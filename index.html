@@ -17,17 +17,23 @@
 </head>
 <body>
   <div id="app">
-    <canvas id="cv" width="480" height="270"></canvas>
+    <canvas id="cv" width="960" height="540"></canvas>
 
     <!-- Játék közbeni HUD -->
     <div id="hud" class="hidden">
       <div id="hud-top">
-        <div id="hpwrap"><div id="hpbar"></div><span id="hptext"></span></div>
+        <div id="hpwrap"><div id="hpbar"></div><div id="hpseg"></div><span id="hptext"></span></div>
         <div id="waveinfo"><div id="wavebar"><div id="wavefill"></div></div><span id="wavetext"></span></div>
         <div id="coininfo">🪙 <span id="coincount">0</span></div>
         <button id="btn-pause" class="hudbtn" aria-label="Szünet">II</button>
       </div>
-      <div id="ammoinfo"><span id="weaponname"></span> · <span id="ammocount"></span></div>
+      <div id="weaponchip">
+        <img id="weaponicon" alt="" />
+        <div class="wc-text">
+          <span id="weaponname"></span>
+          <span id="ammocount"></span>
+        </div>
+      </div>
     </div>
 
     <!-- Érintéses irányítás -->

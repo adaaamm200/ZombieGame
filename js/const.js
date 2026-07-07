@@ -4,23 +4,27 @@ window.ZD = window.ZD || {};
 ZD.C = {
   VIEW_W: 480,
   VIEW_H: 270,
+  RS: 2,             // render-skála: canvas 960×540, logika 480×270 marad
   GROUND_Y: 234,
   WORLD_W: 1040,
   GRAVITY: 620,
   STAGES: 40,
 
+  /* pályatéma: 5 pályánként váltakozik (utca → labor → romváros) */
+  themeFor(level) { return Math.floor((level - 1) / 5) % 3; },
+
   PLAYER: { w: 14, h: 30, speed: 110, baseHp: 100 },
 
   /* Fegyverek — ammo: -1 = végtelen, kind: bullet|flame|rocket|laser */
   WEAPONS: [
-    { id: 'pistol',  name: 'M9 Pisztoly',       dmg: 13,  rps: 3,    spd: 520,  pellets: 1, spread: 0.012, ammo: -1,  price: 0,     kind: 'bullet', color: '#ffe9a8' },
-    { id: 'uzi',     name: 'Vipera SMG',        dmg: 8,   rps: 10,   spd: 540,  pellets: 1, spread: 0.055, ammo: 260, price: 900,   kind: 'bullet', color: '#ffe9a8' },
-    { id: 'shotgun', name: 'Őrszem Sörétes',    dmg: 9,   rps: 1.3,  spd: 480,  pellets: 6, spread: 0.13,  ammo: 48,  price: 2600,  kind: 'bullet', color: '#ffd27a' },
-    { id: 'rifle',   name: 'AK Farkas',         dmg: 22,  rps: 6,    spd: 640,  pellets: 1, spread: 0.03,  ammo: 200, price: 7000,  kind: 'bullet', color: '#ffe9a8' },
-    { id: 'flamer',  name: 'Sárkány Lángszóró', dmg: 5,   rps: 18,   spd: 230,  pellets: 1, spread: 0.10,  ammo: 420, price: 14000, kind: 'flame',  color: '#ff9a3d', range: 105 },
-    { id: 'minigun', name: 'Cerberus Minigun',  dmg: 15,  rps: 15,   spd: 600,  pellets: 1, spread: 0.06,  ammo: 600, price: 30000, kind: 'bullet', color: '#ffe9a8' },
-    { id: 'rocket',  name: 'RPG Vulkán',        dmg: 130, rps: 0.9,  spd: 330,  pellets: 1, spread: 0.01,  ammo: 18,  price: 52000, kind: 'rocket', color: '#ffb066', splash: 82 },
-    { id: 'laser',   name: 'Ion Lézer',         dmg: 34,  rps: 4.5,  spd: 1300, pellets: 1, spread: 0.005, ammo: 140, price: 90000, kind: 'laser',  color: '#7de0ff', pierce: 99 },
+    { id: 'pistol',  name: 'M9 Pisztoly',       dmg: 13,  rps: 3,    spd: 520,  pellets: 1, spread: 0.012, ammo: -1,  price: 0,     kind: 'bullet', color: '#ffe9a8', shake: 0.5, casing: 1 },
+    { id: 'uzi',     name: 'Vipera SMG',        dmg: 8,   rps: 10,   spd: 540,  pellets: 1, spread: 0.055, ammo: 260, price: 900,   kind: 'bullet', color: '#ffe9a8', shake: 0.6, casing: 1 },
+    { id: 'shotgun', name: 'Őrszem Sörétes',    dmg: 9,   rps: 1.3,  spd: 480,  pellets: 6, spread: 0.13,  ammo: 48,  price: 2600,  kind: 'bullet', color: '#ffd27a', shake: 2.4, casing: 1 },
+    { id: 'rifle',   name: 'AK Farkas',         dmg: 22,  rps: 6,    spd: 640,  pellets: 1, spread: 0.03,  ammo: 200, price: 7000,  kind: 'bullet', color: '#ffe9a8', shake: 1.1, casing: 1 },
+    { id: 'flamer',  name: 'Sárkány Lángszóró', dmg: 5,   rps: 18,   spd: 230,  pellets: 1, spread: 0.10,  ammo: 420, price: 14000, kind: 'flame',  color: '#ff9a3d', range: 105, shake: 0.25 },
+    { id: 'minigun', name: 'Cerberus Minigun',  dmg: 15,  rps: 15,   spd: 600,  pellets: 1, spread: 0.06,  ammo: 600, price: 30000, kind: 'bullet', color: '#ffe9a8', shake: 1.3, casing: 1 },
+    { id: 'rocket',  name: 'RPG Vulkán',        dmg: 130, rps: 0.9,  spd: 330,  pellets: 1, spread: 0.01,  ammo: 18,  price: 52000, kind: 'rocket', color: '#ffb066', splash: 82, shake: 3 },
+    { id: 'laser',   name: 'Ion Lézer',         dmg: 34,  rps: 4.5,  spd: 1300, pellets: 1, spread: 0.005, ammo: 140, price: 90000, kind: 'laser',  color: '#7de0ff', pierce: 99, shake: 1.2 },
   ],
 
   /* Zombik — speed: [min,max], coin: alap érme-érték */

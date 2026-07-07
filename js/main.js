@@ -5,6 +5,9 @@ window.ZD = window.ZD || {};
   const C = ZD.C;
   const cv = document.getElementById('cv');
   const ctx = cv.getContext('2d');
+  /* belső render-felbontás: 960×540 (a logika 480×270-ben fut, RS=2 skálával) */
+  cv.width = C.VIEW_W * C.RS;
+  cv.height = C.VIEW_H * C.RS;
   ctx.imageSmoothingEnabled = false;
 
   /* canvas illesztése a képernyőhöz (letterbox, pixeles nagyítás) */
@@ -37,12 +40,15 @@ window.ZD = window.ZD || {};
       ZD.game.update(STEP);
       acc -= STEP;
     }
-    ctx.clearRect(0, 0, C.VIEW_W, C.VIEW_H);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.setTransform(C.RS, 0, 0, C.RS, 0, 0);
+    ctx.imageSmoothingEnabled = false;
     if (ZD.game.st.running) {
       ZD.game.render(ctx);
     } else {
-      /* menü mögé csendes háttér */
-      ZD.sprites.drawBackground(ctx, (now * 0.01) % C.WORLD_W, 1);
+      /* menü mögé élő jelenet */
+      ZD.sprites.drawMenuScene(ctx, now * 0.001);
     }
   }
 

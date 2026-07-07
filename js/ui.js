@@ -7,6 +7,8 @@ ZD.ui = (() => {
   const $ = (sel) => document.querySelector(sel);
   const screens = {};
   let root;
+  let flashId = null;      // vásárlás/fejlesztés utáni kiemelendő kártya
+  let countTimer = null;   // eredmény-képernyő érme-számláló
 
   function el(html) {
     const d = document.createElement('div');
@@ -15,6 +17,18 @@ ZD.ui = (() => {
   }
 
   function fmt(n) { return Math.round(n).toLocaleString('hu-HU'); }
+
+  /* fegyverikonok cache-elve */
+  const iconCache = {};
+  function wIcon(w) {
+    if (!iconCache[w.id]) iconCache[w.id] = ZD.sprites.weaponIcon(w);
+    return iconCache[w.id];
+  }
+  const upgIconCache = {};
+  function uIcon(id) {
+    if (!upgIconCache[id]) upgIconCache[id] = ZD.sprites.upgIcon(id);
+    return upgIconCache[id];
+  }
 
   /* ---------- képernyő-kezelés ---------- */
   function show(name) {
@@ -25,6 +39,10 @@ ZD.ui = (() => {
       const re = 'refresh_' + name;
       if (api[re]) api[re]();
       screens[name].classList.remove('hidden');
+      /* belépő animáció újraindítása */
+      screens[name].classList.remove('anim');
+      void screens[name].offsetWidth;
+      screens[name].classList.add('anim');
     }
   }
 
@@ -40,7 +58,9 @@ ZD.ui = (() => {
     const st = ZD.game.st;
     if (!st.player) return;
     const p = st.player;
-    $('#hpbar').style.width = `${Math.max(0, (p.hp / p.stats.maxHp) * 100)}%`;
+    const hpr = Math.max(0, p.hp / p.stats.maxHp);
+    $('#hpbar').style.width = `${hpr * 100}%`;
+    $('#hpbar').classList.toggle('low', hpr < 0.3);
     $('#hptext').textContent = `${Math.max(0, Math.ceil(p.hp))} / ${Math.round(p.stats.maxHp)}`;
     const denom = st.quota + (C.isBossLevel(st.level) ? 1 : 0);
     const prog = Math.min(1, (st.killed + (st.bossPhase && !st.bossRef ? 1 : 0)) / denom);
@@ -48,6 +68,7 @@ ZD.ui = (() => {
     $('#wavetext').textContent = `${st.level}. pálya`;
     $('#coincount').textContent = fmt(S().coins);
     const w = ZD.game.curWeapon();
+    $('#weaponicon').src = wIcon(w.def);
     $('#weaponname').textContent = w.def.name;
     $('#ammocount').textContent = w.ammo < 0 ? '∞' : String(w.ammo);
     $('#grencount').textContent = String(p.grenades);
@@ -59,24 +80,35 @@ ZD.ui = (() => {
 
     /* Főmenü */
     screens.title = el(`
-      <div class="screen" id="s-title">
-        <div class="logo">ZOMBI KRÓNIKA<small>TÚLÉLŐNAPLÓ</small></div>
-        <div class="menu">
-          <button class="btn primary" data-go="stages">▶ JÁTÉK</button>
-          <button class="btn" data-go="armory">🔫 FEGYVERBOLT</button>
-          <button class="btn" data-go="lab">⚗ LABOR</button>
-          <button class="btn" data-go="settings">⚙ BEÁLLÍTÁSOK</button>
+      <div class="screen title-screen" id="s-title">
+        <div class="title-inner">
+          <div class="logo">
+            <span class="logo-top">ZOMBI</span>
+            <span class="logo-main">KRÓNIKA</span>
+            <span class="logo-sub">— TÚLÉLŐNAPLÓ —</span>
+          </div>
+          <div class="menu">
+            <button class="btn primary big-menu" data-go="stages"><i>▶</i><span>JÁTÉK<small>40 pálya vár rád</small></span></button>
+            <button class="btn big-menu" data-go="armory"><i>🔫</i><span>FEGYVERBOLT<small>8 fegyver</small></span></button>
+            <button class="btn big-menu" data-go="lab"><i>⚗</i><span>LABOR<small>7 fejlesztés</small></span></button>
+            <button class="btn big-menu" data-go="settings"><i>⚙</i><span>BEÁLLÍTÁSOK<small>hang · mentés</small></span></button>
+          </div>
+          <p class="title-note">Saját készítésű hommage — kizárólag magáncélra.</p>
         </div>
-        <p style="margin-top:auto;font-size:10px;color:var(--muted)">Saját készítésű hommage — kizárólag magáncélra.</p>
       </div>`);
 
     /* Pályaválasztó */
     screens.stages = el(`
       <div class="screen" id="s-stages">
         <div class="topbar">
-          <button class="btn backbtn" data-go="title">← VISSZA</button>
-          <h2>PÁLYÁK</h2>
+          <button class="btn backbtn" data-go="title">←</button>
+          <h2>HADJÁRAT</h2>
           <span class="coins">🪙 <span data-coins></span></span>
+        </div>
+        <div class="theme-legend">
+          <span class="tl t0">■ Elhagyott utca</span>
+          <span class="tl t1">■ Labor</span>
+          <span class="tl t2">■ Romváros</span>
         </div>
         <div class="stagegrid" id="stagegrid"></div>
       </div>`);
@@ -85,43 +117,45 @@ ZD.ui = (() => {
     screens.armory = el(`
       <div class="screen" id="s-armory">
         <div class="topbar">
-          <button class="btn backbtn" data-go="title">← VISSZA</button>
+          <button class="btn backbtn" data-go="title">←</button>
           <h2>FEGYVERBOLT</h2>
           <span class="coins">🪙 <span data-coins></span></span>
         </div>
-        <div class="list" id="weaponlist"></div>
+        <div class="cardgrid" id="weaponlist"></div>
       </div>`);
 
     /* Labor */
     screens.lab = el(`
       <div class="screen" id="s-lab">
         <div class="topbar">
-          <button class="btn backbtn" data-go="title">← VISSZA</button>
+          <button class="btn backbtn" data-go="title">←</button>
           <h2>LABOR</h2>
           <span class="coins">🪙 <span data-coins></span></span>
         </div>
-        <div class="list" id="upglist"></div>
+        <div class="cardgrid" id="upglist"></div>
       </div>`);
 
     /* Beállítások */
     screens.settings = el(`
       <div class="screen" id="s-settings">
         <div class="topbar">
-          <button class="btn backbtn" data-go="title">← VISSZA</button>
+          <button class="btn backbtn" data-go="title">←</button>
           <h2>BEÁLLÍTÁSOK</h2><span></span>
         </div>
-        <div class="settingsrow"><span>Hangok</span><button class="btn" id="btn-sound"></button></div>
-        <div class="settingsrow"><span>Mentés exportálása</span><button class="btn" id="btn-export">MÁSOLÁS IDE ↓</button></div>
-        <textarea class="save-io" id="save-io" placeholder="Export: ide kerül a mentéskód. Import: illeszd be a kódot, majd IMPORTÁLÁS."></textarea>
-        <div class="settingsrow"><span>Mentés importálása</span><button class="btn" id="btn-import">IMPORTÁLÁS</button></div>
-        <div class="settingsrow"><span>Minden törlése</span><button class="btn danger" id="btn-reset">TÖRLÉS</button></div>
+        <div class="settings-panel">
+          <div class="settingsrow"><span>Hangok</span><button class="btn" id="btn-sound"></button></div>
+          <div class="settingsrow"><span>Mentés exportálása</span><button class="btn" id="btn-export">MÁSOLÁS IDE ↓</button></div>
+          <textarea class="save-io" id="save-io" placeholder="Export: ide kerül a mentéskód. Import: illeszd be a kódot, majd IMPORTÁLÁS."></textarea>
+          <div class="settingsrow"><span>Mentés importálása</span><button class="btn" id="btn-import">IMPORTÁLÁS</button></div>
+          <div class="settingsrow"><span>Minden törlése</span><button class="btn danger" id="btn-reset">TÖRLÉS</button></div>
+        </div>
       </div>`);
 
     /* Szünet */
     screens.pause = el(`
       <div class="screen modal hidden" id="s-pause">
         <div class="modalbox">
-          <h2>SZÜNET</h2>
+          <h2>⏸ SZÜNET</h2>
           <button class="btn primary" id="btn-resume">FOLYTATÁS</button>
           <button class="btn danger" id="btn-quit">FELADÁS</button>
         </div>
@@ -130,12 +164,14 @@ ZD.ui = (() => {
     /* Eredmény */
     screens.result = el(`
       <div class="screen modal hidden" id="s-result">
-        <div class="modalbox">
+        <div class="modalbox" id="result-box">
+          <div class="result-icon" id="result-icon"></div>
           <h2 class="big" id="result-title"></h2>
+          <div class="loot-line">🪙 <b id="earn-count">0</b></div>
           <p class="sub" id="result-sub"></p>
           <button class="btn primary" id="btn-next"></button>
           <button class="btn" id="btn-retry">ÚJRA</button>
-          <button class="btn" data-go="title">FŐMENÜ</button>
+          <button class="btn ghost" data-go="title">FŐMENÜ</button>
         </div>
       </div>`);
 
@@ -197,18 +233,26 @@ ZD.ui = (() => {
     scr.querySelectorAll('[data-coins]').forEach((n) => { n.textContent = fmt(S().coins); });
   }
 
+  /* normalizált stat-sáv (gyökös skála, hogy a kis értékek is látsszanak) */
+  function bar(label, val, max, text) {
+    const pct = Math.round(Math.sqrt(Math.min(1, val / max)) * 100);
+    return `<div class="srow"><label>${label}</label><div class="bar"><i style="width:${pct}%"></i></div><b>${text}</b></div>`;
+  }
+
   const api = {
     refresh_stages() {
       refreshCoins(screens.stages);
       const grid = $('#stagegrid');
       grid.innerHTML = '';
+      const current = S().stages.unlocked;
       for (let i = 1; i <= C.STAGES; i++) {
         const locked = i > S().stages.unlocked;
         const cleared = S().stages.cleared.includes(i);
         const boss = C.isBossLevel(i);
+        const theme = C.themeFor(i);
         const b = document.createElement('button');
-        b.className = `stagecell${cleared ? ' cleared' : ''}${locked ? ' locked' : ''}${boss ? ' boss' : ''}`;
-        b.innerHTML = `${locked ? '🔒' : cleared ? '✔' : i}<small>${boss ? 'VEZÉR' : `${i}. pálya`}</small>`;
+        b.className = `stagecell t${theme}${cleared ? ' cleared' : ''}${locked ? ' locked' : ''}${boss ? ' boss' : ''}${i === current && !locked ? ' current' : ''}`;
+        b.innerHTML = `<span class="sc-num">${locked ? '🔒' : boss ? '☠' : i}</span><small>${boss ? 'VEZÉR' : cleared ? '✔ kész' : `${i}. pálya`}</small>`;
         if (!locked) {
           b.addEventListener('click', () => {
             ZD.audio.play('click');
@@ -228,21 +272,40 @@ ZD.ui = (() => {
         const equipped = S().weapons.equipped === w.id;
         const afford = S().coins >= w.price;
         const dps = Math.round(w.dmg * w.rps * (w.pellets || 1));
+        const tags = [
+          w.splash ? '💥 robbanó' : '',
+          w.pierce ? '➤ átütő' : '',
+          w.kind === 'flame' ? '🔥 égető' : '',
+          (w.pellets || 1) > 1 ? `⁂ ${w.pellets} lövedék` : '',
+        ].filter(Boolean).join(' · ');
         const item = el(`
-          <div class="item${equipped ? ' equipped' : ''}">
-            <img class="icon" alt="" src="${ZD.sprites.weaponIcon(w)}" />
-            <div class="info">
-              <div class="name">${w.name}</div>
-              <div class="stats">Sebzés ${w.dmg}${(w.pellets || 1) > 1 ? `×${w.pellets}` : ''} · Tűzgyorsaság ${w.rps}/mp · DPS ~${dps}<br/>Tár/bevetés: ${w.ammo < 0 ? '∞' : w.ammo}${w.splash ? ' · robbanó' : ''}${w.pierce ? ' · átütő' : ''}${w.kind === 'flame' ? ' · égető' : ''}</div>
+          <div class="card wcard${equipped ? ' equipped' : ''}${owned ? ' owned' : ''}" data-id="${w.id}">
+            ${equipped ? '<span class="badge">KÉZBEN</span>' : owned ? '<span class="badge dim">MEGVAN</span>' : ''}
+            <div class="wicon"><img alt="" src="${wIcon(w)}" /></div>
+            <div class="wname">${w.name}</div>
+            <div class="wstats">
+              ${bar('SEBZÉS', w.dmg * (w.pellets || 1), 140, w.dmg + ((w.pellets || 1) > 1 ? `×${w.pellets}` : ''))}
+              ${bar('TEMPÓ', w.rps, 18, w.rps + '/mp')}
+              ${bar('DPS', dps, 340, '~' + dps)}
             </div>
-            <div class="act">
+            <div class="wtags">${tags || '&nbsp;'}</div>
+            <div class="wact">
               ${owned
-                ? `<button class="btn ${equipped ? '' : 'primary'}" data-equip="${w.id}" ${equipped ? 'disabled' : ''}>${equipped ? 'KÉZBEN' : 'KIVÁLASZT'}</button>`
-                : `<span class="price">🪙 ${fmt(w.price)}</span><button class="btn primary" data-buy="${w.id}" ${afford ? '' : 'disabled'}>MEGVESZ</button>`}
+                ? `<button class="btn ${equipped ? 'ghost' : 'primary'}" data-equip="${w.id}" ${equipped ? 'disabled' : ''}>${equipped ? '✔ KÉZBEN' : 'KIVÁLASZT'}</button>`
+                : `<span class="price${afford ? '' : ' na'}">🪙 ${fmt(w.price)}</span><button class="btn primary" data-buy="${w.id}" ${afford ? '' : 'disabled'}>MEGVESZ</button>`}
+              <span class="ammoinfo-sm">Tár: ${w.ammo < 0 ? '∞' : w.ammo}</span>
             </div>
           </div>`);
         list.appendChild(item);
       });
+      if (flashId) {
+        const card = list.querySelector(`[data-id="${flashId}"]`);
+        if (card) {
+          card.classList.add('flash');
+          setTimeout(() => card.classList.remove('flash'), 700);
+        }
+        flashId = null;
+      }
       list.onclick = (e) => {
         const buy = e.target.closest('[data-buy]');
         const eq = e.target.closest('[data-equip]');
@@ -254,6 +317,7 @@ ZD.ui = (() => {
             S().weapons.equipped = w.id;
             ZD.save.persist();
             ZD.audio.play('buy');
+            flashId = w.id;
             api.refresh_armory();
           }
         } else if (eq) {
@@ -276,20 +340,29 @@ ZD.ui = (() => {
         const afford = S().coins >= cost;
         const pips = Array.from({ length: u.max }, (_, i) => `<i class="${i < lvl ? 'on' : ''}"></i>`).join('');
         const item = el(`
-          <div class="item">
-            <div class="info">
-              <div class="name">${u.name} <span style="color:var(--muted);font-size:11px">(${lvl}/${u.max})</span></div>
-              <div class="stats">${u.desc}</div>
-              <div class="pips" style="margin-top:5px">${pips}</div>
+          <div class="card ucard${maxed ? ' maxed' : ''}" data-id="${u.id}">
+            <div class="uicon"><img alt="" src="${uIcon(u.id)}" /></div>
+            <div class="uinfo">
+              <div class="wname">${u.name} <span class="ulvl">${lvl}/${u.max}</span></div>
+              <div class="udesc">${u.desc}</div>
+              <div class="pips">${pips}</div>
             </div>
-            <div class="act">
+            <div class="wact">
               ${maxed
-                ? '<span class="price">MAX</span>'
-                : `<span class="price">🪙 ${fmt(cost)}</span><button class="btn primary" data-upg="${u.id}" ${afford ? '' : 'disabled'}>FEJLESZT</button>`}
+                ? '<span class="badge">MAX</span>'
+                : `<span class="price${afford ? '' : ' na'}">🪙 ${fmt(cost)}</span><button class="btn primary" data-upg="${u.id}" ${afford ? '' : 'disabled'}>FEJLESZT</button>`}
             </div>
           </div>`);
         list.appendChild(item);
       });
+      if (flashId) {
+        const card = list.querySelector(`[data-id="${flashId}"]`);
+        if (card) {
+          card.classList.add('flash');
+          setTimeout(() => card.classList.remove('flash'), 700);
+        }
+        flashId = null;
+      }
       list.onclick = (e) => {
         const b = e.target.closest('[data-upg]');
         if (!b) return;
@@ -300,7 +373,8 @@ ZD.ui = (() => {
           S().coins -= cost;
           S().upg[u.id] = lvl + 1;
           ZD.save.persist();
-          ZD.audio.play('buy');
+          ZD.audio.play('upgrade');
+          flashId = u.id;
           api.refresh_lab();
         }
       };
@@ -318,13 +392,30 @@ ZD.ui = (() => {
   function hidePause() { screens.pause.classList.add('hidden'); }
 
   function showResult(won, earned, bonus) {
-    $('#result-title').textContent = won ? '✔ PÁLYA TELJESÍTVE' : '✖ ELESTÉL';
-    $('#result-title').style.color = won ? 'var(--green)' : 'var(--red)';
+    $('#result-box').classList.toggle('win', won);
+    $('#result-box').classList.toggle('lose', !won);
+    $('#result-icon').textContent = won ? '🏅' : '☠';
+    $('#result-title').textContent = won ? 'PÁLYA TELJESÍTVE' : 'ELESTÉL';
     $('#result-sub').innerHTML = won
-      ? `Zsákmány: 🪙 ${fmt(earned)}<br/>(ebből teljesítési bónusz: 🪙 ${fmt(bonus)})`
-      : `A zombik legyűrtek… de a felszedett 🪙 ${fmt(earned)} megmarad.<br/>Fejlessz a laborban, és próbáld újra!`;
+      ? `Teljesítési bónusz: 🪙 ${fmt(bonus)}`
+      : `A zsákmányod megmarad.<br/>Fejlessz a laborban, és próbáld újra!`;
     $('#btn-next').textContent = won ? 'KÖVETKEZŐ PÁLYA ▶' : 'ÚJRA PRÓBÁLOM';
     $('#btn-retry').style.display = won ? '' : 'none';
+
+    /* érme-számláló animáció */
+    if (countTimer) clearInterval(countTimer);
+    const target = Math.round(earned);
+    const t0 = performance.now();
+    const dur = 750;
+    const cnt = $('#earn-count');
+    cnt.textContent = '0';
+    countTimer = setInterval(() => {
+      const k = Math.min(1, (performance.now() - t0) / dur);
+      const ease = 1 - (1 - k) * (1 - k);
+      cnt.textContent = fmt(target * ease);
+      if (k >= 1) { clearInterval(countTimer); countTimer = null; }
+    }, 33);
+
     screens.result.classList.remove('hidden');
   }
 
