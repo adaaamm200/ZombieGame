@@ -9,6 +9,7 @@ ZD.ui = (() => {
   let root;
   let flashId = null;      // vásárlás/fejlesztés utáni kiemelendő kártya
   let countTimer = null;   // eredmény-képernyő érme-számláló
+  let armTab = 'weapons';  // aktív bolt-tab
 
   function el(html) {
     const d = document.createElement('div');
@@ -65,12 +66,16 @@ ZD.ui = (() => {
     const denom = st.quota + (C.isBossLevel(st.level) ? 1 : 0);
     const prog = Math.min(1, (st.killed + (st.bossPhase && !st.bossRef ? 1 : 0)) / denom);
     $('#wavefill').style.width = `${prog * 100}%`;
-    $('#wavetext').textContent = `${st.level}. pálya`;
+    const M = C.MODES[st.mode];
+    const modIcon = st.mod ? ' ' + C.MODS[st.mod].icon : '';
+    $('#wavetext').textContent = `${st.level}. pálya${M.icon ? ' · ' + M.icon : ''}${modIcon}`;
     $('#coincount').textContent = fmt(S().coins);
     const w = ZD.game.curWeapon();
     $('#weaponicon').src = wIcon(w.def);
     $('#weaponname').textContent = w.def.name;
     $('#ammocount').textContent = w.ammo < 0 ? '∞' : String(w.ammo);
+    const lowAmmo = w.ammo >= 0 && w.ammo <= Math.max(8, Math.ceil((w.def.pack || 40) * 0.2));
+    $('#ammocount').classList.toggle('low', lowAmmo);
     $('#grencount').textContent = String(p.grenades);
   }
 
@@ -106,20 +111,28 @@ ZD.ui = (() => {
           <span class="coins">🪙 <span data-coins></span></span>
         </div>
         <div class="theme-legend">
-          <span class="tl t0">■ Elhagyott utca</span>
+          <span class="tl t0">■ Utca</span>
           <span class="tl t1">■ Labor</span>
           <span class="tl t2">■ Romváros</span>
+          <span class="tl">🛡 védelem</span>
+          <span class="tl">⭐ elit</span>
+          <span class="tl">☠ vezér</span>
+          <span class="tl">⚡🌑💰👥 módosító</span>
         </div>
         <div class="stagegrid" id="stagegrid"></div>
       </div>`);
 
-    /* Fegyverbolt */
+    /* Fegyverbolt — fegyver + lőszer tabokkal */
     screens.armory = el(`
       <div class="screen" id="s-armory">
         <div class="topbar">
           <button class="btn backbtn" data-go="title">←</button>
           <h2>FEGYVERBOLT</h2>
           <span class="coins">🪙 <span data-coins></span></span>
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-tab="weapons">🔫 FEGYVEREK</button>
+          <button class="tab" data-tab="ammo">📦 LŐSZER</button>
         </div>
         <div class="cardgrid" id="weaponlist"></div>
       </div>`);
@@ -186,6 +199,14 @@ ZD.ui = (() => {
       if (go) {
         ZD.audio.play('click');
         show(go.dataset.go);
+        return;
+      }
+      const tab = e.target.closest('.tab');
+      if (tab) {
+        ZD.audio.play('click');
+        armTab = tab.dataset.tab;
+        screens.armory.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab));
+        api.refresh_armory();
       }
     });
 
@@ -248,11 +269,21 @@ ZD.ui = (() => {
       for (let i = 1; i <= C.STAGES; i++) {
         const locked = i > S().stages.unlocked;
         const cleared = S().stages.cleared.includes(i);
-        const boss = C.isBossLevel(i);
+        const mode = C.modeFor(i);
+        const mod = C.modFor(i);
+        const boss = mode === 'boss';
         const theme = C.themeFor(i);
         const b = document.createElement('button');
-        b.className = `stagecell t${theme}${cleared ? ' cleared' : ''}${locked ? ' locked' : ''}${boss ? ' boss' : ''}${i === current && !locked ? ' current' : ''}`;
-        b.innerHTML = `<span class="sc-num">${locked ? '🔒' : boss ? '☠' : i}</span><small>${boss ? 'VEZÉR' : cleared ? '✔ kész' : `${i}. pálya`}</small>`;
+        b.className = `stagecell t${theme} m-${mode}${cleared ? ' cleared' : ''}${locked ? ' locked' : ''}${boss ? ' boss' : ''}${i === current && !locked ? ' current' : ''}`;
+        const modeIcon = C.MODES[mode].icon;
+        const sub = boss ? 'VEZÉR'
+          : mode === 'defense' ? 'védelem'
+          : mode === 'elite' ? 'elit'
+          : cleared ? '✔ kész' : `${i}. pálya`;
+        b.innerHTML = `
+          ${modeIcon && !boss ? `<span class="sc-mode">${modeIcon}</span>` : ''}
+          ${mod ? `<span class="sc-mod" title="${C.MODS[mod].name}">${C.MODS[mod].icon}</span>` : ''}
+          <span class="sc-num">${locked ? '🔒' : boss ? '☠' : i}</span><small>${sub}</small>`;
         if (!locked) {
           b.addEventListener('click', () => {
             ZD.audio.play('click');
@@ -267,37 +298,64 @@ ZD.ui = (() => {
       refreshCoins(screens.armory);
       const list = $('#weaponlist');
       list.innerHTML = '';
-      C.WEAPONS.forEach((w) => {
-        const owned = S().weapons.owned.includes(w.id);
-        const equipped = S().weapons.equipped === w.id;
-        const afford = S().coins >= w.price;
-        const dps = Math.round(w.dmg * w.rps * (w.pellets || 1));
-        const tags = [
-          w.splash ? '💥 robbanó' : '',
-          w.pierce ? '➤ átütő' : '',
-          w.kind === 'flame' ? '🔥 égető' : '',
-          (w.pellets || 1) > 1 ? `⁂ ${w.pellets} lövedék` : '',
-        ].filter(Boolean).join(' · ');
-        const item = el(`
-          <div class="card wcard${equipped ? ' equipped' : ''}${owned ? ' owned' : ''}" data-id="${w.id}">
-            ${equipped ? '<span class="badge">KÉZBEN</span>' : owned ? '<span class="badge dim">MEGVAN</span>' : ''}
-            <div class="wicon"><img alt="" src="${wIcon(w)}" /></div>
-            <div class="wname">${w.name}</div>
-            <div class="wstats">
-              ${bar('SEBZÉS', w.dmg * (w.pellets || 1), 140, w.dmg + ((w.pellets || 1) > 1 ? `×${w.pellets}` : ''))}
-              ${bar('TEMPÓ', w.rps, 18, w.rps + '/mp')}
-              ${bar('DPS', dps, 340, '~' + dps)}
-            </div>
-            <div class="wtags">${tags || '&nbsp;'}</div>
-            <div class="wact">
-              ${owned
-                ? `<button class="btn ${equipped ? 'ghost' : 'primary'}" data-equip="${w.id}" ${equipped ? 'disabled' : ''}>${equipped ? '✔ KÉZBEN' : 'KIVÁLASZT'}</button>`
-                : `<span class="price${afford ? '' : ' na'}">🪙 ${fmt(w.price)}</span><button class="btn primary" data-buy="${w.id}" ${afford ? '' : 'disabled'}>MEGVESZ</button>`}
-              <span class="ammoinfo-sm">Tár: ${w.ammo < 0 ? '∞' : w.ammo}</span>
-            </div>
-          </div>`);
-        list.appendChild(item);
-      });
+
+      if (armTab === 'weapons') {
+        C.WEAPONS.forEach((w) => {
+          const owned = S().weapons.owned.includes(w.id);
+          const equipped = S().weapons.equipped === w.id;
+          const afford = S().coins >= w.price;
+          const dps = Math.round(w.dmg * w.rps * (w.pellets || 1));
+          const pool = w.ammo < 0 ? '∞' : fmt(S().ammo[w.id] || 0);
+          const tags = [
+            w.splash ? '💥 robbanó' : '',
+            w.pierce ? '➤ átütő' : '',
+            w.kind === 'flame' ? '🔥 égető' : '',
+            (w.pellets || 1) > 1 ? `⁂ ${w.pellets} lövedék` : '',
+          ].filter(Boolean).join(' · ');
+          const item = el(`
+            <div class="card wcard${equipped ? ' equipped' : ''}${owned ? ' owned' : ''}" data-id="${w.id}">
+              ${equipped ? '<span class="badge">KÉZBEN</span>' : owned ? '<span class="badge dim">MEGVAN</span>' : ''}
+              <div class="wicon"><img alt="" src="${wIcon(w)}" /></div>
+              <div class="wname">${w.name}</div>
+              <div class="wstats">
+                ${bar('SEBZÉS', w.dmg * (w.pellets || 1), 140, w.dmg + ((w.pellets || 1) > 1 ? `×${w.pellets}` : ''))}
+                ${bar('TEMPÓ', w.rps, 18, w.rps + '/mp')}
+                ${bar('DPS', dps, 340, '~' + dps)}
+              </div>
+              <div class="wtags">${tags || '&nbsp;'}</div>
+              <div class="wact">
+                ${owned
+                  ? `<button class="btn ${equipped ? 'ghost' : 'primary'}" data-equip="${w.id}" ${equipped ? 'disabled' : ''}>${equipped ? '✔ KÉZBEN' : 'KIVÁLASZT'}</button>`
+                  : `<span class="price${afford ? '' : ' na'}">🪙 ${fmt(w.price)}</span><button class="btn primary" data-buy="${w.id}" ${afford ? '' : 'disabled'}>MEGVESZ</button>`}
+                <span class="ammoinfo-sm">Lőszerkészlet: ${owned || w.id === 'pistol' ? pool : (w.ammo + ' induló')}</span>
+              </div>
+            </div>`);
+          list.appendChild(item);
+        });
+      } else {
+        /* LŐSZER tab — birtokolt (nem pisztoly) fegyverek csomagjai */
+        const ownedW = C.WEAPONS.filter((w) => w.id !== 'pistol' && S().weapons.owned.includes(w.id));
+        if (!ownedW.length) {
+          list.appendChild(el('<p class="empty-hint">Előbb vegyél egy fegyvert — a pisztolyhoz nem kell lőszer. 🔫</p>'));
+        }
+        ownedW.forEach((w) => {
+          const pool = S().ammo[w.id] || 0;
+          const low = pool <= Math.ceil((w.pack || 40) * 0.2);
+          const afford = S().coins >= w.packPrice;
+          const item = el(`
+            <div class="card acard" data-id="ammo-${w.id}">
+              <div class="wicon"><img alt="" src="${wIcon(w)}" /></div>
+              <div class="wname">${w.name}</div>
+              <div class="apool${low ? ' low' : ''}">Készlet: <b>${fmt(pool)}</b> lövés${low ? ' ⚠' : ''}</div>
+              <div class="wact">
+                <span class="price${afford ? '' : ' na'}">🪙 ${fmt(w.packPrice)}</span>
+                <button class="btn primary" data-ammo="${w.id}" ${afford ? '' : 'disabled'}>+${w.pack} LÖVÉS</button>
+              </div>
+            </div>`);
+          list.appendChild(item);
+        });
+      }
+
       if (flashId) {
         const card = list.querySelector(`[data-id="${flashId}"]`);
         if (card) {
@@ -309,12 +367,14 @@ ZD.ui = (() => {
       list.onclick = (e) => {
         const buy = e.target.closest('[data-buy]');
         const eq = e.target.closest('[data-equip]');
+        const am = e.target.closest('[data-ammo]');
         if (buy) {
           const w = C.WEAPONS.find((x) => x.id === buy.dataset.buy);
           if (S().coins >= w.price) {
             S().coins -= w.price;
             S().weapons.owned.push(w.id);
             S().weapons.equipped = w.id;
+            S().ammo[w.id] = w.ammo;   // induló lőszerkészlet
             ZD.save.persist();
             ZD.audio.play('buy');
             flashId = w.id;
@@ -325,6 +385,16 @@ ZD.ui = (() => {
           ZD.save.persist();
           ZD.audio.play('click');
           api.refresh_armory();
+        } else if (am) {
+          const w = C.WEAPONS.find((x) => x.id === am.dataset.ammo);
+          if (S().coins >= w.packPrice) {
+            S().coins -= w.packPrice;
+            S().ammo[w.id] = (S().ammo[w.id] || 0) + w.pack;
+            ZD.save.persist();
+            ZD.audio.play('ammo');
+            flashId = 'ammo-' + w.id;
+            api.refresh_armory();
+          }
         }
       };
     },
@@ -391,14 +461,17 @@ ZD.ui = (() => {
   function showPause() { screens.pause.classList.remove('hidden'); }
   function hidePause() { screens.pause.classList.add('hidden'); }
 
-  function showResult(won, earned, bonus) {
+  function showResult(won, earned, bonus, stats) {
     $('#result-box').classList.toggle('win', won);
     $('#result-box').classList.toggle('lose', !won);
     $('#result-icon').textContent = won ? '🏅' : '☠';
     $('#result-title').textContent = won ? 'PÁLYA TELJESÍTVE' : 'ELESTÉL';
+    const statLine = stats
+      ? `<span class="statline">☠ ${fmt(stats.kills)} kiiktatva · 🔫 ${fmt(stats.shots)} lövés · 💥 ${fmt(stats.dmg)} sebzés</span><br/>`
+      : '';
     $('#result-sub').innerHTML = won
-      ? `Teljesítési bónusz: 🪙 ${fmt(bonus)}`
-      : `A zsákmányod megmarad.<br/>Fejlessz a laborban, és próbáld újra!`;
+      ? `${statLine}Teljesítési bónusz: 🪙 ${fmt(bonus)}`
+      : `${statLine}A zsákmányod megmarad.<br/>Fejlessz a laborban, és próbáld újra!`;
     $('#btn-next').textContent = won ? 'KÖVETKEZŐ PÁLYA ▶' : 'ÚJRA PRÓBÁLOM';
     $('#btn-retry').style.display = won ? '' : 'none';
 

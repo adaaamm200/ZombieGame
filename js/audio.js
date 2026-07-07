@@ -93,9 +93,15 @@ ZD.audio = (() => {
     roar()      { tone(130, 36, 0.8, 'sawtooth', 0.3); burst(0.35, 0.7, 240); tone(90, 40, 0.6, 'square', 0.14); },
     reload()    { tone(760, 760, 0.03, 'square', 0.14); setTimeout(() => ctx && tone(520, 520, 0.04, 'square', 0.16), 110); },
     upgrade()   { [420, 620, 940].forEach((f, i) => setTimeout(() => ctx && tone(f, f, 0.09, 'square', 0.16), i * 70)); },
+    groan()     { tone(120, 70, 0.5, 'sawtooth', 0.07); tone(95, 58, 0.6, 'triangle', 0.06); },
+    lowammo()   { tone(880, 880, 0.06, 'square', 0.18); setTimeout(() => ctx && tone(880, 880, 0.06, 'square', 0.18), 130); },
+    ammo()      { burst(0.18, 0.05, 2400); tone(640, 900, 0.09, 'square', 0.16); },
+    pdie()      { tone(300, 60, 0.7, 'sawtooth', 0.28); burst(0.25, 0.5, 400); },
+    genhit()    { burst(0.3, 0.1, 700); tone(180, 90, 0.08, 'square', 0.14); },
+    stage()     { tone(320, 320, 0.09, 'square', 0.14); setTimeout(() => ctx && tone(480, 480, 0.12, 'square', 0.15), 120); },
   };
 
-  const throttleMs = { uzi: 45, minigun: 40, flame: 70, hit: 50, shot: 60, rifle: 60, coin: 60 };
+  const throttleMs = { uzi: 45, minigun: 40, flame: 70, hit: 50, shot: 60, rifle: 60, coin: 60, groan: 800, genhit: 120 };
 
   function play(name) {
     if (muted()) return;

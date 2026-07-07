@@ -108,10 +108,12 @@ html, body {
   border-radius: 8px; padding: 3px 10px 3px 4px;
   backdrop-filter: blur(2px);
 }
-#weaponchip img { width: 42px; height: 21px; image-rendering: pixelated; }
+#weaponchip img { width: 44px; height: 22px; image-rendering: pixelated; }
 #weaponchip .wc-text { display: flex; flex-direction: column; line-height: 1.25; }
 #weaponname { font-size: 9.5px; font-weight: bold; color: var(--text); }
 #ammocount { font-size: 11px; font-weight: bold; color: var(--amber); }
+#ammocount.low { color: var(--red); animation: ammo-blink .7s steps(2) infinite; }
+@keyframes ammo-blink { 50% { opacity: .35; } }
 
 /* ============ Irányítás ============ */
 #controls { position: absolute; inset: 0; z-index: 4; }
@@ -265,9 +267,42 @@ html, body {
 }
 .backbtn { font-size: 15px; padding: 8px 15px; }
 
+/* --- bolt-tabok --- */
+.tabs {
+  display: flex; gap: 8px; width: 100%; max-width: 780px; margin-bottom: 12px; flex: none;
+}
+.tab {
+  flex: 1; font-family: inherit; font-size: 13px; font-weight: bold; letter-spacing: 1px;
+  padding: 10px 8px; border-radius: 9px; cursor: pointer;
+  background: linear-gradient(180deg, var(--panel2), var(--panel));
+  color: var(--muted); border: 2px solid var(--line);
+  transition: filter .12s;
+}
+.tab.active {
+  color: #10200a;
+  background: linear-gradient(180deg, #8fd95e, #4d8f2b 70%);
+  border-color: #a5e87e;
+  box-shadow: 0 0 12px rgba(125, 219, 79, .25);
+}
+@media (hover: hover) { .tab:hover:not(.active) { filter: brightness(1.2); } }
+
+.empty-hint {
+  grid-column: 1 / -1; text-align: center; color: var(--muted);
+  font-size: 12px; padding: 26px 10px; line-height: 1.7;
+}
+
+/* lőszer-kártya */
+.acard { align-items: center; text-align: center; }
+.acard .wicon { padding: 4px 8px; }
+.apool { font-size: 11px; color: var(--muted); }
+.apool b { color: var(--text); font-size: 13px; }
+.apool.low b { color: var(--red); }
+.acard .wact { justify-content: center; width: 100%; }
+
 /* --- pályaválasztó --- */
 .theme-legend {
-  display: flex; gap: 14px; font-size: 9.5px; color: var(--muted); margin-bottom: 8px; flex: none;
+  display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 9.5px; color: var(--muted); margin-bottom: 8px; flex: none;
+  justify-content: center;
 }
 .tl.t0 { color: #7ddb4f; }
 .tl.t1 { color: #5bc8d8; }
@@ -288,6 +323,15 @@ html, body {
 }
 .sc-num { font-size: 17px; }
 .stagecell small { font-size: 8px; color: var(--muted); font-weight: normal; }
+.sc-mode {
+  position: absolute; top: 3px; left: 4px; font-size: 9px; line-height: 1;
+}
+.sc-mod {
+  position: absolute; top: 3px; right: 4px; font-size: 9px; line-height: 1;
+  filter: drop-shadow(0 1px 1px #000);
+}
+.stagecell.m-defense:not(.locked) { border-color: #2a4a66; }
+.stagecell.m-elite:not(.locked) { border-color: #6b5a2a; }
 .stagecell.t0:not(.locked) { border-color: #33502a; }
 .stagecell.t1:not(.locked) { border-color: #2a4a50; }
 .stagecell.t2:not(.locked) { border-color: #55332c; }
@@ -347,7 +391,7 @@ html, body {
   border: 1.5px solid #223022; border-radius: 9px;
   padding: 6px 10px;
 }
-.wicon img { width: 112px; height: 56px; image-rendering: pixelated; display: block; }
+.wicon img { width: 120px; height: 60px; image-rendering: pixelated; display: block; }
 .wname { font-size: 14px; font-weight: bold; letter-spacing: .5px; }
 .wstats { display: flex; flex-direction: column; gap: 4px; }
 .srow { display: flex; align-items: center; gap: 7px; font-size: 9px; }
@@ -407,6 +451,7 @@ html, body {
 .modalbox h2 { margin: 0; }
 .modalbox .big { font-size: 23px; letter-spacing: 2px; }
 .modalbox .sub { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.statline { font-size: 10.5px; color: var(--text); opacity: .85; }
 .modalbox .btn { width: 100%; }
 .result-icon { font-size: 44px; line-height: 1; animation: icon-pop .45s cubic-bezier(.2, 1.8, .4, 1) both; }
 @keyframes icon-pop { from { opacity: 0; transform: scale(.2) rotate(-14deg); } to { opacity: 1; transform: none; } }

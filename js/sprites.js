@@ -28,10 +28,11 @@ ZD.sprites = (() => {
     return { c, fw, fh, n };
   }
 
-  /* rect-helper gyár: p(x, top, w, h, szín) — top = origó feletti magasság */
-  const mkP = (g) => (x, top, w, h, col) => {
+  /* rect-helper gyár: p(x, top, w, h, szín) — top = origó feletti magasság.
+     k: rajz-lépték (nagyobb karakterekhez a koordináták skálázódnak) */
+  const mkP = (g, k = 1) => (x, top, w, h, col) => {
     g.fillStyle = col;
-    g.fillRect(Math.round(x), Math.round(-top), Math.round(w), Math.round(h));
+    g.fillRect(Math.round(x * k), Math.round(-top * k), Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k)));
   };
 
   /* pixeles kör (scanline, q kvantálással) */
@@ -44,13 +45,13 @@ ZD.sprites = (() => {
   }
 
   /* ---------- blit-helperek (logikai koordináták, origó lent-középen) ---------- */
-  function blit(ctx, sh, frame, x, y, facing = 1, alpha = 1) {
+  function blit(ctx, sh, frame, x, y, facing = 1, alpha = 1, s = 1) {
     const f = ((frame | 0) % sh.n + sh.n) % sh.n;
     ctx.save();
     ctx.translate(r2(x), r2(y));
     if (facing < 0) ctx.scale(-1, 1);
     if (alpha < 1) ctx.globalAlpha = alpha;
-    ctx.drawImage(sh.c, f * sh.fw, 0, sh.fw, sh.fh, -sh.fw / 2 / ART, -sh.fh / ART, sh.fw / ART, sh.fh / ART);
+    ctx.drawImage(sh.c, f * sh.fw, 0, sh.fw, sh.fh, -sh.fw / 2 / ART * s, -sh.fh / ART * s, sh.fw / ART * s, sh.fh / ART * s);
     ctx.restore();
   }
 
@@ -78,10 +79,10 @@ ZD.sprites = (() => {
   }
 
   /* fehér/piros villanás: sprite maszkolt átszínezése */
-  const [scratch, scrG] = mkc(160, 160);
-  function blitTint(ctx, sh, frame, x, y, facing, color, alpha) {
+  const [scratch, scrG] = mkc(224, 224);
+  function blitTint(ctx, sh, frame, x, y, facing, color, alpha, s = 1) {
     const f = ((frame | 0) % sh.n + sh.n) % sh.n;
-    scrG.clearRect(0, 0, 160, 160);
+    scrG.clearRect(0, 0, scratch.width, scratch.height);
     scrG.globalCompositeOperation = 'source-over';
     scrG.drawImage(sh.c, f * sh.fw, 0, sh.fw, sh.fh, 0, 0, sh.fw, sh.fh);
     scrG.globalCompositeOperation = 'source-in';
@@ -91,7 +92,7 @@ ZD.sprites = (() => {
     ctx.translate(r2(x), r2(y));
     if (facing < 0) ctx.scale(-1, 1);
     ctx.globalAlpha = alpha;
-    ctx.drawImage(scratch, 0, 0, sh.fw, sh.fh, -sh.fw / 2 / ART, -sh.fh / ART, sh.fw / ART, sh.fh / ART);
+    ctx.drawImage(scratch, 0, 0, sh.fw, sh.fh, -sh.fw / 2 / ART * s, -sh.fh / ART * s, sh.fw / ART * s, sh.fh / ART * s);
     ctx.restore();
   }
 
@@ -110,35 +111,45 @@ ZD.sprites = (() => {
   const SKIN = '#d9a878', SKIN2 = '#c08c5e';
 
   function playerBody(g, o) {
-    const p = mkP(g);
+    const p = mkP(g, 1.3);
     const b = o.bob || 0;
     const lF = o.lF || 0, lR = o.lR || 0;
 
     // hátizsák (a test mögött)
     p(-16, 40 + b, 6, 14, '#42503a');
     p(-16, 38 + b, 6, 2, '#33402c');
+    p(-17, 34 + b, 3, 5, '#54452c');            // oldalzseb
 
     // hátsó láb + bakancs
     p(-8 + lR, 20, 6, 16, '#39422f');
     p(-9 + lR, 5, 8, 5, '#1b1b1e');
     p(-9 + lR, 2, 8, 1, '#33333a');
+    p(-7 + lR, 6, 3, 1, '#454550');             // fűző
     // elülső láb + bakancs
     p(2 + lF, 20, 6, 16, '#434e37');
+    p(3 + lF, 18, 4, 6, '#6d5a3a');             // combzseb
     p(1 + lF, 5, 9, 5, '#222226');
     p(1 + lF, 2, 9, 1, '#3a3a42');
+    p(3 + lF, 6, 3, 1, '#4c4c58');              // fűző
     // térdvédő
     p(2 + lF, 14, 6, 3, '#565f47');
+    p(2 + lF, 14, 6, 1, '#67724f');
 
     // törzs: mellény
     p(-10, 42 + b, 20, 23, '#55684a');
     p(-10, 42 + b, 3, 23, '#48593f');           // hát-árnyék
     p(-8, 38 + b, 15, 9, '#5f7452');            // mellkas-lemez
+    p(-8, 38 + b, 15, 1, '#6c8560');
     p(-7, 42 + b, 2, 22, '#3a4531');            // heveder
     p(4, 42 + b, 2, 22, '#3a4531');
     p(-6, 30 + b, 6, 6, '#6d5a3a');             // táskák
     p(2, 30 + b, 6, 6, '#6d5a3a');
     p(-6, 30 + b, 6, 2, '#54452c');
     p(2, 30 + b, 6, 2, '#54452c');
+    p(-4, 27 + b, 2, 1, '#8a7448');             // táska-patent
+    p(4, 27 + b, 2, 1, '#8a7448');
+    p(7, 36 + b, 3, 5, '#2c2c30');              // rádió az oldalán
+    p(8, 38 + b, 1, 2, '#e5484d');
     p(-10, 22 + b, 20, 3, '#4a3b26');           // öv
     p(-2, 22 + b, 4, 3, '#8a7448');             // csat
 
@@ -151,10 +162,13 @@ ZD.sprites = (() => {
     p(3, 52 + b, 2, 2, '#26241e');
     p(1, 54 + b, 4, 1, '#7a5a3c');              // szemöldök
     p(1, 47 + b, 4, 1, '#8a5f43');              // száj
+    p(-2, 49 + b, 2, 1, '#c08c5e');             // borosta-árny
     // sisak
     p(-7, 63 + b, 14, 7, '#44523c');
     p(-8, 57 + b, 16, 3, '#39452f');
+    p(-8, 59 + b, 16, 1, '#2f3a26');            // sisak-pánt
     p(-4, 62 + b, 6, 2, '#586a49');
+    p(2, 64 + b, 3, 2, '#39452f');              // álcaháló-folt
     p(-5, 55 + b, 1, 6, '#2b2b2b');             // szíj
 
     /* karok */
@@ -178,19 +192,20 @@ ZD.sprites = (() => {
     }
   }
 
-  const P_IDLE = sheet(48, 76, 4, (g, i) => playerBody(g, { bob: [0, 0, 1, 1][i] }));
-  const P_WALK = sheet(48, 76, 6, (g, i) => {
+  const P_IDLE = sheet(64, 100, 4, (g, i) => playerBody(g, { bob: [0, 0, 1, 1][i] }));
+  const P_WALK = sheet(64, 100, 6, (g, i) => {
     const sw = [5, 3, -3, -5, -3, 3][i];
     playerBody(g, { lF: sw, lR: -sw, bob: i % 3 === 0 ? 0 : 1 });
   });
-  const P_RELOAD = sheet(48, 76, 4, (g, i) => playerBody(g, { reload: i }));
+  const P_RELOAD = sheet(64, 100, 4, (g, i) => playerBody(g, { reload: i }));
 
-  /* fegyverek — origó a markolatnál (ox,oy), csőirány +x */
+  /* fegyverek — origó a markolatnál, csőirány +x (1.3× lépték a nagyobb karakterhez) */
+  const GUNK = 1.3;
   function gunSheet(draw) {
-    const [c, g] = mkc(56, 28);
+    const [c, g] = mkc(76, 38);
     g.save();
-    g.translate(16, 18);
-    draw(g, mkP(g));
+    g.translate(22, 26);
+    draw(g, mkP(g, GUNK));
     g.restore();
     return c;
   }
@@ -293,10 +308,20 @@ ZD.sprites = (() => {
     }
   });
 
-  const GUN_ANCHOR = { x: 6.5, y: -18 }; // logikai — kéz pozíció
+  const GUN_ANCHOR = { x: 8.4, y: -24 }; // logikai — kéz pozíció (1.3× testhez)
 
   function drawPlayer(ctx, o) {
-    /* o: {x,y,facing,moving,phase,idleT,fireAnim,reloadT,flash,weapon} */
+    /* o: {x,y,facing,moving,phase,idleT,fireAnim,reloadT,flash,weapon,deathT} */
+
+    /* halál: eldőlés + elhalványulás (fegyver nélkül) */
+    if (o.deathT !== undefined && o.deathT > 0) {
+      const fall = Math.min(1, o.deathT / 0.55);
+      const ease = 1 - (1 - fall) * (1 - fall);
+      const alpha = o.deathT < 0.9 ? 1 : Math.max(0.25, 1 - (o.deathT - 0.9) / 1.2);
+      blitRot(ctx, P_IDLE, 0, o.x, o.y, o.facing, -ease * 1.55, alpha);
+      return;
+    }
+
     let sh, frame;
     if (o.reloadT > 0) {
       sh = P_RELOAD; frame = Math.min(3, ((1 - o.reloadT / 0.5) * 4) | 0);
@@ -307,31 +332,32 @@ ZD.sprites = (() => {
     }
     blit(ctx, sh, frame, o.x, o.y, o.facing);
 
-    /* fegyver a kézben */
+    /* fegyver a kézben — lövésnél hátrarúg */
     const gun = GUNS[o.weapon.id] || GUNS.pistol;
-    const rec = o.fireAnim > 0 ? -1.5 : 0;
-    const tilt = o.reloadT > 0 ? 0.5 : 0;
+    const rec = o.fireAnim > 0 ? -2 : 0;
+    const tilt = o.reloadT > 0 ? 0.5 : (o.fireAnim > 0 ? -0.06 : 0);
     ctx.save();
     ctx.translate(r2(o.x), r2(o.y));
     if (o.facing < 0) ctx.scale(-1, 1);
     ctx.translate(GUN_ANCHOR.x + rec, GUN_ANCHOR.y + (o.moving ? -0.5 : 0));
     if (tilt) ctx.rotate(tilt);
-    ctx.drawImage(gun.c, -16 / ART, -18 / ART, 56 / ART, 28 / ART);
+    ctx.drawImage(gun.c, -22 / ART, -26 / ART, 76 / ART, 38 / ART);
     ctx.restore();
 
-    /* torkolattűz */
+    /* torkolattűz — fegyverenként eltérő méret */
     if (o.fireAnim > 0 && o.weapon.kind !== 'flame') {
-      const mx = o.x + o.facing * (GUN_ANCHOR.x + gun.mz + rec);
-      const my = o.y + GUN_ANCHOR.y + gun.mzy;
+      const fs = o.weapon.flashScale || 1;
+      const mx = o.x + o.facing * (GUN_ANCHOR.x + gun.mz * 0.65 + rec);
+      const my = o.y + GUN_ANCHOR.y + gun.mzy * 1.3;
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
       ctx.translate(r2(mx), r2(my));
       if (o.facing < 0) ctx.scale(-1, 1);
       const mf = (o.muzzleSeed || 0) % 3;
-      ctx.drawImage(MUZZLE.c, mf * 28, 0, 28, 28, -4 / ART, -14 / ART, 28 / ART, 28 / ART);
+      ctx.drawImage(MUZZLE.c, mf * 28, 0, 28, 28, -4 / ART * fs, -14 / ART * fs, 28 / ART * fs, 28 / ART * fs);
       // fényudvar
       ctx.globalAlpha = 0.25;
-      pxCircle(ctx, 4, 0, 9, '#ffd76a', 1);
+      pxCircle(ctx, 4 * fs, 0, 9 * fs, '#ffd76a', 1);
       ctx.restore();
     }
 
@@ -373,7 +399,7 @@ ZD.sprites = (() => {
 
   const ZDRAW = {
     walker(g, v, f, atk) {
-      const p = mkP(g);
+      const p = mkP(g, 1.3);
       const sw = atk >= 0 ? 0 : [3, 0, -3, 0][f];
       const bob = atk >= 0 ? 0 : [0, 1, 0, 1][f];
       // karok magassága: támadásnál felemel → lecsap
@@ -390,8 +416,12 @@ ZD.sprites = (() => {
       p(-8, 40 - bob, 3, 24, v.cloth2);
       p(-8, 40 - bob, 17, 2, v.cloth2);
       p(-2, 30 - bob, 5, 7, v.skin2);           // kilátszó has
+      p(-1, 28 - bob, 3, 1, v.skin);            // borda-vonal
+      p(-1, 26 - bob, 3, 1, v.skin);
       p(3, 38 - bob, 3, 9, v.acc);              // nyakkendő-maradvány
       p(-7, 40 - bob, 4, 3, '#7e2f2f');         // váll-seb
+      p(-6, 33 - bob, 3, 2, '#6e2424');         // oldalseb
+      p(5, 25 - bob, 3, 4, v.skin2);            // szakadt ing-lyuk
       // karok előrenyújtva
       p(1, aT, 12, 4, v.skin2);
       p(12, aT - 1, 4, 4, v.skin2);
@@ -409,7 +439,7 @@ ZD.sprites = (() => {
     },
 
     runner(g, v, f, atk) {
-      const p = mkP(g);
+      const p = mkP(g, 1.3);
       const sw = atk >= 0 ? 2 : [6, 0, -6, 0][f];
       const bob = atk >= 0 ? 2 : [1, 0, 1, 0][f];
       // vékony lábak, nagy kilépés
@@ -443,7 +473,7 @@ ZD.sprites = (() => {
     },
 
     crawler(g, v, f, atk) {
-      const p = mkP(g);
+      const p = mkP(g, 1.3);
       const drag = f % 2 ? 2 : 0;
       const up = atk >= 0 ? [2, 5, 1][atk] : 0;
       // vonszolt csonkok hátul
@@ -474,7 +504,7 @@ ZD.sprites = (() => {
     },
 
     spitter(g, v, f, atk) {
-      const p = mkP(g);
+      const p = mkP(g, 1.3);
       const bob = [0, 1, 0, 1][atk >= 0 ? 0 : f];
       const pulse = (atk >= 0 ? 1 : f % 2);
       // köpeny-alj
@@ -485,6 +515,9 @@ ZD.sprites = (() => {
       p(-7, 28 - bob, 14, 13, v.skin2);
       p(-5, 26 - bob, 10, 9, pulse ? '#a6d84e' : '#8cbc3e');
       p(-3, 24 - bob, 6, 5, pulse ? '#ccf27a' : '#b0dc60');
+      p(-8, 32 - bob, 2, 2, '#c8e860');          // gennyes hólyagok
+      p(6, 27 - bob, 2, 2, '#c8e860');
+      p(-6, 19 - bob, 2, 2, '#a6c84e');
       // vékony karok felhúzva
       p(-11, 38 - bob, 4, 10, v.skin2);
       p(8, 38 - bob, 4, 10, v.skin);
@@ -501,7 +534,7 @@ ZD.sprites = (() => {
     },
 
     brute(g, v, f, atk) {
-      const p = mkP(g);
+      const p = mkP(g, 1.3);
       const sw = atk >= 0 ? 0 : [2, 0, -2, 0][f];
       const bob = atk >= 0 ? 0 : [0, 1, 0, 1][f];
       // oszlop-lábak
@@ -516,6 +549,9 @@ ZD.sprites = (() => {
       p(3, 48 - bob, 3, 20, v.skin2);
       p(-13, 44 - bob, 12, 8, v.cloth2);        // szakadt ing-csík
       p(-8, 52 - bob, 5, 4, v.acc);             // seb
+      p(6, 40 - bob, 4, 2, v.acc);              // karmolás-hegek
+      p(5, 37 - bob, 4, 2, v.acc);
+      p(-14, 30 - bob, 3, 6, '#6b5a48');        // betondarab a bőrben
       // vállak + betonvas
       p(-21, 60 - bob, 13, 10, v.skin2);
       p(9, 61 - bob, 13, 10, v.skin2);
@@ -536,7 +572,7 @@ ZD.sprites = (() => {
     },
 
     boss(g, v, f, atk) {
-      const p = mkP(g);
+      const p = mkP(g, 1.2);
       const sw = atk >= 0 ? 0 : [3, 0, -3, 0][f];
       const bob = atk >= 0 ? 0 : [0, 2, 0, 2][f];
       // lábak páncélozott csizmával
@@ -555,6 +591,10 @@ ZD.sprites = (() => {
       p(-22, 88 - bob, 44, 14, v.metal);
       p(-22, 88 - bob, 44, 3, v.metal2);
       p(-20, 86 - bob, 3, 3, v.metal2); p(14, 86 - bob, 3, 3, v.metal2); // szegecsek
+      p(-8, 86 - bob, 3, 3, v.metal2); p(2, 86 - bob, 3, 3, v.metal2);
+      p(-22, 80 - bob, 44, 1, '#20232a');       // lemez-illesztés
+      p(-18, 60 - bob, 10, 8, v.metal);          // has-lemez törött darabja
+      p(-16, 58 - bob, 3, 2, v.metal2);
       // izzó mellkas-seb
       p(-6, 66 - bob, 12, 10, '#7e1c10');
       p(-3, 63 - bob, 6, 5, f % 2 ? '#ff6a3a' : '#e04a20');
@@ -583,12 +623,12 @@ ZD.sprites = (() => {
   };
 
   const ZDIM = {
-    walker:  { fw: 44, fh: 74 },
-    runner:  { fw: 46, fh: 70 },
-    crawler: { fw: 56, fh: 36 },
-    spitter: { fw: 44, fh: 76 },
-    brute:   { fw: 64, fh: 100 },
-    boss:    { fw: 100, fh: 136 },
+    walker:  { fw: 58, fh: 98 },
+    runner:  { fw: 62, fh: 92 },
+    crawler: { fw: 74, fh: 48 },
+    spitter: { fw: 58, fh: 100 },
+    brute:   { fw: 84, fh: 132 },
+    boss:    { fw: 122, fh: 166 },
   };
 
   const ZSHEETS = {};
@@ -617,6 +657,20 @@ ZD.sprites = (() => {
       return;
     }
 
+    const s = z.elite ? 1.14 : 1;
+
+    /* elit aura: pulzáló gyűrű a talpán */
+    if (z.elite) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.16 + 0.08 * Math.sin((z.phase || 0) * 2.2);
+      pxCircle(ctx, z.x, z.y - 1, 13, '#ffc14d', 1);
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = '#ffc14d';
+      ctx.fillRect(z.x - 12, z.y - 1, 24, 1.5);
+      ctx.restore();
+    }
+
     let sh, frame;
     if (z.attacking) {
       sh = sheets.attack;
@@ -625,18 +679,22 @@ ZD.sprites = (() => {
       sh = sheets.walk;
       frame = (z.phase * 1.1) | 0;
     }
-    blit(ctx, sh, frame, z.x, z.y, z.facing);
+    blit(ctx, sh, frame, z.x, z.y, z.facing, 1, s);
     if (z.flash > 0) {
-      blitTint(ctx, sh, frame, z.x, z.y, z.facing, '#ffffff', Math.min(z.flash * 6, 0.85));
+      blitTint(ctx, sh, frame, z.x, z.y, z.facing, '#ffffff', Math.min(z.flash * 6, 0.85), s);
+    }
+    /* enrage: pulzáló vörös derengés a bosson */
+    if (z.enrage) {
+      blitTint(ctx, sh, frame, z.x, z.y, z.facing, '#ff3020', 0.14 + 0.1 * Math.sin((z.phase || 0) * 5), s);
     }
 
     /* HP-csík (csak sérültnek) */
     if (z.hpRatio < 1 && z.hpRatio > 0) {
-      const bw = Math.max(ZDIM[z.type].fw / ART * 0.8, 14);
-      const bx = z.x - bw / 2, by = z.y - ZDIM[z.type].fh / ART - 4;
+      const bw = Math.max(ZDIM[z.type].fw / ART * 0.8, 14) * s;
+      const bx = z.x - bw / 2, by = z.y - ZDIM[z.type].fh / ART * s - 4;
       ctx.fillStyle = 'rgba(10,6,6,.8)';
       ctx.fillRect(bx - 0.5, by - 0.5, bw + 1, 3);
-      ctx.fillStyle = z.type === 'boss' || z.type === 'brute' ? '#ff5b3d' : '#7ddb4f';
+      ctx.fillStyle = z.elite ? '#ffc14d' : (z.type === 'boss' || z.type === 'brute' ? '#ff5b3d' : '#7ddb4f');
       ctx.fillRect(bx, by, bw * z.hpRatio, 2);
     }
   }
@@ -733,6 +791,69 @@ ZD.sprites = (() => {
     ctx.rotate(t * 9 + gr.x);
     ctx.drawImage(GRENADE.c, -3, -4, 6, 7);
     ctx.restore();
+  }
+
+  /* védendő generátor (defense mód) — homokzsákok + gépezet */
+  const GEN = sheet(84, 60, 2, (g, i) => {
+    const p = mkP(g);
+    // homokzsák-alap
+    p(-38, 12, 20, 10, '#4a4232');
+    p(-34, 20, 18, 9, '#544a38');
+    p(20, 12, 20, 10, '#4a4232');
+    p(16, 20, 18, 9, '#544a38');
+    // gépház
+    p(-16, 40, 32, 38, '#3a4048');
+    p(-16, 40, 32, 4, '#4c545e');
+    p(-16, 40, 4, 38, '#31373e');
+    // hűtőrács
+    for (let r = 0; r < 4; r++) p(-11, 33 - r * 6, 22, 3, '#262b31');
+    // állapotjelző lámpa (villog)
+    p(-6, 48, 12, 6, '#22262b');
+    p(-3, 46, 6, 3, i ? '#7ddb4f' : '#3f8f27');
+    // kipufogó
+    p(12, 46, 6, 8, '#2c3138');
+    // kábelek
+    p(-24, 6, 10, 3, '#22262b');
+    p(16, 5, 12, 3, '#22262b');
+  });
+
+  function drawGenerator(ctx, gen, t) {
+    const blink = (t * 2.5) | 0;
+    blit(ctx, GEN, blink, gen.x, C.GROUND_Y + 1);
+    /* HP-csík fölötte */
+    const r = Math.max(0, gen.hp / gen.maxHp);
+    const bw = 34, bx = gen.x - bw / 2, by = C.GROUND_Y - 38;
+    ctx.fillStyle = 'rgba(8,8,12,.85)';
+    ctx.fillRect(bx - 1.5, by - 1.5, bw + 3, 6);
+    ctx.fillStyle = '#26303a';
+    ctx.fillRect(bx, by, bw, 3);
+    ctx.fillStyle = r > 0.5 ? '#5bc8d8' : r > 0.25 ? '#ffc14d' : '#e5484d';
+    ctx.fillRect(bx, by, bw * r, 3);
+    ctx.font = 'bold 6px "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#9fb8c8';
+    ctx.fillText('🛡', gen.x, by - 3);
+  }
+
+  /* lőszerláda pickup */
+  const AMMOBOX = sheet(24, 18, 2, (g, i) => {
+    const p = mkP(g);
+    p(-10, 15, 20, 14, '#3f4a36');
+    p(-10, 15, 20, 3, i ? '#556047' : '#4a5540');
+    p(-10, 15, 3, 14, '#343d2c');
+    p(-6, 9, 12, 4, '#2c3326');
+    p(-4, 8, 3, 2, '#c9a44a');   // töltények
+    p(0, 8, 3, 2, '#c9a44a');
+    p(4, 8, 3, 2, '#c9a44a');
+  });
+
+  function drawAmmoBox(ctx, a, t) {
+    const bob = Math.sin(t * 4 + a.x) * 1.5;
+    ctx.save();
+    ctx.globalAlpha = 0.13 + 0.07 * Math.sin(t * 5);
+    pxCircle(ctx, a.x, a.y - 3 + bob, 9, '#ffc14d', 1);
+    ctx.restore();
+    blit(ctx, AMMOBOX, (t * 3) | 0, a.x, a.y + 2 + bob);
   }
 
   function drawShell(ctx, s) {
@@ -1427,11 +1548,11 @@ ZD.sprites = (() => {
      UI-IKONOK (bolt, labor)
      ===================================================================== */
   function weaponIcon(weapon) {
-    const [c, g] = mkc(112, 56);
+    const [c, g] = mkc(120, 60);
     const gun = GUNS[weapon.id] || GUNS.pistol;
     g.save();
-    g.translate(14, 8);
-    g.scale(2, 2);
+    g.translate(2, 1);
+    g.scale(1.55, 1.55);
     g.drawImage(gun.c, 0, 0);
     g.restore();
     return c.toDataURL();
@@ -1503,6 +1624,7 @@ ZD.sprites = (() => {
   return {
     drawPlayer, drawZombie, drawBackground, drawMenuScene,
     drawBoom, drawCoin, drawMed, drawGrenade, drawShell,
+    drawGenerator, drawAmmoBox,
     weaponIcon, upgIcon, px, pxCircle,
     THEMES, ZDIM,
   };

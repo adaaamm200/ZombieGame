@@ -3,9 +3,39 @@
 > Minden érdemi lépés után frissítendő. Új session elején ELŐSZÖR ezt olvasd el.
 
 ## Hol tartunk
-- **Játszható, teljes alapjáték + TELJES VIZUÁLIS ÁTÉPÍTÉS kész** — „Zombi Krónika".
+- **Játszható alapjáték + vizuális átépítés + GAMEPLAY 2.0 OVERHAUL kész** — „Zombi Krónika".
 - Zero-dependency: HTML5 canvas + vanilla JS (classic scriptek, nincs build), PWA.
-- Tartalom: 8 fegyver, 6 zombitípus + boss (minden 5. pálya), 7 fejlesztés, 40 pálya, érme/medkit drop, gránát, mentés-export/import.
+- Tartalom: 8 fegyver, 6 zombitípus + fázisos boss, 7 fejlesztés, 40 pálya 4 pályamóddal
+  (irtás/védelem/elit vadászat/vezér) + pálya-módosítók, perzisztens lőszerrendszer
+  ammo-bolttal, érme/medkit/lőszerláda drop, gránát, mentés-export/import.
+- Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
+
+## Gameplay 2.0 overhaul (2026-07-07 du.) — mi került bele
+- **Nagyobb, részletesebb karakterek**: player és zombik ~1.3× (boss 1.2×), hitboxok arányosan
+  skálázva (const.js ZOMBIES/PLAYER), extra sprite-részletek (felszerelés, sebek, páncél).
+  A logika marad 480×270-ben — balansz-koordináták változatlanok (A opció, biztonságos).
+- **Combat feel**: hit-stop ölésnél/kritnél, fegyverenkénti knockback (kb mező) és torkolattűz-méret
+  (flashScale), erősebb recoil + fegyverdőlés, játékos halál-animáció (eldőlés lassítva, majd
+  vereség-képernyő), ambiens zombi-morgás, generátor-szikrák/füst, részecske-limitek (260 cap).
+- **Lőszerrendszer**: perzisztens készlet (save.ammo), pisztoly végtelen (nincs softlock),
+  bolt LŐSZER tabbal (fegyverenkénti csomag: pack/packPrice), lőszerláda drop (~5%, elit többet),
+  „kevés lőszer" hang+felirat, üres tárnál auto-pisztoly. Mentés-migráció régi mentésekhez.
+- **Pályamódok** (determinisztikus, modeFor): survival; defense (7,12,17…: generátor-védelem,
+  zombik 55%-a azt támadja, HP-sávval, pusztulás=vereség); elite (9,14,19…: 45% kvóta,
+  2-6× erősebb zombik, arany aurás szuper-elitek, dupla bónusz); boss (minden 5.).
+- **Pálya-módosítók** (modFor, ~40% a 6+. pályákon, boss-pályán soha): ⚡ gyors horda,
+  🌑 sötétség (látókör), 💰 aranyláz (2× érme), 👥 horda (+40% kvóta, sűrűbb spawn).
+  Jelzés: pályaválasztó-cella sarkában + HUD-ban + kezdő bannerben.
+- **Boss-fázisok**: 70% alatt +50% sebesség; 40% alatt minion-hívás (8 mp-enként 2, max 4);
+  20% alatt enrage (+40% sebzés, vörös derengés, nagyobb slam). Roar + banner fázisváltáskor.
+- **Nehézség**: cap 9→11, spawn-intervallum min 0,45s, dmgMul 0,09→0,10, runner gyorsabb.
+  Kite-bot teszt: 3. pálya full HP győzelem; 10. pálya reális felszereléssel kvóta megvan,
+  boss szoros — kézi finomhangolás igény szerint.
+- **UI**: bolt tabokkal (FEGYVEREK/LŐSZER), pályaválasztó mód-ikonokkal és módosító-badge-ekkel,
+  eredmény-képernyő statisztikákkal (kill/lövés/sebzés), HUD: mód+módosító ikon, villogó piros
+  lőszerszám alacsony készletnél.
+- **Audio** (+7): groan, lowammo, ammo (vásárlás/felvétel), pdie, genhit, stage, javított rifle.
+- sw.js cache: zk-v3.
 
 ## Vizuális átépítés (2026-07-07) — mi került bele
 - **Render**: belső felbontás 960×540 (RS=2), a játéklogika változatlanul 480×270-es koordinátákban fut → balansz nem változott.
@@ -19,9 +49,14 @@
 - `sw.js` cache-verzió: zk-v2. `tools/server.js`: PORT env támogatás (preview-hoz).
 
 ## Jelenlegi állapot — TESZTELVE ✅
-- `node --check` minden JS fájlra hibátlan; konzol futás közben tiszta (0 hiba).
-- Böngészős automata teszt lefutott: főmenü ✔, bolt 8 kártya + SMG-vásárlás ✔, labor HP-fejlesztés ✔, 40 pályacella ✔, játékindítás kattintással ✔, export/import ✔, 30 mp szimulált játék (mozgás+tüzelés+váltás+gránát) hibamentesen ✔, teljes pálya végigjátszás → győzelem + pálya-feloldás ✔.
-- Screenshot-ellenőrzés: mindhárom téma, boss-banner + HP-sáv, robbanás, kártyás bolt, labor, pályaválasztó, eredmény-modál — a prototípus-hatás megszűnt.
+- `node --check` minden JS fájlra hibátlan; konzol futás közben tiszta (0 hiba) az összes teszt után.
+- Automata böngészőteszt (2.0): régi mentés migrációja (ammo pótlás) ✔, mód-kiosztás ✔,
+  ammo-vásárlás tabon (+130 lövés, −250 érme) ✔, lőszerfogyás + futás végi sync ✔,
+  defense-mód (generátor-célzás, pusztulás→vereség) ✔, elite-mód (erősebb zombik, kisebb kvóta) ✔,
+  boss mindhárom fázisa (gyorsulás/minion/enrage) ✔, játékos halál-szekvencia→vereség ✔,
+  90 mp intenzív játék hiba és particle-leak nélkül ✔, teljes pálya-győzelem statokkal ✔.
+- Screenshot-ellenőrzés: nagyobb sprite-ok, ammo-tab, mód-ikonos pályaválasztó, sötétség-módosító,
+  eredmény-képernyő statisztikákkal.
 - Mentés tisztára állítva (localStorage törölve a tesztek után).
 - Futtatás: `node tools/server.js` → http://localhost:8080 (vagy preview: `.claude/launch.json` → zombie-dev).
 
@@ -41,11 +76,13 @@
 - Saját art direction, semmi másolt asset/UI a Zombie Diary-ból.
 
 ## Nyitott kérdések
-1. **Hosting a telefonhoz**: HTTPS kell a PWA-hoz. Opciók: Netlify/Vercel (ingyenes, privátabb URL), GitHub Pages (ingyenes tervben csak publikus repónál). Döntés függőben.
-2. Balansz-finomhangolás igény szerint (nehézség, árak) — első kézi játék után.
-3. Extra tartalom később: több pályatéma, második karakter, teljesítmények.
-4. Kézi vizuális finomhangolás igény szerint (sprite-részletek, színek) — a felhasználó első benyomása alapján.
+1. Balansz-finomhangolás kézi játék után: boss-HP a 10+. pályákon szoros lehet; ammo-árak;
+   elit-jutalmak. (A hosting már megoldva: GitHub Pages, publikus repo.)
+2. Kézi vizuális finomhangolás igény szerint (sprite-részletek, színek, effekt-erősségek).
+3. Extra tartalom később: NIGHTMARE/limited-ammo/horde/escort mód, több pályatéma,
+   második karakter, teljesítmények, perzisztens statisztika.
 
 ## Következő lépések
-- Felhasználói kézi teszt asztali böngészőben (új látvány átnézése).
-- Hosting kiválasztása → telefonra telepítés.
+- Felhasználói kézi teszt (asztali + telefon: https://adaaamm200.github.io/ZombieGame/).
+- Telefonon: régi PWA-nál a cache frissül (zk-v3), de érdemes újra megnyitni Safariban.
+- Visszajelzés alapján balansz- és látvány-finomhangolás.

@@ -25,6 +25,7 @@ ZD.game = (() => {
     grenades: [],
     coins: [],
     meds: [],
+    ammoBoxes: [], // lőszerláda dropok
     parts: [],   // részecskék
     nums: [],    // lebegő sebzésszámok
     shells: [],  // töltényhüvelyek
@@ -33,8 +34,15 @@ ZD.game = (() => {
     cam: 0,
     shake: 0,
     slowmo: 0,     // lassítás hátralévő ideje (boss-halál)
+    hitstop: 0,    // rövid "ütés-fagyás" ölésnél
     banner: null,  // {text, t, total} — cinematikus felirat
     bossBarHp: 0,  // animált boss-HP kijelzés
+    mode: 'survival',
+    mod: null,     // aktív pálya-módosító id vagy null
+    gen: null,     // védendő generátor (defense mód)
+    dying: 0,      // játékos halál-szekvencia hátralévő ideje
+    groanT: 3,     // következő ambiens zombi-morgásig
+    stats: { kills: 0, shots: 0, dmg: 0 },
   };
 
   const rand = (a, b) => a + Math.random() * (b - a);
@@ -67,31 +75,64 @@ ZD.game = (() => {
     let wi = owned.findIndex((w) => w.id === S().weapons.equipped);
     if (wi < 0) wi = 0;
 
+    const mode = C.modeFor(level);
+    const mod = C.modFor(level);
+    let quota = C.quota(level);
+    if (mode === 'elite') quota = Math.max(6, Math.round(quota * 0.45));
+    if (mod === 'horde') quota = Math.round(quota * 1.4);
+
     Object.assign(st, {
       running: true, paused: false, level,
-      quota: C.quota(level), killed: 0,
+      quota, killed: 0,
       bossPhase: false, bossRef: null,
       spawnTimer: 0.8, time: 0, earned: 0, result: null,
-      zombies: [], bullets: [], spits: [], grenades: [], coins: [], meds: [],
+      zombies: [], bullets: [], spits: [], grenades: [], coins: [], meds: [], ammoBoxes: [],
       parts: [], nums: [], shells: [], booms: [], decals: [],
-      cam: 0, shake: 0, slowmo: 0, banner: null, bossBarHp: 0,
+      cam: 0, shake: 0, slowmo: 0, hitstop: 0, banner: null, bossBarHp: 0,
+      mode, mod, gen: null, dying: 0, groanT: 3,
+      stats: { kills: 0, shots: 0, dmg: 0 },
     });
 
+    /* defense: generátor a világ közepén, játékos mellette */
+    if (mode === 'defense') {
+      const ghp = C.GENERATOR.hp0 + C.GENERATOR.hpPer * level;
+      st.gen = { x: C.WORLD_W / 2 + 50, hp: ghp, maxHp: ghp, smokeT: 0 };
+    }
+
     st.player = {
-      x: C.WORLD_W / 2, hp: stats.maxHp, stats,
+      x: C.WORLD_W / 2 - (st.gen ? 60 : 0), hp: stats.maxHp, stats,
       facing: 1, phase: 0, idleT: 0, fireCd: 0, fireAnim: 0, muzzleSeed: 0,
       reloadT: 0,
       invuln: 0, flash: 0,
-      weapons: owned.map((w) => ({ def: w, ammo: w.ammo })),
+      /* lőszer a perzisztens készletből (pisztoly végtelen) */
+      weapons: owned.map((w) => ({
+        def: w,
+        ammo: w.id === 'pistol' ? -1 : (S().ammo[w.id] || 0),
+        warned: false,
+      })),
       wi,
       grenades: stats.grenades,
     };
-    st.banner = { text: `${level}. PÁLYA`, t: 1.6, total: 1.6, sub: bossLevelText(level) };
+    /* ha a kiválasztott fegyver üres, pisztolyra állunk */
+    if (st.player.weapons[st.player.wi].ammo === 0) st.player.wi = 0;
+
+    const M = C.MODES[mode];
+    const modTxt = mod ? `${C.MODS[mod].icon} ${C.MODS[mod].name}` : null;
+    st.banner = {
+      text: mode === 'survival' ? `${level}. PÁLYA` : `${M.icon} ${M.name}`,
+      t: 2, total: 2,
+      sub: modTxt || (mode === 'survival' ? null : M.desc),
+    };
+    ZD.audio.play('stage');
     ZD.ui.enterGame();
   }
 
-  function bossLevelText(level) {
-    return C.isBossLevel(level) ? '⚠ VEZÉR-PÁLYA' : null;
+  /* futás végén a maradék lőszer visszaírása a készletbe */
+  function syncAmmo() {
+    if (!st.player) return;
+    st.player.weapons.forEach((w) => {
+      if (w.def.id !== 'pistol') S().ammo[w.def.id] = Math.max(0, w.ammo);
+    });
   }
 
   function curWeapon() { return st.player.weapons[st.player.wi]; }
@@ -109,18 +150,31 @@ ZD.game = (() => {
     return 'walker';
   }
 
-  function spawnZombie(type) {
+  function spawnZombie(type, opts = {}) {
     const def = C.ZOMBIES[type];
     const side = chance(0.5) ? -1 : 1;
     const x = side < 0 ? -20 : C.WORLD_W + 20;
+    let hp = def.hp * C.hpMul(st.level) * (type === 'boss' ? 1 + st.level * 0.04 : 1);
+    let dmg = def.dmg * C.dmgMul(st.level);
+    let speed = rand(def.speed[0], def.speed[1]);
+    let coinMul = 1;
+
+    /* elit vadászat: mindenki keményebb, néhány kiemelt elit */
+    if (st.mode === 'elite' && type !== 'boss') {
+      hp *= opts.elite ? 4.5 : 2;
+      dmg *= opts.elite ? 1.5 : 1.3;
+      speed *= opts.elite ? 1.2 : 1.1;
+      coinMul = opts.elite ? 6 : 2.5;
+    }
+    if (st.mod === 'fast') speed *= 1.25;
+    if (st.mod === 'gold') coinMul *= 2;
+
     st.zombies.push({
       type, def,
       variant: chance(0.5) ? 0 : 1,
+      elite: !!opts.elite,
       x,
-      hp: def.hp * C.hpMul(st.level) * (type === 'boss' ? 1 + st.level * 0.04 : 1),
-      maxHp: def.hp * C.hpMul(st.level) * (type === 'boss' ? 1 + st.level * 0.04 : 1),
-      dmg: def.dmg * C.dmgMul(st.level),
-      speed: rand(def.speed[0], def.speed[1]),
+      hp, maxHp: hp, dmg, speed, coinMul,
       facing: -side,
       phase: rand(0, 6.28),
       atkCd: 0,
@@ -129,6 +183,9 @@ ZD.game = (() => {
       dead: false,
       deathT: 0,
       slamCd: 4,
+      /* defense: a zombik egy része a generátorra megy */
+      tgt: st.gen && type !== 'spitter' && chance(0.55) ? 'gen' : 'player',
+      minion: !!opts.minion,
     });
   }
 
@@ -146,7 +203,26 @@ ZD.game = (() => {
     p.fireAnim = 0.07;
     p.muzzleSeed++;
     p.reloadT = 0;
-    if (w.ammo > 0) w.ammo--;
+    st.stats.shots++;
+    if (w.ammo > 0) {
+      w.ammo--;
+      /* alacsony lőszer figyelmeztetés — egyszer, a küszöb átlépésekor */
+      const warnAt = Math.max(8, Math.ceil((def.pack || 40) * 0.2));
+      if (!w.warned && w.ammo > 0 && w.ammo <= warnAt) {
+        w.warned = true;
+        ZD.audio.play('lowammo');
+        st.nums.push({
+          x: p.x, y: C.GROUND_Y - C.PLAYER.h - 14,
+          vx: 0, vy: -26, life: 1, max: 1, val: 'KEVÉS LŐSZER!', warn: true,
+        });
+      }
+      if (w.ammo === 0) {
+        st.nums.push({
+          x: p.x, y: C.GROUND_Y - C.PLAYER.h - 14,
+          vx: 0, vy: -26, life: 1.1, max: 1.1, val: 'LŐSZER ELFOGYOTT', warn: true,
+        });
+      }
+    }
 
     const gy = C.GROUND_Y - 15;
     for (let i = 0; i < (def.pellets || 1); i++) {
@@ -160,6 +236,7 @@ ZD.game = (() => {
         dmg: def.dmg * p.stats.dmgMul * (crit ? 2 : 1),
         crit,
         kind: def.kind,
+        kb: def.kb !== undefined ? def.kb : 14,
         color: def.color,
         pierce: def.pierce || 0,
         splash: def.splash || 0,
@@ -225,6 +302,8 @@ ZD.game = (() => {
   function hurtZombie(z, dmg, crit) {
     z.hp -= dmg;
     z.flash = 0.12;
+    st.stats.dmg += dmg;
+    if (crit) st.hitstop = Math.max(st.hitstop, 0.035);
     st.nums.push({
       x: z.x + rand(-4, 4), y: C.GROUND_Y - z.def.h - 8,
       vx: rand(-8, 8), vy: -38, life: crit ? 0.85 : 0.65, max: crit ? 0.85 : 0.65,
@@ -245,6 +324,9 @@ ZD.game = (() => {
     z.deathT = 0;
     ZD.audio.play('zdie');
     addDecal(z.x, z.type === 'brute' || z.type === 'boss');
+    st.stats.kills++;
+    /* hit-stop: az ölés "üt" — nagyobb ellenfélnél hosszabb */
+    st.hitstop = Math.max(st.hitstop, z.type === 'brute' ? 0.07 : z.elite ? 0.08 : 0.045);
 
     if (z.type === 'boss') {
       st.bossRef = null;
@@ -272,18 +354,21 @@ ZD.game = (() => {
         life: rand(0.3, 0.8), color: chance(0.6) ? '#8f2f2f' : '#5f1f1f', size: rand(1.5, 3), grav: 1,
       });
     }
-    // érmék
-    const val = Math.round(z.def.coin * C.coinMul(st.level) * st.player.stats.coinMul);
-    const n = Math.min(5, 1 + Math.floor(val / 12));
+    // érmék (elit/módosító szorzóval)
+    const val = Math.round(z.def.coin * C.coinMul(st.level) * st.player.stats.coinMul * (z.coinMul || 1));
+    const n = Math.min(z.elite ? 8 : 5, 1 + Math.floor(val / 12));
     for (let i = 0; i < n; i++) {
       st.coins.push({
         x: z.x, y: C.GROUND_Y - 14, vx: rand(-70, 70), vy: rand(-170, -70),
         val: Math.max(1, Math.round(val / n)), life: 12, settled: false, spin: (Math.random() * 6) | 0,
       });
     }
-    // medkit esély
-    if (chance(0.045)) {
+    // medkit esély (elit garantáltan dob valamit)
+    if (chance(0.045) || (z.elite && chance(0.5))) {
       st.meds.push({ x: z.x, y: C.GROUND_Y - 12, vy: -110, life: 12 });
+    } else if (chance(0.05) || (z.elite && chance(0.6))) {
+      // lőszerláda drop
+      st.ammoBoxes.push({ x: z.x, y: C.GROUND_Y - 12, vy: -100, life: 12 });
     }
   }
 
@@ -293,11 +378,15 @@ ZD.game = (() => {
     const p = st.player;
     const inp = ZD.input.state;
 
-    /* lassítás (boss-halál) — a világ lassul, a banner nem */
+    /* lassítás (boss-halál) + hit-stop — a világ lassul, a banner nem */
     let dt = rdt;
     if (st.slowmo > 0) {
       st.slowmo -= rdt;
       dt = rdt * 0.32;
+    }
+    if (st.hitstop > 0) {
+      st.hitstop -= rdt;
+      dt *= 0.1;
     }
     st.time += dt;
     if (st.banner) {
@@ -305,19 +394,31 @@ ZD.game = (() => {
       if (st.banner.t <= 0) st.banner = null;
     }
 
-    /* — bemenet, él-triggerek — */
-    if (inp.grenade) { inp.grenade = false; throwGrenade(); }
-    if (inp.swap) {
-      inp.swap = false;
-      p.wi = (p.wi + 1) % p.weapons.length;
-      p.reloadT = 0.5;
-      ZD.audio.play('reload');
-      ZD.ui.updateHud();
+    /* — játékos halál-szekvencia: a világ még pörög, de nincs irányítás — */
+    if (st.dying > 0) {
+      st.dying -= rdt;
+      if (st.dying <= 0) { lose(); return; }
     }
+
+    /* — bemenet, él-triggerek — */
     if (inp.pause) { inp.pause = false; pause(); return; }
+    if (st.dying <= 0) {
+      if (inp.grenade) { inp.grenade = false; throwGrenade(); }
+      if (inp.swap) {
+        inp.swap = false;
+        p.wi = (p.wi + 1) % p.weapons.length;
+        p.reloadT = 0.5;
+        ZD.audio.play('reload');
+        ZD.ui.updateHud();
+      }
+    } else {
+      inp.grenade = false; inp.swap = false;
+    }
 
     /* — játékos mozgás — */
-    if (inp.axis !== 0) {
+    if (st.dying > 0) {
+      /* halott: nem mozog, nem lő */
+    } else if (inp.axis !== 0) {
       p.facing = inp.axis > 0 ? 1 : -1;
       p.x += inp.axis * p.stats.speed * dt;
       p.x = Math.max(10, Math.min(C.WORLD_W - 10, p.x));
@@ -332,7 +433,7 @@ ZD.game = (() => {
     if (p.reloadT > 0) p.reloadT -= dt;
     if (p.invuln > 0) p.invuln -= dt;
     if (p.flash > 0) p.flash -= dt;
-    if (inp.fire && p.fireCd <= 0) shoot();
+    if (st.dying <= 0 && inp.fire && p.fireCd <= 0) shoot();
 
     // regeneráció
     if (p.stats.regen > 0 && p.hp < p.stats.maxHp) {
@@ -344,8 +445,11 @@ ZD.game = (() => {
     if (st.killed < st.quota && spawnedLeft > 0) {
       st.spawnTimer -= dt;
       if (st.spawnTimer <= 0 && st.zombies.filter((z) => !z.dead).length < C.cap(st.level)) {
-        st.spawnTimer = C.spawnInterval(st.level) * rand(0.7, 1.3);
-        spawnZombie(pickType());
+        let iv = C.spawnInterval(st.level);
+        if (st.mod === 'horde') iv *= 0.72;
+        if (st.mode === 'elite') iv *= 1.7;
+        st.spawnTimer = iv * rand(0.7, 1.3);
+        spawnZombie(pickType(), { elite: st.mode === 'elite' && chance(0.22) });
       }
     } else if (st.killed >= st.quota && !st.bossPhase && C.isBossLevel(st.level)) {
       st.bossPhase = true;
@@ -373,7 +477,9 @@ ZD.game = (() => {
         if (Math.abs(z.kb) < 2) z.kb = 0;
       }
 
-      const dx = p.x - z.x;
+      /* célpont: játékos, vagy defense-módban a generátor */
+      const tx = (z.tgt === 'gen' && st.gen) ? st.gen.x : p.x;
+      const dx = tx - z.x;
       z.facing = dx > 0 ? 1 : -1;
       const dist = Math.abs(dx);
 
@@ -394,23 +500,58 @@ ZD.game = (() => {
       } else if (dist > z.def.reach) {
         z.x += Math.sign(dx) * z.speed * dt;
       } else if (z.atkCd <= 0) {
-        // közelharci támadás
+        // közelharci támadás — játékosra vagy generátorra
         z.atkCd = z.def.atkCd;
-        hurtPlayer(z.dmg);
+        if (z.tgt === 'gen' && st.gen) hurtGen(z.dmg);
+        else hurtPlayer(z.dmg);
         if (z.type === 'boss' || z.type === 'brute') st.shake = Math.max(st.shake, 3);
       }
 
-      // boss földcsapás
+      // boss: fázisváltások + földcsapás
       if (z.type === 'boss') {
+        const r = z.hp / z.maxHp;
+        if (r < 0.7 && !z.ph1) {
+          z.ph1 = true;
+          z.speed *= 1.5;
+          st.shake = Math.max(st.shake, 4);
+          ZD.audio.play('roar');
+        }
+        if (r < 0.4 && !z.ph2) {
+          z.ph2 = true;
+          z.summonCd = 0.5;
+          st.banner = { text: 'A VEZÉR SEGÍTSÉGET HÍV!', t: 1.6, total: 1.6, sub: null };
+          ZD.audio.play('roar');
+        }
+        if (r < 0.2 && !z.ph3) {
+          z.ph3 = true;
+          z.enrage = true;
+          z.dmg *= 1.4;
+          z.speed *= 1.35;
+          st.banner = { text: '⚠ A VEZÉR MEGDÜHÖDÖTT', t: 1.6, total: 1.6, sub: null };
+          st.shake = Math.max(st.shake, 6);
+          ZD.audio.play('roar');
+        }
+        /* minion-hívás a 2. fázisban */
+        if (z.ph2) {
+          z.summonCd -= dt;
+          const minions = st.zombies.filter((m) => m.minion && !m.dead).length;
+          if (z.summonCd <= 0 && minions < 4) {
+            z.summonCd = 8;
+            spawnZombie(chance(0.5) ? 'walker' : 'runner', { minion: true });
+            spawnZombie('runner', { minion: true });
+            st.shake = Math.max(st.shake, 3);
+          }
+        }
         z.slamCd -= dt;
         if (z.slamCd <= 0) {
-          z.slamCd = 6;
+          z.slamCd = z.ph1 ? 4.5 : 6;
           ZD.audio.play('slam');
           st.shake = Math.max(st.shake, 7);
-          if (Math.abs(p.x - z.x) < 130) hurtPlayer(z.dmg * 0.8);
+          const slamR = z.enrage ? 160 : 130;
+          if (Math.abs(p.x - z.x) < slamR) hurtPlayer(z.dmg * 0.8);
           for (let i = 0; i < 14; i++) {
             st.parts.push({
-              x: z.x + rand(-100, 100), y: C.GROUND_Y, vx: rand(-20, 20), vy: rand(-160, -60),
+              x: z.x + rand(-slamR * 0.8, slamR * 0.8), y: C.GROUND_Y, vx: rand(-20, 20), vy: rand(-160, -60),
               life: rand(0.3, 0.6), color: '#4a4436', size: rand(2, 4), grav: 1,
             });
           }
@@ -451,7 +592,7 @@ ZD.game = (() => {
           }
           if (b.hitSet && b.hitSet.has(z)) continue;
           hurtZombie(z, b.dmg, b.crit);
-          z.kb += Math.sign(b.vx) * (b.kind === 'flame' ? 4 : 14);
+          z.kb += Math.sign(b.vx) * b.kb * (z.type === 'brute' ? 0.4 : z.type === 'boss' ? 0.15 : 1);
           if (b.kind === 'laser') {
             st.parts.push({ x: b.x, y: b.y, vx: rand(-40, 40), vy: rand(-50, 10), life: 0.2, color: '#7de0ff', size: 1.5, grav: 0 });
           }
@@ -561,6 +702,38 @@ ZD.game = (() => {
       return c.life > 0;
     });
 
+    /* — lőszerládák — */
+    st.ammoBoxes = st.ammoBoxes.filter((a) => {
+      a.life -= dt;
+      a.vy += C.GRAVITY * dt;
+      a.y = Math.min(C.GROUND_Y - 5, a.y + a.vy * dt);
+      if (Math.abs(a.x - p.x) < 14) {
+        /* lőszer a kézben lévő (nem pisztoly) fegyverhez, különben egy másik birtokolthoz */
+        let w = curWeapon().def.id !== 'pistol' ? curWeapon()
+          : p.weapons.find((q) => q.def.id !== 'pistol');
+        if (w) {
+          const amt = Math.max(4, Math.ceil((w.def.pack || 40) * 0.25));
+          w.ammo += amt;
+          w.warned = false;
+          st.nums.push({
+            x: p.x, y: C.GROUND_Y - C.PLAYER.h - 10,
+            vx: 0, vy: -30, life: 0.9, max: 0.9, val: `+${amt} LŐSZER`, ammo: true,
+          });
+        } else {
+          st.earned += 20;
+          S().coins += 20;
+          st.nums.push({
+            x: p.x, y: C.GROUND_Y - C.PLAYER.h - 10,
+            vx: 0, vy: -30, life: 0.9, max: 0.9, val: '+20', crit: true,
+          });
+        }
+        ZD.audio.play('ammo');
+        ZD.ui.updateHud();
+        return false;
+      }
+      return a.life > 0;
+    });
+
     st.meds = st.meds.filter((m) => {
       m.life -= dt;
       m.vy += C.GRAVITY * dt;
@@ -602,6 +775,32 @@ ZD.game = (() => {
       return n.life > 0;
     });
 
+    /* — ambiens zombi-morgás — */
+    st.groanT -= dt;
+    if (st.groanT <= 0) {
+      st.groanT = rand(2.5, 5.5);
+      if (st.zombies.some((z) => !z.dead && Math.abs(z.x - st.cam - C.VIEW_W / 2) < C.VIEW_W)) {
+        ZD.audio.play('groan');
+      }
+    }
+
+    /* — sérült generátor füstöl — */
+    if (st.gen && st.gen.hp / st.gen.maxHp < 0.45) {
+      st.gen.smokeT -= dt;
+      if (st.gen.smokeT <= 0) {
+        st.gen.smokeT = 0.12;
+        st.parts.push({
+          x: st.gen.x + rand(-8, 8), y: C.GROUND_Y - 26, vx: rand(-6, 6), vy: rand(-40, -20),
+          life: rand(0.4, 0.9), color: chance(0.5) ? '#3a3632' : '#4a443e', size: rand(2, 3), grav: 0,
+        });
+      }
+    }
+
+    /* — részecske-limitek (mobil-teljesítmény) — */
+    if (st.parts.length > 260) st.parts.splice(0, st.parts.length - 260);
+    if (st.shells.length > 50) st.shells.splice(0, st.shells.length - 50);
+    if (st.nums.length > 40) st.nums.splice(0, st.nums.length - 40);
+
     /* — kamera — */
     const target = Math.max(0, Math.min(C.WORLD_W - C.VIEW_W, p.x - C.VIEW_W / 2));
     st.cam += (target - st.cam) * Math.min(1, dt * 6);
@@ -616,7 +815,7 @@ ZD.game = (() => {
 
   function hurtPlayer(dmg) {
     const p = st.player;
-    if (p.invuln > 0) return;
+    if (p.invuln > 0 || st.dying > 0) return;
     p.hp -= dmg;
     p.invuln = 0.5;
     p.flash = 0.3;
@@ -625,27 +824,54 @@ ZD.game = (() => {
     ZD.ui.updateHud();
     if (p.hp <= 0) {
       p.hp = 0;
+      /* halál-szekvencia: eldőlés lassítva, aztán jön a vereség-képernyő */
+      st.dying = 1.6;
+      st.slowmo = Math.max(st.slowmo, 0.7);
+      st.shake = Math.max(st.shake, 5);
+      ZD.audio.play('pdie');
+    }
+  }
+
+  function hurtGen(dmg) {
+    const g = st.gen;
+    if (!g) return;
+    g.hp -= dmg;
+    st.shake = Math.max(st.shake, 1.5);
+    ZD.audio.play('genhit');
+    for (let i = 0; i < 4; i++) {
+      st.parts.push({
+        x: g.x + rand(-14, 14), y: C.GROUND_Y - rand(4, 24), vx: rand(-50, 50), vy: rand(-80, -20),
+        life: rand(0.2, 0.4), color: chance(0.5) ? '#ffd76a' : '#8a8f96', size: 1.5, grav: 1,
+      });
+    }
+    if (g.hp <= 0) {
+      g.hp = 0;
+      st.booms.push({ x: g.x, y: C.GROUND_Y - 14, t: 0, scale: 1.4 });
+      ZD.audio.play('boom');
+      st.banner = { text: '✖ A GENERÁTOR MEGSEMMISÜLT', t: 1.4, total: 1.4, sub: null };
       lose();
     }
   }
 
   function win() {
     st.result = 'win';
-    const bonus = C.clearBonus(st.level);
+    const bonus = C.clearBonus(st.level) * (st.mode === 'elite' ? 2 : 1);
     st.earned += bonus;
     S().coins += bonus;
     if (!S().stages.cleared.includes(st.level)) S().stages.cleared.push(st.level);
     S().stages.unlocked = Math.max(S().stages.unlocked, Math.min(st.level + 1, C.STAGES));
+    syncAmmo();
     ZD.save.persist();
     ZD.audio.play('win');
-    ZD.ui.showResult(true, st.earned, bonus);
+    ZD.ui.showResult(true, st.earned, bonus, st.stats);
   }
 
   function lose() {
     st.result = 'lose';
+    syncAmmo();
     ZD.save.persist(); // a felszedett érme megmarad
     ZD.audio.play('lose');
-    ZD.ui.showResult(false, st.earned, 0);
+    ZD.ui.showResult(false, st.earned, 0, st.stats);
   }
 
   function pause() {
@@ -656,6 +882,7 @@ ZD.game = (() => {
   function resume() { st.paused = false; ZD.ui.hidePause(); }
   function quit() {
     st.running = false;
+    syncAmmo();
     ZD.save.persist();
     ZD.ui.show('title');
   }
@@ -692,8 +919,12 @@ ZD.game = (() => {
       });
     });
 
-    /* medkitek, érmék */
+    /* generátor (defense mód) */
+    if (st.gen) SP.drawGenerator(ctx, st.gen, st.time);
+
+    /* medkitek, lőszerládák, érmék */
     st.meds.forEach((m) => SP.drawMed(ctx, m, st.time));
+    st.ammoBoxes.forEach((a) => SP.drawAmmoBox(ctx, a, st.time));
     st.coins.forEach((c) => {
       const blink = c.life < 3 && Math.floor(c.life * 6) % 2 === 0;
       if (!blink) SP.drawCoin(ctx, c, st.time);
@@ -708,12 +939,18 @@ ZD.game = (() => {
         facing: z.facing, phase: z.phase,
         attacking: z.atkCd > 0 && atkT < 0.3, atkT,
         flash: z.flash, dead: false, deathT: 0,
+        elite: z.elite, enrage: z.enrage,
         hpRatio: z.hp / z.maxHp,
       });
     });
 
-    /* játékos (sérülésnél villog) */
-    if (!(p.invuln > 0 && Math.floor(st.time * 14) % 2 === 0)) {
+    /* játékos (sérülésnél villog; halálnál eldől) */
+    if (st.dying > 0) {
+      SP.drawPlayer(ctx, {
+        x: p.x, y: C.GROUND_Y, facing: p.facing,
+        deathT: 1.6 - st.dying, weapon: curWeapon().def,
+      });
+    } else if (!(p.invuln > 0 && Math.floor(st.time * 14) % 2 === 0)) {
       SP.drawPlayer(ctx, {
         x: p.x, y: C.GROUND_Y, facing: p.facing,
         moving: ZD.input.state.axis !== 0, phase: p.phase, idleT: p.idleT,
@@ -781,18 +1018,18 @@ ZD.game = (() => {
       ctx.globalAlpha = 1;
     });
 
-    /* sebzésszámok */
+    /* sebzésszámok, feliratok */
     ctx.textAlign = 'center';
     st.nums.forEach((n) => {
       const t01 = 1 - n.life / n.max;
       const pop = t01 < 0.18 ? 0.6 + t01 * 3 : 1.15 - t01 * 0.15;
-      const size = (n.crit ? 10 : 7) * pop;
+      const size = (n.crit ? 10 : n.warn ? 8 : 7) * pop;
       ctx.font = `bold ${size.toFixed(1)}px "Courier New", monospace`;
       ctx.globalAlpha = Math.max(0, Math.min(1, n.life * 3));
-      const str = n.crit ? `${n.val}!` : String(n.val);
+      const str = n.crit && typeof n.val === 'number' ? `${n.val}!` : String(n.val);
       ctx.fillStyle = '#141210';
       ctx.fillText(str, n.x + 0.7, n.y + 0.7);
-      ctx.fillStyle = n.heal ? '#8fe86a' : n.crit ? '#ffc14d' : '#ffffff';
+      ctx.fillStyle = n.heal ? '#8fe86a' : n.warn ? '#ff6a4a' : n.ammo ? '#ffd97a' : n.crit ? '#ffc14d' : '#ffffff';
       ctx.fillText(str, n.x, n.y);
       ctx.globalAlpha = 1;
     });
@@ -800,6 +1037,17 @@ ZD.game = (() => {
     ctx.restore();
 
     /* ---- képernyő-terű rétegek ---- */
+
+    /* SÖTÉTSÉG módosító: látókör a játékos körül */
+    if (st.mod === 'dark') {
+      const px_ = p.x - st.cam, py_ = C.GROUND_Y - 18;
+      const dg = ctx.createRadialGradient(px_, py_, 55, px_, py_, 190);
+      dg.addColorStop(0, 'rgba(2,4,8,0)');
+      dg.addColorStop(0.6, 'rgba(2,4,8,.55)');
+      dg.addColorStop(1, 'rgba(2,4,8,.9)');
+      ctx.fillStyle = dg;
+      ctx.fillRect(0, 0, C.VIEW_W, C.VIEW_H);
+    }
 
     /* sérülés-vignetta + alacsony HP pulzus */
     const lowHp = p.hp / p.stats.maxHp < 0.3;
