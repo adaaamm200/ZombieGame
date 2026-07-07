@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Bash(node:*)", "Bash(npm:*)", "Bash(npx:*)", "Bash(pnpm:*)", "Bash(yarn:*)", "Bash(bun:*)", "Bash(deno:*)",
+      "Bash(vite:*)", "Bash(tsc:*)", "Bash(eslint:*)", "Bash(prettier:*)", "Bash(vitest:*)", "Bash(jest:*)", "Bash(playwright:*)",
+      "Bash(git:*)", "Bash(git commit:*)", "Bash(git push:*)",
+      "Bash(python:*)", "Bash(python3:*)", "Bash(py:*)", "Bash(pip:*)", "Bash(pip3:*)", "Bash(pytest:*)",
+      "Bash(ls:*)", "Bash(cat:*)", "Bash(find:*)", "Bash(grep:*)", "Bash(rg:*)", "Bash(echo:*)",
+      "Bash(mkdir:*)", "Bash(touch:*)", "Bash(cp:*)", "Bash(mv:*)", "Bash(head:*)", "Bash(tail:*)",
+      "Bash(wc:*)", "Bash(sed:*)", "Bash(awk:*)", "Bash(sort:*)", "Bash(uniq:*)", "Bash(diff:*)",
+      "Bash(tree:*)", "Bash(which:*)", "Bash(pwd:*)", "Bash(tar:*)", "Bash(unzip:*)",
+      "PowerShell(node:*)", "PowerShell(npm:*)", "PowerShell(npx:*)", "PowerShell(pnpm:*)", "PowerShell(yarn:*)",
+      "PowerShell(vite:*)", "PowerShell(tsc:*)", "PowerShell(eslint:*)", "PowerShell(prettier:*)",
+      "PowerShell(git:*)", "PowerShell(python:*)", "PowerShell(pytest:*)"
+    ],
+    "ask": [
+      "Bash(npm install:*)", "Bash(npm i:*)", "Bash(npm ci:*)", "Bash(npm update:*)",
+      "Bash(pnpm add:*)", "Bash(pnpm install:*)", "Bash(yarn add:*)", "Bash(yarn install:*)", "Bash(bun add:*)",
+      "Bash(pip install:*)", "Bash(pip3 install:*)",
+      "Bash(git merge:*)", "Bash(git rebase:*)", "Bash(git reset:*)", "Bash(git clean:*)", "Bash(git checkout:*)",
+      "Bash(git push --force:*)", "Bash(git push -f:*)",
+      "Bash(vercel:*)", "Bash(netlify:*)", "Bash(gh pr:*)",
+      "Bash(curl:*)", "Bash(wget:*)",
+      "PowerShell(npm install:*)", "PowerShell(pnpm add:*)", "PowerShell(yarn add:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /:*)", "Bash(rm -rf ~:*)", "Bash(rm -rf /*:*)"
+    ]
+  }
+}

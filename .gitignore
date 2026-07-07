@@ -1,0 +1,11 @@
+# OS / szerkesztő
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Claude Code helyi felülírás
+.claude/settings.local.json
+
+# Logok
+*.log

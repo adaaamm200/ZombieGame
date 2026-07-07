@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Zombi Krónika</title>
+  <meta name="description" content="Retro oldalnézetes zombis akciójáték — saját felhasználásra." />
+  <meta name="theme-color" content="#0a0f0a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Zombi Krónika" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon-180.png" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="cv" width="480" height="270"></canvas>
+
+    <!-- Játék közbeni HUD -->
+    <div id="hud" class="hidden">
+      <div id="hud-top">
+        <div id="hpwrap"><div id="hpbar"></div><span id="hptext"></span></div>
+        <div id="waveinfo"><div id="wavebar"><div id="wavefill"></div></div><span id="wavetext"></span></div>
+        <div id="coininfo">🪙 <span id="coincount">0</span></div>
+        <button id="btn-pause" class="hudbtn" aria-label="Szünet">II</button>
+      </div>
+      <div id="ammoinfo"><span id="weaponname"></span> · <span id="ammocount"></span></div>
+    </div>
+
+    <!-- Érintéses irányítás -->
+    <div id="controls" class="hidden">
+      <div id="joyzone"><div id="joybase"><div id="joyknob"></div></div></div>
+      <div id="btnzone">
+        <button id="btn-swap" class="ctlbtn small" aria-label="Fegyverváltás">⇄</button>
+        <button id="btn-gren" class="ctlbtn small" aria-label="Gránát">💣<em id="grencount"></em></button>
+        <button id="btn-fire" class="ctlbtn big" aria-label="Tűz">🔥</button>
+      </div>
+    </div>
+
+    <!-- Menü képernyők (a js/ui.js tölti fel) -->
+    <div id="screens"></div>
+
+    <div id="rotate-note">📱 Fordítsd fekvő módba a telefont!</div>
+  </div>
+
+  <script src="js/const.js"></script>
+  <script src="js/save.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

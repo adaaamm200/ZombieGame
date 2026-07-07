@@ -1,0 +1,204 @@
+/* Zombi Krónika — retro UI */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #0a0f0a;
+  --panel: #121a12;
+  --panel2: #1a241a;
+  --line: #2c3b2c;
+  --green: #7ddb4f;
+  --green-dim: #4c8a32;
+  --amber: #ffc14d;
+  --red: #e5484d;
+  --text: #e8f0e2;
+  --muted: #93a58c;
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
+html, body {
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: "Courier New", ui-monospace, monospace;
+  color: var(--text);
+}
+
+#app { position: fixed; inset: 0; background: #000; }
+
+#cv {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: var(--bg);
+}
+
+.hidden { display: none !important; }
+
+/* ---------- HUD ---------- */
+#hud { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+#hud-top {
+  position: absolute; top: 8px; left: calc(10px + var(--sal)); right: calc(10px + var(--sar));
+  display: flex; align-items: center; gap: 10px;
+}
+#hpwrap {
+  position: relative; width: 150px; height: 16px;
+  background: #200c0c; border: 2px solid #000; border-radius: 4px; overflow: hidden;
+}
+#hpbar { height: 100%; width: 100%; background: linear-gradient(180deg, #6fd24a, #3f8f27); transition: width .15s; }
+#hptext {
+  position: absolute; inset: 0; font-size: 10px; font-weight: bold; color: #fff;
+  display: flex; align-items: center; justify-content: center; text-shadow: 1px 1px 0 #000;
+}
+#waveinfo { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
+#wavebar { flex: 1; height: 8px; background: #101810; border: 2px solid #000; border-radius: 4px; overflow: hidden; }
+#wavefill { height: 100%; width: 0%; background: var(--amber); }
+#wavetext { font-size: 11px; color: var(--muted); white-space: nowrap; }
+#coininfo { font-size: 13px; font-weight: bold; color: var(--amber); text-shadow: 1px 1px 0 #000; }
+#ammoinfo {
+  position: absolute; top: 34px; left: calc(10px + var(--sal));
+  font-size: 11px; color: var(--muted); text-shadow: 1px 1px 0 #000;
+}
+.hudbtn {
+  pointer-events: auto;
+  width: 34px; height: 28px; font-size: 12px; font-weight: bold;
+  background: var(--panel2); color: var(--text);
+  border: 2px solid var(--line); border-radius: 6px;
+}
+
+/* ---------- Irányítás ---------- */
+#controls { position: absolute; inset: 0; z-index: 4; }
+#joyzone { position: absolute; left: 0; top: 0; bottom: 0; width: 45%; }
+#joybase {
+  position: absolute; width: 92px; height: 92px; border-radius: 50%;
+  border: 2px solid rgba(125, 219, 79, .35); background: rgba(20, 30, 18, .35);
+  display: none;
+}
+#joyknob {
+  position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(125, 219, 79, .45); border: 2px solid rgba(125, 219, 79, .7);
+  transform: translate(-50%, -50%);
+}
+#btnzone {
+  position: absolute; right: calc(14px + var(--sar)); bottom: calc(14px + var(--sab));
+  display: flex; align-items: flex-end; gap: 10px;
+}
+.ctlbtn {
+  border-radius: 50%; border: 3px solid rgba(125, 219, 79, .5);
+  background: rgba(20, 30, 18, .55); color: var(--text); font-weight: bold;
+  display: flex; align-items: center; justify-content: center; position: relative;
+}
+.ctlbtn.big { width: 78px; height: 78px; font-size: 30px; }
+.ctlbtn.small { width: 52px; height: 52px; font-size: 20px; }
+.ctlbtn:active { background: rgba(125, 219, 79, .35); }
+.ctlbtn em {
+  position: absolute; top: -4px; right: -4px; font-style: normal; font-size: 11px;
+  background: var(--amber); color: #201400; border-radius: 10px; padding: 1px 6px; font-weight: bold;
+}
+
+/* ---------- Képernyők ---------- */
+.screen {
+  position: absolute; inset: 0; z-index: 10;
+  background: radial-gradient(90% 90% at 50% 10%, #16241280, transparent 70%), var(--bg);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 20px calc(16px + var(--sar)) calc(16px + var(--sab)) calc(16px + var(--sal));
+  overflow-y: auto;
+}
+.screen.modal { background: rgba(4, 8, 4, .82); }
+
+.logo {
+  font-size: clamp(30px, 7vw, 52px); font-weight: bold; letter-spacing: 3px;
+  color: var(--green); text-shadow: 0 3px 0 #143010, 0 6px 14px #000;
+  margin-top: 4vh; text-align: center;
+}
+.logo small { display: block; font-size: 12px; color: var(--muted); letter-spacing: 6px; margin-top: 6px; }
+
+.menu { display: flex; flex-direction: column; gap: 12px; margin-top: 4vh; width: min(320px, 86vw); }
+
+.btn {
+  font-family: inherit; font-size: 16px; font-weight: bold; letter-spacing: 1px;
+  padding: 13px 18px; border-radius: 8px; cursor: pointer;
+  background: linear-gradient(180deg, #2a3d22, #1b2a15);
+  color: var(--text); border: 2px solid var(--green-dim);
+  box-shadow: 0 3px 0 #0c140a;
+  text-align: center;
+}
+.btn:active { transform: translateY(2px); box-shadow: none; }
+.btn.primary { background: linear-gradient(180deg, #79c94c, #4d8f2b); color: #10200a; border-color: #a5e87e; }
+.btn.danger { background: linear-gradient(180deg, #5f2020, #401414); border-color: #8f3a3a; }
+.btn:disabled { opacity: .45; }
+
+.screen h2 {
+  font-size: 20px; letter-spacing: 2px; color: var(--green); margin: 6px 0 14px;
+  text-shadow: 0 2px 0 #143010;
+}
+.topbar { width: 100%; max-width: 720px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.topbar .coins { color: var(--amber); font-weight: bold; font-size: 14px; }
+.backbtn { font-size: 13px; padding: 8px 14px; }
+
+/* pályaválasztó rács */
+.stagegrid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 8px; width: 100%; max-width: 720px; margin-top: 8px;
+}
+.stagecell {
+  aspect-ratio: 1; border-radius: 8px; border: 2px solid var(--line);
+  background: var(--panel); color: var(--text);
+  font-family: inherit; font-size: 16px; font-weight: bold;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+}
+.stagecell.cleared { border-color: var(--green-dim); color: var(--green); }
+.stagecell.locked { opacity: .35; }
+.stagecell.boss { border-color: #8f3a3a; }
+.stagecell small { font-size: 8px; color: var(--muted); }
+
+/* bolt / labor listák */
+.list { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 720px; margin-top: 6px; }
+.item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--panel); border: 2px solid var(--line); border-radius: 10px; padding: 10px 12px;
+}
+.item.equipped { border-color: var(--green); }
+.item .icon { width: 56px; height: 34px; flex: none; image-rendering: pixelated; }
+.item .info { flex: 1; min-width: 0; }
+.item .name { font-size: 14px; font-weight: bold; }
+.item .stats { font-size: 10.5px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+.item .act { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.item .price { font-size: 12px; color: var(--amber); font-weight: bold; }
+.item .btn { font-size: 12px; padding: 8px 14px; }
+.pips { display: inline-flex; gap: 2px; }
+.pips i { width: 9px; height: 9px; border-radius: 2px; background: #24301f; border: 1px solid #000; }
+.pips i.on { background: var(--green); }
+
+/* eredmény / szünet modal */
+.modalbox {
+  margin-top: 8vh; background: var(--panel); border: 3px solid var(--line);
+  border-radius: 14px; padding: 22px 26px; width: min(360px, 88vw);
+  display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center;
+}
+.modalbox h2 { margin: 0; }
+.modalbox .big { font-size: 26px; }
+.modalbox .sub { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.modalbox .btn { width: 100%; }
+
+.settingsrow { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 480px; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+textarea.save-io {
+  width: 100%; max-width: 480px; height: 70px; background: #0d130d; color: var(--text);
+  border: 2px solid var(--line); border-radius: 8px; font-family: inherit; font-size: 10px; padding: 8px;
+}
+
+#rotate-note {
+  position: absolute; inset: 0; z-index: 99; display: none;
+  align-items: center; justify-content: center; text-align: center;
+  background: var(--bg); font-size: 18px; padding: 30px;
+}
+@media (orientation: portrait) {
+  #rotate-note { display: flex; }
+}
