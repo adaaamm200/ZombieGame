@@ -7,6 +7,7 @@ ZD.input = (() => {
     fire: false,      // nyomva tartva
     grenade: false,   // él-trigger (game.js nullázza)
     swap: false,      // él-trigger
+    buyammo: false,   // él-trigger — meccs közbeni lőszervásárlás
     pause: false,     // él-trigger
   };
 
@@ -17,6 +18,7 @@ ZD.input = (() => {
     keys[e.code] = true;
     if (e.code === 'KeyG') state.grenade = true;
     if (e.code === 'KeyQ' || e.code === 'KeyE') state.swap = true;
+    if (e.code === 'KeyB') state.buyammo = true;
     if (e.code === 'KeyP' || e.code === 'Escape') state.pause = true;
     ZD.audio.unlock();
   });
@@ -86,6 +88,7 @@ ZD.input = (() => {
     bind('btn-fire', () => { touchFire = true; }, () => { touchFire = false; });
     bind('btn-gren', () => { state.grenade = true; });
     bind('btn-swap', () => { state.swap = true; });
+    bind('btn-ammo', () => { state.buyammo = true; });
     bind('btn-pause', () => { state.pause = true; });
 
     state._touchFire = () => touchFire;

@@ -70,6 +70,9 @@ ZD.ui = (() => {
     if (st.mode === 'survive') {
       prog = Math.min(1, st.time / st.surviveT);
       waveLabel = `${Math.max(0, Math.ceil(st.surviveT - st.time))} mp`;
+    } else if (st.mode === 'free') {
+      prog = st.waveQuota ? Math.min(1, st.waveKills / st.waveQuota) : 0;
+      waveLabel = `${st.wave}. hullám`;
     } else {
       const denom = st.quota + (C.isBossLevel(st.level) ? 1 : 0);
       prog = Math.min(1, (st.killed + (st.bossPhase && !st.bossRef ? 1 : 0)) / denom);
@@ -86,6 +89,9 @@ ZD.ui = (() => {
     const lowAmmo = w.ammo >= 0 && w.ammo <= Math.max(8, Math.ceil((w.def.pack || 40) * 0.2));
     $('#ammocount').classList.toggle('low', lowAmmo);
     $('#grencount').textContent = String(p.grenades);
+    /* meccs közbeni lőszervásárló gomb ára (pisztolynál ∞) */
+    const ap = $('#ammoprice');
+    if (ap) ap.textContent = w.def.id === 'pistol' ? '∞' : fmt(Math.ceil(w.def.packPrice * C.AMMO_EMERGENCY));
   }
 
   /* ---------- képernyők felépítése ---------- */
@@ -128,6 +134,10 @@ ZD.ui = (() => {
           <span class="tl">☠ vezér</span>
           <span class="tl">⚡🌑💰👥 módosító</span>
         </div>
+        <button class="btn freemode-btn" id="btn-freemode">
+          <span class="fm-ic">♾</span>
+          <span class="fm-txt">SZABAD FARM<small>Végtelen hullámok — gyűjts érmét fejlesztésekre</small></span>
+        </button>
         <div class="stagegrid" id="stagegrid"></div>
       </div>`);
 
@@ -274,6 +284,12 @@ ZD.ui = (() => {
     $('#btn-resume').addEventListener('click', () => ZD.game.resume());
     $('#btn-quit').addEventListener('click', () => { hidePause(); ZD.game.quit(); });
 
+    /* Free Mode indítása a pályaválasztóról */
+    $('#btn-freemode').addEventListener('click', () => {
+      ZD.audio.play('click');
+      showLoadout('free');
+    });
+
     /* loadout */
     $('#lo-prev').addEventListener('click', () => { cycleWeapon(-1); });
     $('#lo-next').addEventListener('click', () => { cycleWeapon(1); });
@@ -303,6 +319,7 @@ ZD.ui = (() => {
     });
     $('#btn-next').addEventListener('click', () => {
       screens.result.classList.add('hidden');
+      if (ZD.game.st.isFree) { ZD.game.start('free'); return; }
       const next = ZD.game.st.result === 'win' ? Math.min(ZD.game.st.level + 1, C.STAGES) : ZD.game.st.level;
       ZD.game.start(next);
     });
@@ -327,10 +344,11 @@ ZD.ui = (() => {
 
   function refreshLoadout() {
     const level = loLevel;
-    const mode = C.modeFor(level);
-    const mod = C.modFor(level);
+    const isFree = level === 'free';
+    const mode = isFree ? 'free' : C.modeFor(level);
+    const mod = isFree ? null : C.modFor(level);
     const M = C.MODES[mode];
-    $('#lo-title').textContent = `${level}. PÁLYA ${M.icon ? '· ' + M.icon + ' ' + M.name : ''}`;
+    $('#lo-title').textContent = isFree ? `${M.icon} ${M.name}` : `${level}. PÁLYA ${M.icon ? '· ' + M.icon + ' ' + M.name : ''}`;
     $('#lo-desc').innerHTML = M.desc + (mod ? `<br/><span class="lo-mod">${C.MODS[mod].icon} ${C.MODS[mod].name} — ${C.MODS[mod].desc}</span>` : '');
     const w = C.WEAPONS.find((x) => x.id === S().weapons.equipped) || C.WEAPONS[0];
     $('#lo-wicon').src = wIcon(w);
@@ -350,7 +368,7 @@ ZD.ui = (() => {
       .filter((x) => S().weapons.owned.includes(x.id) && (x.ammo < 0 || (S().ammo[x.id] || 0) > 0))
       .map((x) => x.dmg * x.rps * (x.pellets || 1)));
     const power = bestDps * stats.dmgMul + stats.maxHp * 0.6;
-    const need = 90 + level * 16;
+    const need = isFree ? 80 : 90 + level * 16;
     $('#lo-power').innerHTML = power >= need
       ? '<span class="lo-ok">✔ FELKÉSZÜLVE</span>'
       : '<span class="lo-risky">⚠ KOCKÁZATOS — fejlessz vagy vegyél lőszert!</span>';
@@ -452,14 +470,23 @@ ZD.ui = (() => {
           const pool = S().ammo[w.id] || 0;
           const low = pool <= Math.ceil((w.pack || 40) * 0.2);
           const afford = S().coins >= w.packPrice;
+          const affordBig = S().coins >= w.packBigPrice;
+          /* nagy csomag mennyiségi kedvezménye (%) */
+          const save = Math.round((1 - (w.packBigPrice / w.packBig) / (w.packPrice / w.pack)) * 100);
           const item = el(`
             <div class="card acard" data-id="ammo-${w.id}">
               <div class="wicon"><img alt="" src="${wIcon(w)}" /></div>
               <div class="wname">${w.name}</div>
               <div class="apool${low ? ' low' : ''}">Készlet: <b>${fmt(pool)}</b> lövés${low ? ' ⚠' : ''}</div>
-              <div class="wact">
-                <span class="price${afford ? '' : ' na'}">🪙 ${fmt(w.packPrice)}</span>
-                <button class="btn primary" data-ammo="${w.id}" ${afford ? '' : 'disabled'}>+${w.pack} LÖVÉS</button>
+              <div class="ammo-buys">
+                <div class="ammo-buy">
+                  <span class="price${afford ? '' : ' na'}">🪙 ${fmt(w.packPrice)}</span>
+                  <button class="btn" data-ammo="${w.id}" ${afford ? '' : 'disabled'}>+${w.pack}</button>
+                </div>
+                <div class="ammo-buy">
+                  <span class="price${affordBig ? '' : ' na'}">🪙 ${fmt(w.packBigPrice)}${save > 0 ? ` <em>−${save}%</em>` : ''}</span>
+                  <button class="btn primary" data-ammobig="${w.id}" ${affordBig ? '' : 'disabled'}>+${w.packBig}</button>
+                </div>
               </div>
             </div>`);
           list.appendChild(item);
@@ -478,6 +505,7 @@ ZD.ui = (() => {
         const buy = e.target.closest('[data-buy]');
         const eq = e.target.closest('[data-equip]');
         const am = e.target.closest('[data-ammo]');
+        const amb = e.target.closest('[data-ammobig]');
         if (buy) {
           const w = C.WEAPONS.find((x) => x.id === buy.dataset.buy);
           if (S().coins >= w.price) {
@@ -500,6 +528,16 @@ ZD.ui = (() => {
           if (S().coins >= w.packPrice) {
             S().coins -= w.packPrice;
             S().ammo[w.id] = (S().ammo[w.id] || 0) + w.pack;
+            ZD.save.persist();
+            ZD.audio.play('ammo');
+            flashId = 'ammo-' + w.id;
+            api.refresh_armory();
+          }
+        } else if (amb) {
+          const w = C.WEAPONS.find((x) => x.id === amb.dataset.ammobig);
+          if (S().coins >= w.packBigPrice) {
+            S().coins -= w.packBigPrice;
+            S().ammo[w.id] = (S().ammo[w.id] || 0) + w.packBig;
             ZD.save.persist();
             ZD.audio.play('ammo');
             flashId = 'ammo-' + w.id;
@@ -571,19 +609,27 @@ ZD.ui = (() => {
   function showPause() { screens.pause.classList.remove('hidden'); }
   function hidePause() { screens.pause.classList.add('hidden'); }
 
-  function showResult(won, earned, bonus, stats) {
-    $('#result-box').classList.toggle('win', won);
-    $('#result-box').classList.toggle('lose', !won);
-    $('#result-icon').textContent = won ? '🏅' : '☠';
-    $('#result-title').textContent = won ? 'PÁLYA TELJESÍTVE' : 'ELESTÉL';
+  function showResult(won, earned, bonus, stats, opts = {}) {
+    const isFree = won === 'free';
+    const w = won === true;
+    $('#result-box').classList.toggle('win', w || isFree);
+    $('#result-box').classList.toggle('lose', won === false);
+    $('#result-icon').textContent = isFree ? '♾' : w ? '🏅' : '☠';
+    $('#result-title').textContent = isFree ? 'FARM VÉGE' : w ? 'PÁLYA TELJESÍTVE' : 'ELESTÉL';
     const statLine = stats
       ? `<span class="statline">☠ ${fmt(stats.kills)} kiiktatva · 🔫 ${fmt(stats.shots)} lövés · 💥 ${fmt(stats.dmg)} sebzés</span><br/>`
       : '';
-    $('#result-sub').innerHTML = won
-      ? `${statLine}Teljesítési bónusz: 🪙 ${fmt(bonus)}`
-      : `${statLine}A zsákmányod megmarad.<br/>Fejlessz a laborban, és próbáld újra!`;
-    $('#btn-next').textContent = won ? 'KÖVETKEZŐ PÁLYA ▶' : 'ÚJRA PRÓBÁLOM';
-    $('#btn-retry').style.display = won ? '' : 'none';
+    if (isFree) {
+      $('#result-sub').innerHTML =
+        `<span class="statline">⏱ ${Math.round(opts.time || 0)} mp túlélés · ♾ ${fmt(opts.wave || 1)}. hullám</span><br/>`
+        + statLine + `Idő-bónusz: 🪙 ${fmt(bonus)}`;
+    } else {
+      $('#result-sub').innerHTML = w
+        ? `${statLine}Teljesítési bónusz: 🪙 ${fmt(bonus)}`
+        : `${statLine}A zsákmányod megmarad.<br/>Fejlessz a laborban, és próbáld újra!`;
+    }
+    $('#btn-next').textContent = isFree ? '♾ ÚJRA FARM' : w ? 'KÖVETKEZŐ PÁLYA ▶' : 'ÚJRA PRÓBÁLOM';
+    $('#btn-retry').style.display = w ? '' : 'none';
 
     /* érme-számláló animáció */
     if (countTimer) clearInterval(countTimer);

@@ -42,6 +42,12 @@ ZD.game = (() => {
     gen: null,     // védendő generátor (defense mód)
     dying: 0,      // játékos halál-szekvencia hátralévő ideje
     groanT: 3,     // következő ambiens zombi-morgásig
+    errFlash: 0,   // rövid piros keret-villanás (pl. nincs elég pénz)
+    isFree: false, // Free Mode fut-e
+    wave: 0,       // Free Mode: aktuális hullám
+    waveKills: 0,  // Free Mode: kiiktatva a hullámban
+    waveQuota: 0,  // Free Mode: kell a hullám továbblépéséhez
+    freeTrickle: 0,// Free Mode: túlélési „csepegő" jutalom időzítő
     stats: { kills: 0, shots: 0, dmg: 0 },
   };
 
@@ -75,22 +81,30 @@ ZD.game = (() => {
     let wi = owned.findIndex((w) => w.id === S().weapons.equipped);
     if (wi < 0) wi = 0;
 
-    const mode = C.modeFor(level);
-    const mod = C.modFor(level);
-    let quota = C.quota(level);
+    const isFree = level === 'free';
+    /* Free Mode: nem kampánypálya — effektív nehézség a hullámból ered (1-től indul) */
+    const effLevel = isFree ? 1 : level;
+    const mode = isFree ? 'free' : C.modeFor(level);
+    const mod = isFree ? null : C.modFor(level);
+    let quota = isFree ? Infinity : C.quota(level);
     if (mode === 'elite') quota = Math.max(6, Math.round(quota * 0.45));
     if (mode === 'survive') quota = 99999; // időre megy, nem kvótára
     if (mod === 'horde') quota = Math.round(quota * 1.4);
 
     Object.assign(st, {
-      running: true, paused: false, level,
+      running: true, paused: false, level: effLevel,
       quota, killed: 0,
       bossPhase: false, bossRef: null,
       spawnTimer: 0.8, time: 0, earned: 0, result: null,
       zombies: [], bullets: [], spits: [], grenades: [], coins: [], meds: [], ammoBoxes: [],
       parts: [], nums: [], shells: [], booms: [], decals: [],
       cam: 0, shake: 0, slowmo: 0, hitstop: 0, banner: null, bossBarHp: 0,
-      mode, mod, gen: null, dying: 0, groanT: 3,
+      mode, mod, gen: null, dying: 0, groanT: 3, errFlash: 0,
+      isFree,
+      wave: isFree ? 1 : 0,
+      waveKills: 0,
+      waveQuota: isFree ? C.FREE.waveQuota(1) : 0,
+      freeTrickle: isFree ? C.FREE.trickleEvery : 0,
       surviveT: mode === 'survive' ? C.surviveTime(level) : 0, hudAcc: 0,
       stats: { kills: 0, shots: 0, dmg: 0 },
     });
@@ -120,11 +134,13 @@ ZD.game = (() => {
 
     const M = C.MODES[mode];
     const modTxt = mod ? `${C.MODS[mod].icon} ${C.MODS[mod].name}` : null;
-    st.banner = {
-      text: mode === 'survival' ? `${level}. PÁLYA` : `${M.icon} ${M.name}`,
-      t: 2, total: 2,
-      sub: modTxt || (mode === 'survival' ? null : M.desc),
-    };
+    st.banner = isFree
+      ? { text: `${M.icon} ${M.name}`, t: 2, total: 2, sub: '1. HULLÁM — gyűjts érmét!' }
+      : {
+          text: mode === 'survival' ? `${level}. PÁLYA` : `${M.icon} ${M.name}`,
+          t: 2, total: 2,
+          sub: modTxt || (mode === 'survival' ? null : M.desc),
+        };
     ZD.audio.play('stage');
     ZD.ui.enterGame();
   }
@@ -156,8 +172,9 @@ ZD.game = (() => {
     const def = C.ZOMBIES[type];
     const side = chance(0.5) ? -1 : 1;
     const x = side < 0 ? -20 : C.WORLD_W + 20;
-    let hp = def.hp * C.hpMul(st.level) * (type === 'boss' ? 1 + st.level * 0.04 : 1);
-    let dmg = def.dmg * C.dmgMul(st.level);
+    /* boss: dedikált, fair skálázás (nem a sima hpMul/dmgMul), a többi zombi a szintből */
+    let hp = type === 'boss' ? C.bossHp(st.level) : def.hp * C.hpMul(st.level);
+    let dmg = type === 'boss' ? C.bossDmg(st.level) : def.dmg * C.dmgMul(st.level);
     let speed = rand(def.speed[0], def.speed[1]);
     let coinMul = 1;
 
@@ -275,6 +292,70 @@ ZD.game = (() => {
     ZD.ui.updateHud();
   }
 
+  /* lebegő felirat a játékos fölött (vásárlás/figyelmeztetés) */
+  function floatMsg(val, kind) {
+    const p = st.player;
+    st.nums.push({
+      x: p.x, y: C.GROUND_Y - C.PLAYER.h - 12,
+      vx: 0, vy: -30, life: 1, max: 1, val,
+      warn: kind === 'warn', ammo: kind === 'ammo', crit: kind === 'good',
+    });
+  }
+
+  /* ---------- meccs közbeni (emergency) lőszervásárlás ---------- */
+  function buyAmmoInMatch() {
+    const p = st.player;
+    const w = curWeapon();
+    if (w.def.id === 'pistol') {
+      floatMsg('PISZTOLY: ∞ LŐSZER', 'ammo');
+      ZD.audio.play('click');
+      return;
+    }
+    const price = Math.ceil(w.def.packPrice * C.AMMO_EMERGENCY);
+    const amt = w.def.pack;
+    if (S().coins >= price) {
+      S().coins -= price;
+      w.ammo += amt;
+      w.warned = false;
+      floatMsg(`+${amt} LŐSZER`, 'ammo');
+      ZD.audio.play('ammo');
+    } else {
+      st.errFlash = 0.45;
+      floatMsg('NINCS ELÉG 🪙', 'warn');
+      ZD.audio.play('lowammo');
+    }
+    ZD.ui.updateHud();
+  }
+
+  /* ---------- Free Mode: hullámléptetés ---------- */
+  function advanceWave() {
+    st.wave++;
+    st.waveKills = 0;
+    st.waveQuota = C.FREE.waveQuota(st.wave);
+    st.level = C.FREE.levelFor(st.wave); // effektív nehézség ramp
+    const bonus = C.FREE.waveBonus(st.wave);
+    st.earned += bonus; S().coins += bonus;
+    const mini = st.wave % C.FREE.miniBossEvery === 0;
+    st.banner = {
+      text: `${st.wave}. HULLÁM`, t: 1.5, total: 1.5,
+      sub: mini ? `⚠ MINI-BOSS · +${bonus} 🪙` : `+${bonus} 🪙`,
+    };
+    ZD.audio.play('stage');
+    if (mini) { spawnZombie('brute'); ZD.audio.play('roar'); }
+    ZD.ui.updateHud();
+  }
+
+  /* ---------- Free Mode: futam vége (halálkor) ---------- */
+  function freeEnd() {
+    st.result = 'free';
+    const timeBonus = Math.round(st.time * C.FREE.timeBonusMul);
+    st.earned += timeBonus; S().coins += timeBonus;
+    syncAmmo();
+    ZD.save.persist();
+    ZD.audio.play('lose');
+    ZD.ui.showResult('free', st.earned, timeBonus, st.stats, { wave: st.wave, time: st.time });
+  }
+
   function explode(x, y, dmg, radius, big) {
     ZD.audio.play('boom');
     st.shake = Math.max(st.shake, big ? 11 : 8);
@@ -352,6 +433,7 @@ ZD.game = (() => {
       ZD.audio.play('roar');
     } else {
       st.killed++;
+      if (st.mode === 'free') st.waveKills++;
     }
 
     // vér-részecskék + húscafatok
@@ -408,6 +490,7 @@ ZD.game = (() => {
       st.banner.t -= rdt;
       if (st.banner.t <= 0) st.banner = null;
     }
+    if (st.errFlash > 0) st.errFlash -= rdt;
 
     /* — túlélés mód: időre megy, a HUD folyamatosan frissül — */
     if (st.mode === 'survive') {
@@ -416,10 +499,23 @@ ZD.game = (() => {
       if (st.time >= st.surviveT && !st.result) { win(); return; }
     }
 
+    /* — Free Mode: hullámléptetés + túlélési „csepegő" jutalom — */
+    if (st.mode === 'free') {
+      st.hudAcc += rdt;
+      if (st.hudAcc > 0.25) { st.hudAcc = 0; ZD.ui.updateHud(); }
+      st.freeTrickle -= dt;
+      if (st.freeTrickle <= 0) {
+        st.freeTrickle = C.FREE.trickleEvery;
+        const t = C.FREE.trickle(st.wave);
+        st.earned += t; S().coins += t;
+      }
+      if (st.waveKills >= st.waveQuota) advanceWave();
+    }
+
     /* — játékos halál-szekvencia: a világ még pörög, de nincs irányítás — */
     if (st.dying > 0) {
       st.dying -= rdt;
-      if (st.dying <= 0) { lose(); return; }
+      if (st.dying <= 0) { if (st.mode === 'free') freeEnd(); else lose(); return; }
     }
 
     /* — bemenet, él-triggerek — */
@@ -433,8 +529,9 @@ ZD.game = (() => {
         ZD.audio.play('reload');
         ZD.ui.updateHud();
       }
+      if (inp.buyammo) { inp.buyammo = false; buyAmmoInMatch(); }
     } else {
-      inp.grenade = false; inp.swap = false;
+      inp.grenade = false; inp.swap = false; inp.buyammo = false;
     }
 
     /* — játékos mozgás — */
@@ -529,47 +626,61 @@ ZD.game = (() => {
         if (z.type === 'boss' || z.type === 'brute') st.shake = Math.max(st.shake, 3);
       }
 
-      // boss: fázisváltások + földcsapás
+      // boss: fázisváltások + telegrafált földcsapás (fair, kitérhető)
       if (z.type === 'boss') {
         const r = z.hp / z.maxHp;
         if (r < 0.7 && !z.ph1) {
           z.ph1 = true;
-          z.speed *= 1.5;
+          z.speed *= 1.35;
           st.shake = Math.max(st.shake, 4);
           ZD.audio.play('roar');
         }
         if (r < 0.4 && !z.ph2) {
           z.ph2 = true;
-          z.summonCd = 0.5;
+          z.summonCd = 2;
           st.banner = { text: 'A VEZÉR SEGÍTSÉGET HÍV!', t: 1.6, total: 1.6, sub: null };
           ZD.audio.play('roar');
         }
         if (r < 0.2 && !z.ph3) {
           z.ph3 = true;
           z.enrage = true;
-          z.dmg *= 1.4;
-          z.speed *= 1.35;
+          z.dmg *= 1.25;
+          z.speed *= 1.25;
           st.banner = { text: '⚠ A VEZÉR MEGDÜHÖDÖTT', t: 1.6, total: 1.6, sub: null };
           st.shake = Math.max(st.shake, 6);
           ZD.audio.play('roar');
         }
-        /* minion-hívás a 2. fázisban */
+        /* minion-hívás a 2. fázisban — visszafogott (max 3, egyesével) */
         if (z.ph2) {
           z.summonCd -= dt;
           const minions = st.zombies.filter((m) => m.minion && !m.dead).length;
-          if (z.summonCd <= 0 && minions < 4) {
-            z.summonCd = 8;
+          if (z.summonCd <= 0 && minions < 3) {
+            z.summonCd = 6;
             spawnZombie(chance(0.5) ? 'walker' : 'runner', { minion: true });
-            spawnZombie('runner', { minion: true });
             st.shake = Math.max(st.shake, 3);
           }
         }
+        /* földcsapás: előbb ~0,6 mp telegraf (porgyűrű + morgás), utána csapás →
+           a játékosnak van ideje kitérni a hatókörből */
         z.slamCd -= dt;
+        const slamR = z.enrage ? 150 : 128;
+        if (z.slamCd <= 0.6 && z.slamCd > 0 && !z.slamWarned) {
+          z.slamWarned = true;
+          ZD.audio.play('groan');
+          for (let i = 0; i < 12; i++) {
+            const a = (i / 12) * 6.28;
+            st.parts.push({
+              x: z.x + Math.cos(a) * slamR, y: C.GROUND_Y - 2,
+              vx: 0, vy: rand(-40, -14),
+              life: rand(0.4, 0.7), color: '#c2662a', size: rand(2, 3.5), grav: 0,
+            });
+          }
+        }
         if (z.slamCd <= 0) {
           z.slamCd = z.ph1 ? 4.5 : 6;
+          z.slamWarned = false;
           ZD.audio.play('slam');
           st.shake = Math.max(st.shake, 7);
-          const slamR = z.enrage ? 160 : 130;
           if (Math.abs(p.x - z.x) < slamR) hurtPlayer(z.dmg * 0.8);
           for (let i = 0; i < 14; i++) {
             st.parts.push({
@@ -878,7 +989,7 @@ ZD.game = (() => {
 
   function win() {
     st.result = 'win';
-    const bonus = C.clearBonus(st.level) * (st.mode === 'elite' ? 2 : 1);
+    const bonus = Math.round(C.clearBonus(st.level) * C.clearMult(st.mode));
     st.earned += bonus;
     S().coins += bonus;
     if (!S().stages.cleared.includes(st.level)) S().stages.cleared.push(st.level);
@@ -1095,6 +1206,16 @@ ZD.game = (() => {
       vg.addColorStop(1, `rgba(160,20,20,${a})`);
       ctx.fillStyle = vg;
       ctx.fillRect(0, 0, C.VIEW_W, C.VIEW_H);
+    }
+
+    /* nincs-elég-pénz hibavillanás: piros keret */
+    if (st.errFlash > 0) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(0.6, st.errFlash * 1.6);
+      ctx.strokeStyle = '#e5484d';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(3, 3, C.VIEW_W - 6, C.VIEW_H - 6);
+      ctx.restore();
     }
 
     /* boss HP-sáv */

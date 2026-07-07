@@ -3,12 +3,36 @@
 > Minden érdemi lépés után frissítendő. Új session elején ELŐSZÖR ezt olvasd el.
 
 ## Hol tartunk
-- **Játszható alapjáték + vizuális átépítés + GAMEPLAY 2.0 OVERHAUL kész** — „Zombi Krónika".
+- **Alapjáték + vizuális átépítés + GAMEPLAY 2.0 + FÁZIS 1 (economy overhaul) kész** — „Zombi Krónika".
 - Zero-dependency: HTML5 canvas + vanilla JS (classic scriptek, nincs build), PWA.
-- Tartalom: 8 fegyver, 6 zombitípus + fázisos boss, 7 fejlesztés, 40 pálya 4 pályamóddal
-  (irtás/védelem/elit vadászat/vezér) + pálya-módosítók, perzisztens lőszerrendszer
-  ammo-bolttal, érme/medkit/lőszerláda drop, gránát, mentés-export/import.
+- Tartalom: 8 fegyver, 6 zombitípus + fázisos boss, 7 fejlesztés, 40 pálya + **Free Mode**,
+  5 pályamód (irtás/védelem/elit/vezér/túlélés) + módosítók, **olcsó perzisztens lőszerrendszer**
+  (kis/nagy pack + meccs közbeni vásárlás), érme/medkit/lőszerláda drop, gránát, mentés-export/import.
+- Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
+
+## FÁZIS 1 — Economy overhaul (2026-07-07) — mi került bele
+- **Lőszer-gazdaságtan újraírva, sokkal olcsóbb** (const.js WEAPONS): kezdő lőszerek nagyobbak,
+  árak töredékére csökkentek (pl. uzi kis-pack 250→130🪙 / 220 lövés; rifle 750→320; shotgun 420→180).
+  Minden fegyverhez **kis és nagy pack** (`pack/packPrice` + `packBig/packBigPrice`), a nagy pack
+  ~13-25% mennyiségi kedvezménnyel. Fegyverárak is mérséklve (rifle 7000→5000, laser 90k→65k stb).
+- **Meccs közbeni (emergency) lőszervásárlás** az aktuális fegyverhez: **B** billentyű + új mobil
+  **📦 gomb** a HUD-on (ár-badge-dzsel). Ára a kis-pack ×1.25 (`AMMO_EMERGENCY`). Van pénz → levon,
+  ad lőszert, hang + „+N LŐSZER" felirat. Nincs pénz → piros keret-villanás (`errFlash`) + hibahang
+  + „NINCS ELÉG 🪙". Pisztolynál végtelen (∞). A flow nem akad meg.
+- **Free Mode** (♾ SZABAD FARM — nem kampánypálya): a pályaválasztó tetején külön gombbal indul.
+  Hullámalapú, végtelen; hullámléptetés a kvóta teljesítésekor (`C.FREE`), effektív nehézség lassan
+  ramp-el, minden 4. hullám mini-boss (brute). Pénz: kill + hullámbónusz (40+16×w) + 5 mp-enkénti
+  „csepegő" jutalom + futam végi idő-bónusz (mp×3). Halálkor `freeEnd()` → külön eredményképernyő
+  (túlélési idő, hullám, statok, idő-bónusz). A szerzett érme mentésbe kerül.
+- **Boss balansz átdolgozva, fair + megölhető**: dedikált HP/dmg formula (`bossHp`=1400+130×lvl,
+  `bossDmg`=18+1.3×lvl) a régi dupla-skálázás helyett → az 5. vezér 2050 HP (előtte ~2950).
+  Fázis-sebességek mérsékelve (ph1 ×1.35, enrage dmg ×1.25 / spd ×1.25), minion-limit 4→3 egyesével.
+  **Telegrafált földcsapás**: ~0,6 mp előjelzés (narancs porgyűrű + morgás), utána csap → kitérhető.
+  Nincs időlimit boss-pályán. Mért nyers boss-TTK (5. pálya): rifle ~16s, uzi/shotgun ~26s, pisztoly ~55s.
+- **Reward balansz**: `clearBonus` 50+28×lvl → 60+32×lvl, mód-szorzó (`clearMult`): elit ×2, boss ×1.6,
+  védelem/túlélés ×1.3. Gránát-vásárlás 250→200🪙.
+- sw.js cache: **zk-v5**. Új fájl: [`docs/ROADMAP.md`](ROADMAP.md).
 
 ## Layout + látvány 2.1 (2026-07-07 este) — regresszió-javítás
 - **#stage konténer**: a canvas, HUD, touch-gombok ÉS menük egyetlen, arányosan
@@ -101,6 +125,8 @@
    második karakter, teljesítmények, perzisztens statisztika.
 
 ## Következő lépések
-- Felhasználói kézi teszt (asztali + telefon: https://adaaamm200.github.io/ZombieGame/).
-- Telefonon: régi PWA-nál a cache frissül (zk-v3), de érdemes újra megnyitni Safariban.
-- Visszajelzés alapján balansz- és látvány-finomhangolás.
+- Felhasználói kézi teszt (asztali + telefon: https://adaaamm200.github.io/ZombieGame/):
+  meccs közbeni ammo-vétel (B / 📦), Free Mode farm, boss-harc érzet, ammo-árak.
+- Telefonon a PWA cache frissül (zk-v5) — érdemes újra megnyitni Safariban.
+- Visszajelzés alapján balansz-finomhangolás (boss-HP magasabb pályákon, ammo-árak, free-mode jutalom).
+- Ha az alap élmény már jó: **FÁZIS 2 — Campaign Map** (map-alapú pályaválasztó). Lásd ROADMAP.md.

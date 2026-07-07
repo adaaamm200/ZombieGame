@@ -12,6 +12,9 @@ ZD.C = {
   GRAVITY: 620,
   STAGES: 40,
 
+  /* meccs közbeni (emergency) lőszervásárlás felára a bolti kis-pack árához képest */
+  AMMO_EMERGENCY: 1.25,
+
   /* pályatéma: 5 pályánként váltakozik (utca → labor → romváros) */
   themeFor(level) { return Math.floor((level - 1) / 5) % 3; },
 
@@ -22,6 +25,7 @@ ZD.C = {
     elite:    { name: 'ELIT VADÁSZAT', icon: '⭐', desc: 'Kevesebb, de erős célpont — dupla zsákmány!' },
     survive:  { name: 'TÚLÉLÉS',       icon: '⏱', desc: 'Éld túl az időt — a horda nem fogy el!' },
     boss:     { name: 'VEZÉR',         icon: '☠',  desc: 'Győzd le a vezért!' },
+    free:     { name: 'SZABAD FARM',   icon: '♾', desc: 'Végtelen hullámok — gyűjts érmét fejlesztésekre!' },
   },
   modeFor(level) {
     if (this.isBossLevel(level)) return 'boss';
@@ -53,17 +57,19 @@ ZD.C = {
   PLAYER: { w: 18, h: 38, speed: 110, baseHp: 100 },
 
   /* Fegyverek — ammo: kezdő lőszer (perzisztens pool), -1 = végtelen.
-     kb: találati visszalökés, flashScale: torkolattűz méret,
-     pack/packPrice: lőszercsomag a boltban */
+     kb: találati visszalökés, flashScale: torkolattűz méret.
+     Lőszer-gazdaságtan (jelentősen olcsóbb, játékosbarát):
+       pack/packPrice   — kis csomag,
+       packBig/packBigPrice — nagy csomag (mennyiségi kedvezménnyel). */
   WEAPONS: [
     { id: 'pistol',  name: 'M9 Pisztoly',       dmg: 13,  rps: 3,    spd: 520,  pellets: 1, spread: 0.012, ammo: -1,  price: 0,     kind: 'bullet', color: '#ffe9a8', shake: 0.5, casing: 1, kb: 14, flashScale: 0.9 },
-    { id: 'uzi',     name: 'Vipera SMG',        dmg: 8,   rps: 10,   spd: 540,  pellets: 1, spread: 0.055, ammo: 260, price: 900,   kind: 'bullet', color: '#ffe9a8', shake: 0.6, casing: 1, kb: 9,  flashScale: 0.8, pack: 130, packPrice: 250 },
-    { id: 'shotgun', name: 'Őrszem Sörétes',    dmg: 9,   rps: 1.3,  spd: 480,  pellets: 6, spread: 0.13,  ammo: 48,  price: 2600,  kind: 'bullet', color: '#ffd27a', shake: 2.6, casing: 1, kb: 30, flashScale: 1.5, pack: 30,  packPrice: 420 },
-    { id: 'rifle',   name: 'AK Farkas',         dmg: 22,  rps: 6,    spd: 640,  pellets: 1, spread: 0.03,  ammo: 200, price: 7000,  kind: 'bullet', color: '#ffe9a8', shake: 1.1, casing: 1, kb: 18, flashScale: 1.1, pack: 90,  packPrice: 750 },
-    { id: 'flamer',  name: 'Sárkány Lángszóró', dmg: 5,   rps: 18,   spd: 230,  pellets: 1, spread: 0.10,  ammo: 420, price: 14000, kind: 'flame',  color: '#ff9a3d', range: 105, shake: 0.25, kb: 4, flashScale: 0, pack: 210, packPrice: 900 },
-    { id: 'minigun', name: 'Cerberus Minigun',  dmg: 15,  rps: 15,   spd: 600,  pellets: 1, spread: 0.06,  ammo: 600, price: 30000, kind: 'bullet', color: '#ffe9a8', shake: 1.4, casing: 1, kb: 14, flashScale: 1.3, pack: 300, packPrice: 2400 },
-    { id: 'rocket',  name: 'RPG Vulkán',        dmg: 130, rps: 0.9,  spd: 330,  pellets: 1, spread: 0.01,  ammo: 18,  price: 52000, kind: 'rocket', color: '#ffb066', splash: 82, shake: 3, kb: 0, flashScale: 1.6, pack: 6, packPrice: 2600 },
-    { id: 'laser',   name: 'Ion Lézer',         dmg: 34,  rps: 4.5,  spd: 1300, pellets: 1, spread: 0.005, ammo: 140, price: 90000, kind: 'laser',  color: '#7de0ff', pierce: 99, shake: 1.2, kb: 20, flashScale: 1.2, pack: 70, packPrice: 4200 },
+    { id: 'uzi',     name: 'Vipera SMG',        dmg: 8,   rps: 10,   spd: 540,  pellets: 1, spread: 0.055, ammo: 300, price: 700,   kind: 'bullet', color: '#ffe9a8', shake: 0.6, casing: 1, kb: 9,  flashScale: 0.8, pack: 220, packPrice: 130,  packBig: 700,  packBigPrice: 360 },
+    { id: 'shotgun', name: 'Őrszem Sörétes',    dmg: 9,   rps: 1.3,  spd: 480,  pellets: 6, spread: 0.13,  ammo: 60,  price: 2000,  kind: 'bullet', color: '#ffd27a', shake: 2.6, casing: 1, kb: 30, flashScale: 1.5, pack: 40,  packPrice: 180,  packBig: 130,  packBigPrice: 500 },
+    { id: 'rifle',   name: 'AK Farkas',         dmg: 22,  rps: 6,    spd: 640,  pellets: 1, spread: 0.03,  ammo: 220, price: 5000,  kind: 'bullet', color: '#ffe9a8', shake: 1.1, casing: 1, kb: 18, flashScale: 1.1, pack: 120, packPrice: 320,  packBig: 380,  packBigPrice: 850 },
+    { id: 'flamer',  name: 'Sárkány Lángszóró', dmg: 5,   rps: 18,   spd: 230,  pellets: 1, spread: 0.10,  ammo: 500, price: 10000, kind: 'flame',  color: '#ff9a3d', range: 105, shake: 0.25, kb: 4, flashScale: 0, pack: 320, packPrice: 220,  packBig: 1000, packBigPrice: 600 },
+    { id: 'minigun', name: 'Cerberus Minigun',  dmg: 15,  rps: 15,   spd: 600,  pellets: 1, spread: 0.06,  ammo: 640, price: 22000, kind: 'bullet', color: '#ffe9a8', shake: 1.4, casing: 1, kb: 14, flashScale: 1.3, pack: 420, packPrice: 420,  packBig: 1300, packBigPrice: 1150 },
+    { id: 'rocket',  name: 'RPG Vulkán',        dmg: 130, rps: 0.9,  spd: 330,  pellets: 1, spread: 0.01,  ammo: 20,  price: 38000, kind: 'rocket', color: '#ffb066', splash: 82, shake: 3, kb: 0, flashScale: 1.6, pack: 10, packPrice: 700,  packBig: 32,   packBigPrice: 1900 },
+    { id: 'laser',   name: 'Ion Lézer',         dmg: 34,  rps: 4.5,  spd: 1300, pellets: 1, spread: 0.005, ammo: 160, price: 65000, kind: 'laser',  color: '#7de0ff', pierce: 99, shake: 1.2, kb: 20, flashScale: 1.2, pack: 100, packPrice: 1100, packBig: 320,  packBigPrice: 2900 },
   ],
 
   /* Zombik — speed: [min,max], coin: alap érme-érték (méretek ~1.3×, hitbox = látvány) */
@@ -73,7 +79,9 @@ ZD.C = {
     crawler: { hp: 34,   dmg: 8,  speed: [42, 58], coin: 8,   w: 26, h: 17, reach: 19, atkCd: 0.9 },
     spitter: { hp: 48,   dmg: 11, speed: [20, 28], coin: 12,  w: 21, h: 40, reach: 20, atkCd: 2.2, range: 250 },
     brute:   { hp: 260,  dmg: 24, speed: [16, 22], coin: 35,  w: 31, h: 49, reach: 28, atkCd: 1.4 },
-    boss:    { hp: 1500, dmg: 34, speed: [20, 26], coin: 300, w: 48, h: 67, reach: 42, atkCd: 1.8 },
+    /* boss hp/dmg futásidőben a bossHp()/bossDmg() szerint (fair, tanulható); az itteni
+       hp/dmg csak fallback-referencia. coin/méret/atkCd innen jön. */
+    boss:    { hp: 2050, dmg: 26, speed: [20, 26], coin: 300, w: 48, h: 67, reach: 42, atkCd: 2.0 },
   },
 
   /* Melyik szinttől jelenik meg az adott típus, súlyozva */
@@ -94,7 +102,17 @@ ZD.C = {
   cap(level) { return Math.min(3 + Math.floor(level / 2), 11); },
   spawnInterval(level) { return Math.max(0.45, 1.6 - level * 0.04); },
   isBossLevel(level) { return level % 5 === 0; },
-  clearBonus(level) { return 50 + 28 * level; },
+  clearBonus(level) { return 60 + 32 * level; },
+  /* pálya-teljesítési bónusz szorzó mód szerint (nagyobb kockázat → több jutalom) */
+  clearMult(mode) {
+    return mode === 'elite' ? 2 : mode === 'boss' ? 1.6
+      : (mode === 'defense' || mode === 'survive') ? 1.3 : 1;
+  },
+
+  /* Boss balansz — fair, tanulható: az első vezér (5. pálya) átlagos játékossal is
+     legyőzhető ~45-90 mp alatt; a sebzés nem öl 1-2 ütésből normál HP mellett. */
+  bossHp(level) { return Math.round(1400 + level * 130); },
+  bossDmg(level) { return Math.round(18 + level * 1.3); },
 
   /* Fejlesztések (labor) */
   UPGRADES: [
@@ -108,5 +126,22 @@ ZD.C = {
   ],
   upgCost(u, lvl) { return Math.round(u.cost0 * Math.pow(u.mul, lvl)); },
 
-  GRENADE: { dmg: 210, radius: 88, baseCount: 2, buyPrice: 250, buyMax: 3 },
+  GRENADE: { dmg: 210, radius: 88, baseCount: 2, buyPrice: 200, buyMax: 3 },
+
+  /* ---- Free Mode (végtelen pénzfarm, hullámalapú) ---- */
+  FREE: {
+    /* hány zombit kell kiiktatni a hullám továbblépéséhez */
+    waveQuota(w) { return 5 + Math.round(w * 2.2); },
+    /* hullám-teljesítési bónusz */
+    waveBonus(w) { return 40 + w * 16; },
+    /* túlélési „csepegő" jutalom 5 mp-enként */
+    trickleEvery: 5,
+    trickle(w) { return 8 + w * 2; },
+    /* effektív nehézségi szint a hullámból (a kampánynál lassabb ív) */
+    levelFor(w) { return Math.min(40, 1 + Math.floor((w - 1) * 0.8)); },
+    /* minden ennyiedik hullámon elit mini-boss (brute) esemény */
+    miniBossEvery: 4,
+    /* futam végi túlélési idő-bónusz szorzó (mp × ennyi) */
+    timeBonusMul: 3,
+  },
 };
