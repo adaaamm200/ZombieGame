@@ -69,7 +69,7 @@ ZD.game = (() => {
   }
 
   /* ---------- indítás ---------- */
-  function start(level) {
+  function start(level, opts = {}) {
     const stats = calcStats();
     const owned = ownedWeapons();
     let wi = owned.findIndex((w) => w.id === S().weapons.equipped);
@@ -79,6 +79,7 @@ ZD.game = (() => {
     const mod = C.modFor(level);
     let quota = C.quota(level);
     if (mode === 'elite') quota = Math.max(6, Math.round(quota * 0.45));
+    if (mode === 'survive') quota = 99999; // időre megy, nem kvótára
     if (mod === 'horde') quota = Math.round(quota * 1.4);
 
     Object.assign(st, {
@@ -90,6 +91,7 @@ ZD.game = (() => {
       parts: [], nums: [], shells: [], booms: [], decals: [],
       cam: 0, shake: 0, slowmo: 0, hitstop: 0, banner: null, bossBarHp: 0,
       mode, mod, gen: null, dying: 0, groanT: 3,
+      surviveT: mode === 'survive' ? C.surviveTime(level) : 0, hudAcc: 0,
       stats: { kills: 0, shots: 0, dmg: 0 },
     });
 
@@ -111,7 +113,7 @@ ZD.game = (() => {
         warned: false,
       })),
       wi,
-      grenades: stats.grenades,
+      grenades: stats.grenades + (opts.extraGren || 0),
     };
     /* ha a kiválasztott fegyver üres, pisztolyra állunk */
     if (st.player.weapons[st.player.wi].ammo === 0) st.player.wi = 0;
@@ -275,7 +277,8 @@ ZD.game = (() => {
 
   function explode(x, y, dmg, radius, big) {
     ZD.audio.play('boom');
-    st.shake = Math.max(st.shake, big ? 9 : 6);
+    st.shake = Math.max(st.shake, big ? 11 : 8);
+    st.hitstop = Math.max(st.hitstop, 0.05);
     st.booms.push({ x, y: Math.min(y, C.GROUND_Y - 4), t: 0, scale: big ? 1.6 : 1 });
     for (let i = 0; i < (big ? 34 : 22); i++) {
       st.parts.push({
@@ -298,8 +301,8 @@ ZD.game = (() => {
     if (st.decals.length > 40) st.decals.shift();
   }
 
-  /* ---------- sebzés a zombinak ---------- */
-  function hurtZombie(z, dmg, crit) {
+  /* ---------- sebzés a zombinak (dir: vérfröccsenés iránya) ---------- */
+  function hurtZombie(z, dmg, crit, dir = 0) {
     z.hp -= dmg;
     z.flash = 0.12;
     st.stats.dmg += dmg;
@@ -309,12 +312,16 @@ ZD.game = (() => {
       vx: rand(-8, 8), vy: -38, life: crit ? 0.85 : 0.65, max: crit ? 0.85 : 0.65,
       val: Math.round(dmg), crit,
     });
-    for (let i = 0; i < (crit ? 6 : 4); i++) {
+    /* irányított vérfröccsenés — a lövés irányába spriccel */
+    for (let i = 0; i < (crit ? 10 : 7); i++) {
+      const away = dir !== 0 ? dir * rand(15, 95) : rand(-60, 60);
       st.parts.push({
-        x: z.x, y: C.GROUND_Y - z.def.h * 0.6, vx: rand(-60, 60), vy: rand(-90, -10),
-        life: rand(0.2, 0.5), color: chance(0.6) ? '#8f2f2f' : '#6e2020', size: rand(1.5, 2.5), grav: 1,
+        x: z.x, y: C.GROUND_Y - z.def.h * rand(0.4, 0.75),
+        vx: away + rand(-25, 25), vy: rand(-100, -10),
+        life: rand(0.25, 0.55), color: chance(0.6) ? '#8f2f2f' : '#6e2020', size: rand(1.5, 3), grav: 1,
       });
     }
+    if (chance(0.3)) addDecal(z.x + dir * 6, false);
     ZD.audio.play('hit');
     if (z.hp <= 0 && !z.dead) killZombie(z);
   }
@@ -347,11 +354,19 @@ ZD.game = (() => {
       st.killed++;
     }
 
-    // vér-részecskék
-    for (let i = 0; i < 12; i++) {
+    // vér-részecskék + húscafatok
+    for (let i = 0; i < 16; i++) {
       st.parts.push({
-        x: z.x, y: C.GROUND_Y - z.def.h * 0.5, vx: rand(-90, 90), vy: rand(-150, -20),
+        x: z.x, y: C.GROUND_Y - z.def.h * 0.5, vx: rand(-100, 100), vy: rand(-160, -20),
         life: rand(0.3, 0.8), color: chance(0.6) ? '#8f2f2f' : '#5f1f1f', size: rand(1.5, 3), grav: 1,
+      });
+    }
+    const zp = ZD.C.ZOMBIES[z.type];
+    for (let i = 0; i < 4; i++) {
+      st.parts.push({
+        x: z.x + rand(-4, 4), y: C.GROUND_Y - zp.h * rand(0.3, 0.8),
+        vx: rand(-70, 70), vy: rand(-170, -60),
+        life: rand(0.4, 0.9), color: chance(0.5) ? '#6f8a55' : '#5a7a44', size: rand(2.5, 4), grav: 1,
       });
     }
     // érmék (elit/módosító szorzóval)
@@ -392,6 +407,13 @@ ZD.game = (() => {
     if (st.banner) {
       st.banner.t -= rdt;
       if (st.banner.t <= 0) st.banner = null;
+    }
+
+    /* — túlélés mód: időre megy, a HUD folyamatosan frissül — */
+    if (st.mode === 'survive') {
+      st.hudAcc += rdt;
+      if (st.hudAcc > 0.25) { st.hudAcc = 0; ZD.ui.updateHud(); }
+      if (st.time >= st.surviveT && !st.result) { win(); return; }
     }
 
     /* — játékos halál-szekvencia: a világ még pörög, de nincs irányítás — */
@@ -591,7 +613,7 @@ ZD.game = (() => {
             return false;
           }
           if (b.hitSet && b.hitSet.has(z)) continue;
-          hurtZombie(z, b.dmg, b.crit);
+          hurtZombie(z, b.dmg, b.crit, Math.sign(b.vx));
           z.kb += Math.sign(b.vx) * b.kb * (z.type === 'brute' ? 0.4 : z.type === 'boss' ? 0.15 : 1);
           if (b.kind === 'laser') {
             st.parts.push({ x: b.x, y: b.y, vx: rand(-40, 40), vy: rand(-50, 10), life: 0.2, color: '#7de0ff', size: 1.5, grav: 0 });
@@ -801,8 +823,9 @@ ZD.game = (() => {
     if (st.shells.length > 50) st.shells.splice(0, st.shells.length - 50);
     if (st.nums.length > 40) st.nums.splice(0, st.nums.length - 40);
 
-    /* — kamera — */
-    const target = Math.max(0, Math.min(C.WORLD_W - C.VIEW_W, p.x - C.VIEW_W / 2));
+    /* — kamera (a zoomolt, keskenyebb látómezőhöz igazítva) — */
+    const visW = C.VIEW_W / C.ZOOM;
+    const target = Math.max(0, Math.min(C.WORLD_W - visW, p.x - visW / 2));
     st.cam += (target - st.cam) * Math.min(1, dt * 6);
     if (st.shake > 0) st.shake -= rdt * 14;
 
@@ -892,13 +915,21 @@ ZD.game = (() => {
     if (!st.running) return;
     const p = st.player;
     const SP = ZD.sprites;
+    const Z = C.ZOOM;
+    /* a talajvonal a képernyő ~86%-ára kerüljön a zoom után */
+    const vy0 = C.GROUND_Y - 232 / Z;
     const shx = st.shake > 0 ? rand(-st.shake, st.shake) : 0;
     const shy = st.shake > 0 ? rand(-st.shake * 0.6, st.shake * 0.6) : 0;
 
+    /* a teljes világ (háttér + entitások) a zoom-transzformon belül rajzolódik */
+    ctx.save();
+    ctx.translate(shx, shy);
+    ctx.scale(Z, Z);
+    ctx.translate(0, -vy0);
+
     SP.drawBackground(ctx, st.cam, st.level, st.time);
 
-    ctx.save();
-    ctx.translate(-Math.round(st.cam) + shx, shy);
+    ctx.translate(-Math.round(st.cam), 0);
 
     /* vérfoltok a talajon */
     st.decals.forEach((d) => {
@@ -986,12 +1017,15 @@ ZD.game = (() => {
         SP.px(ctx, b.x - Math.sign(b.vx) * 7, b.y - 1.5, 5, 3, '#ffb84d');
         ctx.restore();
       } else {
-        /* golyó: fényes tracer */
+        /* golyó: hosszú, fényes tracer */
         ctx.save();
-        ctx.globalAlpha = 0.4;
-        SP.px(ctx, b.x - Math.sign(b.vx) * 7, b.y - 0.5, 8, 1, b.color);
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = 0.22;
+        SP.px(ctx, b.x - Math.sign(b.vx) * 16, b.y - 1, 16, 2, b.color);
+        ctx.globalAlpha = 0.55;
+        SP.px(ctx, b.x - Math.sign(b.vx) * 9, b.y - 0.5, 9, 1.5, b.color);
         ctx.globalAlpha = 1;
-        SP.px(ctx, b.x - 2, b.y - 1, 4, 2, '#fff6d8');
+        SP.px(ctx, b.x - 2.5, b.y - 1, 5, 2, '#fff6d8');
         ctx.restore();
       }
     });
@@ -1038,10 +1072,10 @@ ZD.game = (() => {
 
     /* ---- képernyő-terű rétegek ---- */
 
-    /* SÖTÉTSÉG módosító: látókör a játékos körül */
+    /* SÖTÉTSÉG módosító: látókör a játékos körül (képernyő-koordinátákban) */
     if (st.mod === 'dark') {
-      const px_ = p.x - st.cam, py_ = C.GROUND_Y - 18;
-      const dg = ctx.createRadialGradient(px_, py_, 55, px_, py_, 190);
+      const px_ = (p.x - st.cam) * Z, py_ = (C.GROUND_Y - 18 - vy0) * Z;
+      const dg = ctx.createRadialGradient(px_, py_, 55 * Z, px_, py_, 190 * Z);
       dg.addColorStop(0, 'rgba(2,4,8,0)');
       dg.addColorStop(0.6, 'rgba(2,4,8,.55)');
       dg.addColorStop(1, 'rgba(2,4,8,.9)');

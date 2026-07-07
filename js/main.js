@@ -10,14 +10,19 @@ window.ZD = window.ZD || {};
   cv.height = C.VIEW_H * C.RS;
   ctx.imageSmoothingEnabled = false;
 
-  /* canvas illesztése a képernyőhöz (letterbox, pixeles nagyítás) */
+  /* stage (canvas + HUD + gombok + menük) illesztése a képernyőhöz:
+     arányos 16:9, maximális kitöltés, minimális letterbox */
+  const stage = document.getElementById('stage');
   function fit() {
-    const scale = Math.min(window.innerWidth / C.VIEW_W, window.innerHeight / C.VIEW_H);
-    cv.style.width = `${C.VIEW_W * scale}px`;
-    cv.style.height = `${C.VIEW_H * scale}px`;
+    const w = window.innerWidth, h = window.innerHeight;
+    const scale = Math.min(w / C.VIEW_W, h / C.VIEW_H);
+    stage.style.width = `${Math.round(C.VIEW_W * scale)}px`;
+    stage.style.height = `${Math.round(C.VIEW_H * scale)}px`;
   }
   window.addEventListener('resize', fit);
   window.addEventListener('orientationchange', () => setTimeout(fit, 250));
+  window.addEventListener('load', fit);
+  setTimeout(fit, 120); // iOS PWA: első layout után újraszámolás
 
   /* gesztusok tiltása (iOS dupla koppintás zoom, pinch) */
   document.addEventListener('gesturestart', (e) => e.preventDefault());

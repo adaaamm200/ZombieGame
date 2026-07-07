@@ -5,6 +5,8 @@ ZD.C = {
   VIEW_W: 480,
   VIEW_H: 270,
   RS: 2,             // render-skála: canvas 960×540, logika 480×270 marad
+  ZOOM: 1.75,        // kamera-nagyítás: a karakterek ~2× nagyobbak a képernyőn,
+                     // a játéklogika és a balansz érintetlen marad
   GROUND_Y: 234,
   WORLD_W: 1040,
   GRAVITY: 620,
@@ -18,15 +20,18 @@ ZD.C = {
     survival: { name: 'IRTÁS',         icon: '',   desc: 'Öld meg az összes zombit!' },
     defense:  { name: 'VÉDELEM',       icon: '🛡', desc: 'Védd meg a generátort!' },
     elite:    { name: 'ELIT VADÁSZAT', icon: '⭐', desc: 'Kevesebb, de erős célpont — dupla zsákmány!' },
+    survive:  { name: 'TÚLÉLÉS',       icon: '⏱', desc: 'Éld túl az időt — a horda nem fogy el!' },
     boss:     { name: 'VEZÉR',         icon: '☠',  desc: 'Győzd le a vezért!' },
   },
   modeFor(level) {
     if (this.isBossLevel(level)) return 'boss';
     const m = level % 5;
     if (m === 2 && level > 6) return 'defense';
+    if (m === 3 && level > 8) return 'survive';
     if (m === 4 && level > 4) return 'elite';
     return 'survival';
   },
+  surviveTime(level) { return Math.round(40 + level * 1.5); },
 
   /* pálya-módosítók — nem minden pályán, determinisztikusan */
   MODS: {
@@ -103,5 +108,5 @@ ZD.C = {
   ],
   upgCost(u, lvl) { return Math.round(u.cost0 * Math.pow(u.mul, lvl)); },
 
-  GRENADE: { dmg: 210, radius: 88, baseCount: 2 },
+  GRENADE: { dmg: 210, radius: 88, baseCount: 2, buyPrice: 250, buyMax: 3 },
 };

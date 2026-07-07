@@ -346,7 +346,7 @@ ZD.sprites = (() => {
 
     /* torkolattűz — fegyverenként eltérő méret */
     if (o.fireAnim > 0 && o.weapon.kind !== 'flame') {
-      const fs = o.weapon.flashScale || 1;
+      const fs = (o.weapon.flashScale || 1) * 1.35;
       const mx = o.x + o.facing * (GUN_ANCHOR.x + gun.mz * 0.65 + rec);
       const my = o.y + GUN_ANCHOR.y + gun.mzy * 1.3;
       ctx.save();
@@ -1528,6 +1528,11 @@ ZD.sprites = (() => {
   /* menü-háttér: lassan pásztázó jelenet vonuló zombi-sziluettekkel */
   function drawMenuScene(ctx, t) {
     const cam = (t * 9) % (C.WORLD_W - C.VIEW_W);
+    /* enyhe zoom, hogy a menü mögötti jelenet is közelibb, élőbb legyen */
+    ctx.save();
+    const MZ = 1.35;
+    ctx.scale(MZ, MZ);
+    ctx.translate(0, -(GY - 240 / MZ));
     drawBackground(ctx, cam, 1, t);
     // sziluett-zombik
     for (let i = 0; i < 3; i++) {
@@ -1536,6 +1541,7 @@ ZD.sprites = (() => {
       const sh = ZSHEETS[type][i % 2].walk;
       blitTint(ctx, sh, (t * 4 + i * 2) | 0, wx, GY, 1, '#060a08', 0.88);
     }
+    ctx.restore();
     // sötétítő vignetta
     const v = ctx.createRadialGradient(C.VIEW_W / 2, C.VIEW_H * 0.42, 60, C.VIEW_W / 2, C.VIEW_H / 2, C.VIEW_W * 0.62);
     v.addColorStop(0, 'rgba(0,0,0,0)');

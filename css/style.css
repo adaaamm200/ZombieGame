@@ -35,10 +35,23 @@ html, body {
 
 #app { position: fixed; inset: 0; background: #000; }
 
-#cv {
+/* Stage: a játék-viewport doboza — a canvas, HUD, gombok és menük
+   MIND ehhez igazodnak, így letterboxnál sem esik szét a layout.
+   Méretét a main.js fit() állítja (arányos 16:9). */
+#stage {
   position: absolute;
   left: 50%; top: 50%;
   transform: translate(-50%, -50%);
+  overflow: hidden;
+  background: var(--bg);
+  box-shadow: 0 0 60px rgba(0, 0, 0, .8);
+}
+
+#cv {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   background: var(--bg);
@@ -460,6 +473,28 @@ html, body {
 #result-box.win { border-color: var(--green-dim); }
 #result-box.lose { border-color: #6b2a2a; }
 .loot-line { font-size: 19px; color: var(--amber); font-weight: bold; text-shadow: 0 2px 0 #000; }
+
+/* --- loadout (bevetés előtt) --- */
+.modalbox.loadout { gap: 9px; }
+.lo-weapon {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  background: #0d130d; border: 1.5px solid #223022; border-radius: 10px; padding: 7px 8px;
+}
+.modalbox.loadout .lo-arrow { width: auto; padding: 8px 12px; font-size: 14px; flex: none; }
+.modalbox.loadout .lo-row .btn { width: auto; }
+.lo-winfo { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.lo-winfo img { width: 96px; height: 48px; image-rendering: pixelated; }
+#lo-wname { font-size: 12px; font-weight: bold; }
+#lo-wammo { font-size: 10px; color: var(--muted); }
+#lo-wammo .lo-empty { color: var(--red); }
+.lo-row {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; font-size: 12px; gap: 8px;
+}
+.lo-row .btn { font-size: 11px; padding: 7px 12px; }
+.lo-mod { color: var(--amber); font-size: 10.5px; }
+.lo-ok { color: var(--green); font-size: 10.5px; font-weight: bold; }
+.lo-risky { color: var(--amber); font-size: 9.5px; font-weight: bold; text-align: right; }
 
 /* --- beállítások --- */
 .settings-panel {

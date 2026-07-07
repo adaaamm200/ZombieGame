@@ -10,6 +10,24 @@
   ammo-bolttal, érme/medkit/lőszerláda drop, gránát, mentés-export/import.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## Layout + látvány 2.1 (2026-07-07 este) — regresszió-javítás
+- **#stage konténer**: a canvas, HUD, touch-gombok ÉS menük egyetlen, arányosan
+  skálázott 16:9 dobozban élnek — letterboxnál sem esik szét a layout, a HUD a
+  játéktérhez igazodik, nem az ablakhoz. fit() a stage-et méretezi (main.js).
+- **Kamera-zoom (C.ZOOM=1.75)**: a világ 1.75× nagyítással renderelődik → a
+  karakterek a képernyő ~28%-át teszik ki (előtte ~14%) = 2× nagyobb látvány.
+  A játéklogika és a hitboxok változatlanok; a kamera a szűkebb (274 logikai px)
+  látómezőhöz clampel. A sötétség-módosító látóköre képernyő-koordinátára váltva.
+- **Combat juice +**: irányított vérfröccsenés a lövés irányába (7-10 részecske),
+  húscafat-gibek ölésnél, találatnál 30% eséllyel vérfolt, hosszú additív tracer,
+  1.35× torkolattűz, robbanás shake 8/11 + hit-stop, menü-jelenet is zoomolva.
+- **Loadout-képernyő** pályaindítás előtt: mód+módosító leírás, fegyverváltó
+  nyilakkal (lőszer-kijelzéssel, ÜRES-figyelmeztetéssel), gránátvásárlás erre a
+  bevetésre (+1 · 250🪙, max 3), HP, erő-becslés (FELKÉSZÜLVE / KOCKÁZATOS).
+- **5. pályamód: TÚLÉLÉS (⏱)** — időre megy (40+1,5×szint mp), végtelen horda,
+  HUD visszaszámlálóval (13., 18., 23., 28., 33., 38. pálya).
+- sw cache: zk-v4.
+
 ## Gameplay 2.0 overhaul (2026-07-07 du.) — mi került bele
 - **Nagyobb, részletesebb karakterek**: player és zombik ~1.3× (boss 1.2×), hitboxok arányosan
   skálázva (const.js ZOMBIES/PLAYER), extra sprite-részletek (felszerelés, sebek, páncél).

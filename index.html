@@ -17,6 +17,8 @@
 </head>
 <body>
   <div id="app">
+    <!-- Stage: a játék-viewport — canvas, HUD, gombok, menük EGY rendszerben -->
+    <div id="stage">
     <canvas id="cv" width="960" height="540"></canvas>
 
     <!-- Játék közbeni HUD -->
@@ -48,6 +50,7 @@
 
     <!-- Menü képernyők (a js/ui.js tölti fel) -->
     <div id="screens"></div>
+    </div><!-- /stage -->
 
     <div id="rotate-note">📱 Fordítsd fekvő módba a telefont!</div>
   </div>

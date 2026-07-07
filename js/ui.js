@@ -10,6 +10,8 @@ ZD.ui = (() => {
   let flashId = null;      // vásárlás/fejlesztés utáni kiemelendő kártya
   let countTimer = null;   // eredmény-képernyő érme-számláló
   let armTab = 'weapons';  // aktív bolt-tab
+  let loLevel = 1;         // loadout: kiválasztott pálya
+  let loGren = 0;          // loadout: erre a bevetésre vett extra gránát
 
   function el(html) {
     const d = document.createElement('div');
@@ -63,12 +65,19 @@ ZD.ui = (() => {
     $('#hpbar').style.width = `${hpr * 100}%`;
     $('#hpbar').classList.toggle('low', hpr < 0.3);
     $('#hptext').textContent = `${Math.max(0, Math.ceil(p.hp))} / ${Math.round(p.stats.maxHp)}`;
-    const denom = st.quota + (C.isBossLevel(st.level) ? 1 : 0);
-    const prog = Math.min(1, (st.killed + (st.bossPhase && !st.bossRef ? 1 : 0)) / denom);
+    let prog;
+    let waveLabel = `${st.level}. pálya`;
+    if (st.mode === 'survive') {
+      prog = Math.min(1, st.time / st.surviveT);
+      waveLabel = `${Math.max(0, Math.ceil(st.surviveT - st.time))} mp`;
+    } else {
+      const denom = st.quota + (C.isBossLevel(st.level) ? 1 : 0);
+      prog = Math.min(1, (st.killed + (st.bossPhase && !st.bossRef ? 1 : 0)) / denom);
+    }
     $('#wavefill').style.width = `${prog * 100}%`;
     const M = C.MODES[st.mode];
     const modIcon = st.mod ? ' ' + C.MODS[st.mod].icon : '';
-    $('#wavetext').textContent = `${st.level}. pálya${M.icon ? ' · ' + M.icon : ''}${modIcon}`;
+    $('#wavetext').textContent = `${waveLabel}${M.icon ? ' · ' + M.icon : ''}${modIcon}`;
     $('#coincount').textContent = fmt(S().coins);
     const w = ZD.game.curWeapon();
     $('#weaponicon').src = wIcon(w.def);
@@ -174,6 +183,34 @@ ZD.ui = (() => {
         </div>
       </div>`);
 
+    /* Bevetés előtti loadout */
+    screens.loadout = el(`
+      <div class="screen modal hidden" id="s-loadout">
+        <div class="modalbox loadout">
+          <h2 id="lo-title"></h2>
+          <p class="sub" id="lo-desc"></p>
+          <div class="lo-weapon">
+            <button class="btn ghost lo-arrow" id="lo-prev">◀</button>
+            <div class="lo-winfo">
+              <img id="lo-wicon" alt="" />
+              <span id="lo-wname"></span>
+              <span id="lo-wammo"></span>
+            </div>
+            <button class="btn ghost lo-arrow" id="lo-next">▶</button>
+          </div>
+          <div class="lo-row">
+            <span>💣 Gránát: <b id="lo-gren"></b></span>
+            <button class="btn" id="lo-buygren"></button>
+          </div>
+          <div class="lo-row">
+            <span>❤ HP: <b id="lo-hp"></b></span>
+            <span id="lo-power"></span>
+          </div>
+          <button class="btn primary" id="lo-start">INDULÁS ▶</button>
+          <button class="btn ghost" id="lo-back">VISSZA</button>
+        </div>
+      </div>`);
+
     /* Eredmény */
     screens.result = el(`
       <div class="screen modal hidden" id="s-result">
@@ -237,6 +274,28 @@ ZD.ui = (() => {
     $('#btn-resume').addEventListener('click', () => ZD.game.resume());
     $('#btn-quit').addEventListener('click', () => { hidePause(); ZD.game.quit(); });
 
+    /* loadout */
+    $('#lo-prev').addEventListener('click', () => { cycleWeapon(-1); });
+    $('#lo-next').addEventListener('click', () => { cycleWeapon(1); });
+    $('#lo-buygren').addEventListener('click', () => {
+      if (loGren < C.GRENADE.buyMax && S().coins >= C.GRENADE.buyPrice) {
+        S().coins -= C.GRENADE.buyPrice;
+        loGren++;
+        ZD.save.persist();
+        ZD.audio.play('buy');
+        refreshLoadout();
+      }
+    });
+    $('#lo-start').addEventListener('click', () => {
+      screens.loadout.classList.add('hidden');
+      ZD.audio.play('click');
+      ZD.game.start(loLevel, { extraGren: loGren });
+    });
+    $('#lo-back').addEventListener('click', () => {
+      screens.loadout.classList.add('hidden');
+      ZD.audio.play('click');
+    });
+
     /* eredmény */
     $('#btn-retry').addEventListener('click', () => {
       screens.result.classList.add('hidden');
@@ -252,6 +311,56 @@ ZD.ui = (() => {
   /* ---------- frissítők ---------- */
   function refreshCoins(scr) {
     scr.querySelectorAll('[data-coins]').forEach((n) => { n.textContent = fmt(S().coins); });
+  }
+
+  /* ---------- loadout (bevetés előtti képernyő) ---------- */
+  function cycleWeapon(dir) {
+    const owned = C.WEAPONS.filter((w) => S().weapons.owned.includes(w.id));
+    let i = owned.findIndex((w) => w.id === S().weapons.equipped);
+    if (i < 0) i = 0;
+    i = (i + dir + owned.length) % owned.length;
+    S().weapons.equipped = owned[i].id;
+    ZD.save.persist();
+    ZD.audio.play('click');
+    refreshLoadout();
+  }
+
+  function refreshLoadout() {
+    const level = loLevel;
+    const mode = C.modeFor(level);
+    const mod = C.modFor(level);
+    const M = C.MODES[mode];
+    $('#lo-title').textContent = `${level}. PÁLYA ${M.icon ? '· ' + M.icon + ' ' + M.name : ''}`;
+    $('#lo-desc').innerHTML = M.desc + (mod ? `<br/><span class="lo-mod">${C.MODS[mod].icon} ${C.MODS[mod].name} — ${C.MODS[mod].desc}</span>` : '');
+    const w = C.WEAPONS.find((x) => x.id === S().weapons.equipped) || C.WEAPONS[0];
+    $('#lo-wicon').src = wIcon(w);
+    $('#lo-wname').textContent = w.name;
+    const pool = w.ammo < 0 ? '∞' : fmt(S().ammo[w.id] || 0);
+    const empty = w.ammo >= 0 && !(S().ammo[w.id] > 0);
+    $('#lo-wammo').innerHTML = `Lőszer: <b class="${empty ? 'lo-empty' : ''}">${pool}</b>${empty ? ' ⚠ ÜRES!' : ''}`;
+    const stats = ZD.game.calcStats();
+    $('#lo-gren').textContent = String(stats.grenades + loGren);
+    const canBuy = loGren < C.GRENADE.buyMax && S().coins >= C.GRENADE.buyPrice;
+    const bg = $('#lo-buygren');
+    bg.textContent = loGren >= C.GRENADE.buyMax ? 'MAX' : `+1 · 🪙 ${C.GRENADE.buyPrice}`;
+    bg.disabled = !canBuy;
+    $('#lo-hp').textContent = String(Math.round(stats.maxHp));
+    /* egyszerű erő-becslés a pálya nehézségéhez képest */
+    const bestDps = Math.max(...C.WEAPONS
+      .filter((x) => S().weapons.owned.includes(x.id) && (x.ammo < 0 || (S().ammo[x.id] || 0) > 0))
+      .map((x) => x.dmg * x.rps * (x.pellets || 1)));
+    const power = bestDps * stats.dmgMul + stats.maxHp * 0.6;
+    const need = 90 + level * 16;
+    $('#lo-power').innerHTML = power >= need
+      ? '<span class="lo-ok">✔ FELKÉSZÜLVE</span>'
+      : '<span class="lo-risky">⚠ KOCKÁZATOS — fejlessz vagy vegyél lőszert!</span>';
+  }
+
+  function showLoadout(level) {
+    loLevel = level;
+    loGren = 0;
+    refreshLoadout();
+    screens.loadout.classList.remove('hidden');
   }
 
   /* normalizált stat-sáv (gyökös skála, hogy a kis értékek is látsszanak) */
@@ -279,6 +388,7 @@ ZD.ui = (() => {
         const sub = boss ? 'VEZÉR'
           : mode === 'defense' ? 'védelem'
           : mode === 'elite' ? 'elit'
+          : mode === 'survive' ? 'túlélés'
           : cleared ? '✔ kész' : `${i}. pálya`;
         b.innerHTML = `
           ${modeIcon && !boss ? `<span class="sc-mode">${modeIcon}</span>` : ''}
@@ -287,7 +397,7 @@ ZD.ui = (() => {
         if (!locked) {
           b.addEventListener('click', () => {
             ZD.audio.play('click');
-            ZD.game.start(i);
+            showLoadout(i);
           });
         }
         grid.appendChild(b);
