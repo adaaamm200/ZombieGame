@@ -14,6 +14,7 @@ ZD.save = (() => {
     upg: { hp: 0, regen: 0, dmg: 0, crit: 0, speed: 0, gren: 0, luck: 0 },
     stages: { unlocked: 1, cleared: [] },
     sound: true,
+    lang: 'en',          // UI nyelv: 'en' (alap) vagy 'hu'
     everBackedUp: false, // volt-e már fájl/kód biztonsági mentés
     _ts: 0,              // utolsó mentés időbélyege (a rétegek egyeztetéséhez)
   });
@@ -94,6 +95,7 @@ ZD.save = (() => {
     } catch (e) {
       data = defaults();
     }
+    if (window.ZD && ZD.i18n) ZD.i18n.setLang(data.lang || 'en');
     return data;
   }
 

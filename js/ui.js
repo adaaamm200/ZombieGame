@@ -33,8 +33,12 @@ ZD.ui = (() => {
     return upgIconCache[id];
   }
 
+  const T = (k, v) => ZD.i18n.t(k, v);
+  const IC = (n, c) => ZD.icon(n, c);
+
   /* ---------- képernyő-kezelés ---------- */
   function show(name) {
+    if (ZD.i18n) ZD.i18n.setLang(S().lang || 'en');
     Object.values(screens).forEach((s) => s.classList.add('hidden'));
     $('#hud').classList.add('hidden');
     $('#controls').classList.add('hidden');
@@ -66,21 +70,20 @@ ZD.ui = (() => {
     $('#hpbar').classList.toggle('low', hpr < 0.3);
     $('#hptext').textContent = `${Math.max(0, Math.ceil(p.hp))} / ${Math.round(p.stats.maxHp)}`;
     let prog;
-    let waveLabel = `${st.level}. pálya`;
+    let waveLabel;
     if (st.mode === 'survive') {
       prog = Math.min(1, st.time / st.surviveT);
-      waveLabel = `${Math.max(0, Math.ceil(st.surviveT - st.time))} mp`;
+      waveLabel = `${Math.max(0, Math.ceil(st.surviveT - st.time))}s`;
     } else if (st.mode === 'free') {
       prog = st.waveQuota ? Math.min(1, st.waveKills / st.waveQuota) : 0;
-      waveLabel = `${st.wave}. hullám`;
+      waveLabel = `${T('res.statWave')} ${st.wave}`;
     } else {
       const denom = st.quota + (C.isBossLevel(st.level) ? 1 : 0);
       prog = Math.min(1, (st.killed + (st.bossPhase && !st.bossRef ? 1 : 0)) / denom);
+      waveLabel = `${T('brief.mission')} ${C.missionInDay(st.level)}`;
     }
     $('#wavefill').style.width = `${prog * 100}%`;
-    const M = C.MODES[st.mode];
-    const modIcon = st.mod ? ' ' + C.MODS[st.mod].icon : '';
-    $('#wavetext').textContent = `${waveLabel}${M.icon ? ' · ' + M.icon : ''}${modIcon}`;
+    $('#wavetext').textContent = `${waveLabel} · ${T('mode.' + st.mode)}${st.mod ? ' · ' + C.MODS[st.mod].name : ''}`;
     $('#coincount').textContent = fmt(S().coins);
     const w = ZD.game.curWeapon();
     $('#weaponicon').src = wIcon(w.def);
@@ -98,22 +101,18 @@ ZD.ui = (() => {
   function build() {
     root = $('#screens');
 
-    /* Főmenü */
+    /* Főmenü — logó + programozott prémium menü (i18n) */
     screens.title = el(`
       <div class="screen title-screen" id="s-title">
+        <div class="title-topbar">
+          <span class="title-coin" id="title-coin"></span>
+          <button class="title-gear" id="title-gear" data-go="settings" aria-label="Settings"></button>
+        </div>
         <div class="title-inner">
-          <div class="logo">
-            <span class="logo-top">ZOMBI</span>
-            <span class="logo-main">KRÓNIKA</span>
-            <span class="logo-sub">— TÚLÉLŐNAPLÓ —</span>
-          </div>
-          <div class="menu">
-            <button class="btn primary big-menu" data-go="stages"><i>▶</i><span>JÁTÉK<small>40 pálya vár rád</small></span></button>
-            <button class="btn big-menu" data-go="armory"><i>🔫</i><span>FEGYVERBOLT<small>8 fegyver</small></span></button>
-            <button class="btn big-menu" data-go="lab"><i>⚗</i><span>LABOR<small>7 fejlesztés</small></span></button>
-            <button class="btn big-menu" data-go="settings"><i>⚙</i><span>BEÁLLÍTÁSOK<small>hang · mentés</small></span></button>
-          </div>
-          <p class="title-note">Saját készítésű hommage — kizárólag magáncélra.</p>
+          <img class="brand-logo" src="assets/references/logo.png" alt="ZombieChronicles" draggable="false" />
+          <div class="menu" id="title-menu"></div>
+          <button class="title-save" id="title-save" data-go="settings"></button>
+          <p class="title-note" id="title-note"></p>
         </div>
       </div>`);
 
@@ -125,27 +124,24 @@ ZD.ui = (() => {
         <div class="board-scrim"></div>
         <div class="board-overlay">
           <div class="bhud">
-            <button class="bhud-back" data-go="title" aria-label="Főmenü">←</button>
-            <div class="bhud-day">
-              <span class="bd-num">DAY 1</span>
-              <span class="bd-name">KARANTÉN UTCA</span>
-            </div>
+            <button class="bhud-back" data-go="title" aria-label="Menu"></button>
+            <div class="bhud-day"><span class="bd-num" id="bd-num">DAY 1</span><span class="bd-name" id="bd-name"></span></div>
             <div class="bhud-right">
-              <span class="bhud-coin">🪙 <b data-coins></b></span>
-              <button class="bhud-shop" data-go="armory">🔫 <span>SHOP</span></button>
-              <button class="bhud-gear" data-go="settings" aria-label="Beállítások">⚙</button>
+              <span class="bhud-coin" id="bhud-coin"></span>
+              <button class="bhud-shop" data-go="armory"><span class="shop-ic" id="bhud-shop-ic"></span><span id="bhud-shop-t"></span></button>
+              <button class="bhud-gear" data-go="settings" aria-label="Settings"></button>
             </div>
           </div>
           <div class="bnav">
-            <button class="bnav-item active"><span class="i">📖</span><span class="t">CAMPAIGN</span></button>
-            <button class="bnav-item" id="bn-scavenge"><span class="i">📦</span><span class="t">SCAVENGE</span></button>
-            <button class="bnav-item" data-go="settings"><span class="i">⚙</span><span class="t">BEÁLLÍTÁS</span></button>
+            <button class="bnav-item active"><span class="i" id="nav-camp-ic"></span><span class="t" id="nav-camp-t"></span></button>
+            <button class="bnav-item" id="bn-scavenge"><span class="i" id="nav-scav-ic"></span><span class="t" id="nav-scav-t"></span></button>
+            <button class="bnav-item" data-go="settings"><span class="i" id="nav-set-ic"></span><span class="t" id="nav-set-t"></span></button>
           </div>
           <div class="board-hotspots" id="board-hotspots"></div>
         </div>
         <div class="stage-preview hidden" id="stage-preview">
           <div class="sp-card" id="sp-card">
-            <button class="sp-close" id="sp-close">✕</button>
+            <button class="sp-close" id="sp-close" aria-label="Close"></button>
             <div class="sp-brief">
               <div class="sp-thumb" id="sp-thumb"></div>
               <div class="sp-info">
@@ -171,13 +167,13 @@ ZD.ui = (() => {
     screens.armory = el(`
       <div class="screen" id="s-armory">
         <div class="topbar">
-          <button class="btn backbtn" data-go="title">←</button>
-          <h2>FEGYVERBOLT</h2>
-          <span class="coins">🪙 <span data-coins></span></span>
+          <button class="btn backbtn" data-go="title" id="arm-back"></button>
+          <h2 id="arm-title"></h2>
+          <span class="coins"><svg class="coin-ic" viewBox="0 0 24 24" width="1em" height="1em"><circle cx="12" cy="12" r="9" fill="#ffcf4d"/><path d="M9.4 9.2a3.4 3.4 0 100 5.6M8.2 12h3.4" fill="none" stroke="rgba(60,40,0,.75)" stroke-width="1.7" stroke-linecap="round"/></svg> <span data-coins></span></span>
         </div>
         <div class="tabs">
-          <button class="tab active" data-tab="weapons">🔫 FEGYVEREK</button>
-          <button class="tab" data-tab="ammo">📦 LŐSZER</button>
+          <button class="tab active" data-tab="weapons" id="arm-tab-w"></button>
+          <button class="tab" data-tab="ammo" id="arm-tab-a"></button>
         </div>
         <div class="cardgrid" id="weaponlist"></div>
       </div>`);
@@ -186,9 +182,9 @@ ZD.ui = (() => {
     screens.lab = el(`
       <div class="screen" id="s-lab">
         <div class="topbar">
-          <button class="btn backbtn" data-go="title">←</button>
-          <h2>LABOR</h2>
-          <span class="coins">🪙 <span data-coins></span></span>
+          <button class="btn backbtn" data-go="title" id="lab-back"></button>
+          <h2 id="lab-title"></h2>
+          <span class="coins"><svg class="coin-ic" viewBox="0 0 24 24" width="1em" height="1em"><circle cx="12" cy="12" r="9" fill="#ffcf4d"/><path d="M9.4 9.2a3.4 3.4 0 100 5.6M8.2 12h3.4" fill="none" stroke="rgba(60,40,0,.75)" stroke-width="1.7" stroke-linecap="round"/></svg> <span data-coins></span></span>
         </div>
         <div class="cardgrid" id="upglist"></div>
       </div>`);
@@ -197,20 +193,26 @@ ZD.ui = (() => {
     screens.settings = el(`
       <div class="screen" id="s-settings">
         <div class="topbar">
-          <button class="btn backbtn" data-go="title">←</button>
-          <h2>BEÁLLÍTÁSOK</h2><span></span>
+          <button class="btn backbtn" data-go="title" id="set-back"></button>
+          <h2 id="set-title"></h2><span></span>
         </div>
         <div class="settings-panel">
-          <div class="settingsrow"><span>Hangok</span><button class="btn" id="btn-sound"></button></div>
+          <div class="settingsrow"><span id="set-lang-l"></span>
+            <div class="lang-switch">
+              <button class="lang-opt" data-lang="en">English</button>
+              <button class="lang-opt" data-lang="hu">Magyar</button>
+            </div>
+          </div>
+          <div class="settingsrow"><span id="set-sound-l"></span><button class="btn" id="btn-sound"></button></div>
           <div class="backup-hint" id="backup-hint"></div>
-          <div class="settingsrow"><span>💾 Mentés fájlba</span><button class="btn primary" id="btn-savefile">LETÖLTÉS ↓</button></div>
-          <div class="settingsrow"><span>📂 Betöltés fájlból</span><button class="btn" id="btn-loadfile">FÁJL VÁLASZTÁSA</button></div>
+          <div class="settingsrow"><span id="set-savefile-l"></span><button class="btn primary" id="btn-savefile"></button></div>
+          <div class="settingsrow"><span id="set-loadfile-l"></span><button class="btn" id="btn-loadfile"></button></div>
           <input type="file" id="file-input" accept=".txt,.json,text/plain,application/json" style="display:none" />
-          <div class="settings-sep">— vagy kód másolással —</div>
-          <div class="settingsrow"><span>Mentés-kód exportálása</span><button class="btn" id="btn-export">MÁSOLÁS IDE ↓</button></div>
-          <textarea class="save-io" id="save-io" placeholder="Export: ide kerül a mentéskód (jelöld ki és másold). Import: illeszd be a kódot, majd IMPORTÁLÁS."></textarea>
-          <div class="settingsrow"><span>Mentés-kód importálása</span><button class="btn" id="btn-import">IMPORTÁLÁS</button></div>
-          <div class="settingsrow"><span>Minden törlése</span><button class="btn danger" id="btn-reset">TÖRLÉS</button></div>
+          <div class="settings-sep" id="set-sep"></div>
+          <div class="settingsrow"><span id="set-export-l"></span><button class="btn" id="btn-export"></button></div>
+          <textarea class="save-io" id="save-io"></textarea>
+          <div class="settingsrow"><span id="set-import-l"></span><button class="btn" id="btn-import"></button></div>
+          <div class="settingsrow"><span id="set-wipe-l"></span><button class="btn danger" id="btn-reset"></button></div>
         </div>
       </div>`);
 
@@ -218,9 +220,9 @@ ZD.ui = (() => {
     screens.pause = el(`
       <div class="screen modal hidden" id="s-pause">
         <div class="modalbox">
-          <h2>⏸ SZÜNET</h2>
-          <button class="btn primary" id="btn-resume">FOLYTATÁS</button>
-          <button class="btn danger" id="btn-quit">FELADÁS</button>
+          <h2 id="pause-title"></h2>
+          <button class="btn primary" id="btn-resume"></button>
+          <button class="btn danger" id="btn-quit"></button>
         </div>
       </div>`);
 
@@ -231,24 +233,24 @@ ZD.ui = (() => {
           <h2 id="lo-title"></h2>
           <p class="sub" id="lo-desc"></p>
           <div class="lo-weapon">
-            <button class="btn ghost lo-arrow" id="lo-prev">◀</button>
+            <button class="btn ghost lo-arrow" id="lo-prev" aria-label="Prev"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
             <div class="lo-winfo">
               <img id="lo-wicon" alt="" />
               <span id="lo-wname"></span>
               <span id="lo-wammo"></span>
             </div>
-            <button class="btn ghost lo-arrow" id="lo-next">▶</button>
+            <button class="btn ghost lo-arrow" id="lo-next" aria-label="Next"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
           </div>
           <div class="lo-row">
-            <span>💣 Gránát: <b id="lo-gren"></b></span>
+            <span><b id="lo-gren-l"></b>: <b id="lo-gren"></b></span>
             <button class="btn" id="lo-buygren"></button>
           </div>
           <div class="lo-row">
-            <span>❤ HP: <b id="lo-hp"></b></span>
+            <span><b id="lo-hp-l"></b>: <b id="lo-hp"></b></span>
             <span id="lo-power"></span>
           </div>
-          <button class="btn primary" id="lo-start">INDULÁS ▶</button>
-          <button class="btn ghost" id="lo-back">VISSZA</button>
+          <button class="btn primary" id="lo-start"></button>
+          <button class="btn ghost" id="lo-back"></button>
         </div>
       </div>`);
 
@@ -258,11 +260,11 @@ ZD.ui = (() => {
         <div class="modalbox" id="result-box">
           <div class="result-icon" id="result-icon"></div>
           <h2 class="big" id="result-title"></h2>
-          <div class="loot-line">🪙 <b id="earn-count">0</b></div>
+          <div class="loot-line"><svg class="coin-ic" viewBox="0 0 24 24" width="1em" height="1em"><circle cx="12" cy="12" r="9" fill="#ffcf4d"/><path d="M9.4 9.2a3.4 3.4 0 100 5.6M8.2 12h3.4" fill="none" stroke="rgba(60,40,0,.75)" stroke-width="1.7" stroke-linecap="round"/></svg> <b id="earn-count">0</b></div>
           <p class="sub" id="result-sub"></p>
           <button class="btn primary" id="btn-next"></button>
-          <button class="btn" id="btn-retry">ÚJRA</button>
-          <button class="btn ghost" data-go="title">FŐMENÜ</button>
+          <button class="btn" id="btn-retry"></button>
+          <button class="btn ghost" id="result-menu" data-go="title"></button>
         </div>
       </div>`);
 
@@ -273,6 +275,12 @@ ZD.ui = (() => {
 
     /* navigációs gombok */
     root.addEventListener('click', (e) => {
+      const act = e.target.closest('[data-action]');
+      if (act) {
+        ZD.audio.play('click');
+        if (act.dataset.action === 'scavenge') showLoadout('free');
+        return;
+      }
       const go = e.target.closest('[data-go]');
       if (go) {
         ZD.audio.play('click');
@@ -295,15 +303,25 @@ ZD.ui = (() => {
       api.refresh_settings();
       ZD.audio.play('click');
     });
+    /* nyelvválasztás */
+    screens.settings.addEventListener('click', (e) => {
+      const opt = e.target.closest('.lang-opt');
+      if (!opt) return;
+      S().lang = opt.dataset.lang;
+      ZD.i18n.setLang(S().lang);
+      ZD.save.persist();
+      ZD.audio.play('click');
+      api.refresh_settings();
+    });
     $('#btn-export').addEventListener('click', () => {
       $('#save-io').value = ZD.save.exportStr();
       ZD.audio.play('click');
     });
     $('#btn-import').addEventListener('click', () => {
       const ok = ZD.save.importStr($('#save-io').value);
-      $('#save-io').value = ok ? '✔ Sikeres import!' : '✖ Érvénytelen mentéskód.';
+      $('#save-io').value = T(ok ? 'set.importOk' : 'set.importBad');
       ZD.audio.play(ok ? 'buy' : 'click');
-      if (ok) api.refresh_settings();
+      if (ok) { ZD.i18n.setLang(S().lang || 'en'); api.refresh_settings(); }
     });
     /* fájl-alapú biztonsági mentés — túléli a PWA törlését is */
     $('#btn-savefile').addEventListener('click', () => {
@@ -317,14 +335,16 @@ ZD.ui = (() => {
       if (!file) return;
       ZD.save.importFile(file).then((ok) => {
         ZD.audio.play(ok ? 'buy' : 'click');
-        $('#save-io').value = ok ? '✔ Mentés betöltve fájlból!' : '✖ Érvénytelen mentésfájl.';
+        $('#save-io').value = T(ok ? 'set.fileOk' : 'set.fileBad');
+        if (ok) ZD.i18n.setLang(S().lang || 'en');
         api.refresh_settings();
         e.target.value = '';
       });
     });
     $('#btn-reset').addEventListener('click', () => {
-      if (confirm('Biztosan törlöd az összes haladást?')) {
+      if (confirm(T('set.wipeConfirm'))) {
         ZD.save.reset();
+        ZD.i18n.setLang(S().lang || 'en');
         api.refresh_settings();
       }
     });
@@ -403,31 +423,35 @@ ZD.ui = (() => {
     const isFree = level === 'free';
     const mode = isFree ? 'free' : C.modeFor(level);
     const mod = isFree ? null : C.modFor(level);
-    const M = C.MODES[mode];
-    $('#lo-title').textContent = isFree ? `${M.icon} ${M.name}` : `${level}. PÁLYA ${M.icon ? '· ' + M.icon + ' ' + M.name : ''}`;
-    $('#lo-desc').innerHTML = M.desc + (mod ? `<br/><span class="lo-mod">${C.MODS[mod].icon} ${C.MODS[mod].name} — ${C.MODS[mod].desc}</span>` : '');
+    $('#lo-title').textContent = isFree
+      ? T('scav.title')
+      : `${T('brief.mission')} ${C.missionInDay(level)} · ${modeLabel(mode)}`;
+    $('#lo-desc').innerHTML = T('obj.' + mode) + (mod ? `<br/><span class="lo-mod">${C.MODS[mod].name} — ${C.MODS[mod].desc}</span>` : '');
     const w = C.WEAPONS.find((x) => x.id === S().weapons.equipped) || C.WEAPONS[0];
     $('#lo-wicon').src = wIcon(w);
     $('#lo-wname').textContent = w.name;
     const pool = w.ammo < 0 ? '∞' : fmt(S().ammo[w.id] || 0);
     const empty = w.ammo >= 0 && !(S().ammo[w.id] > 0);
-    $('#lo-wammo').innerHTML = `Lőszer: <b class="${empty ? 'lo-empty' : ''}">${pool}</b>${empty ? ' ⚠ ÜRES!' : ''}`;
+    $('#lo-wammo').innerHTML = `${T('lo.ammo')}: <b class="${empty ? 'lo-empty' : ''}">${pool}</b>${empty ? ' · ' + T('lo.empty') : ''}`;
+    $('#lo-gren-l').textContent = T('lo.grenades');
+    $('#lo-hp-l').textContent = T('lo.hp');
     const stats = ZD.game.calcStats();
     $('#lo-gren').textContent = String(stats.grenades + loGren);
     const canBuy = loGren < C.GRENADE.buyMax && S().coins >= C.GRENADE.buyPrice;
     const bg = $('#lo-buygren');
-    bg.textContent = loGren >= C.GRENADE.buyMax ? 'MAX' : `+1 · 🪙 ${C.GRENADE.buyPrice}`;
+    bg.innerHTML = loGren >= C.GRENADE.buyMax ? T('lo.max') : `+1 · ${IC('coin', 'coin-ic')} ${C.GRENADE.buyPrice}`;
     bg.disabled = !canBuy;
     $('#lo-hp').textContent = String(Math.round(stats.maxHp));
-    /* egyszerű erő-becslés a pálya nehézségéhez képest */
+    $('#lo-start').textContent = T('lo.start');
+    $('#lo-back').textContent = T('lo.back');
     const bestDps = Math.max(...C.WEAPONS
       .filter((x) => S().weapons.owned.includes(x.id) && (x.ammo < 0 || (S().ammo[x.id] || 0) > 0))
       .map((x) => x.dmg * x.rps * (x.pellets || 1)));
     const power = bestDps * stats.dmgMul + stats.maxHp * 0.6;
     const need = isFree ? 80 : 90 + level * 16;
     $('#lo-power').innerHTML = power >= need
-      ? '<span class="lo-ok">✔ FELKÉSZÜLVE</span>'
-      : '<span class="lo-risky">⚠ KOCKÁZATOS — fejlessz vagy vegyél lőszert!</span>';
+      ? `<span class="lo-ok">${T('lo.ready')}</span>`
+      : `<span class="lo-risky">${T('lo.risky')}</span>`;
   }
 
   function showLoadout(level) {
@@ -437,23 +461,7 @@ ZD.ui = (() => {
     screens.loadout.classList.remove('hidden');
   }
 
-  /* ---------- DAY-alapú campaign board ---------- */
-  const DIFF_LABELS = ['—', 'Alacsony', 'Mérsékelt', 'Magas', 'Súlyos', 'Kritikus'];
-  const THEME_NAMES = ['Elhagyott utca', 'Labor-bunker', 'Romos város'];
-  const LOC_GLYPH = ['🏙', '⚗', '🏚'];
-  const THEME_FLAVOR = [
-    'Kihalt utcák, felborult autók, pislákoló lámpák — a horda a sötétből jön.',
-    'Zárt labor-folyosók és tartályok. A fertőzés forrása valahol idelent lüktet.',
-    'Beomlott házak, parázsló romok. A túlélők rég elhagyták ezt a negyedet.',
-  ];
-  const OBJECTIVE = {
-    survival: 'tisztítsd meg a területet — irtsd ki az összes fertőzöttet.',
-    defense: 'védd meg a generátort a hordától.',
-    survive: 'tartsd magad a kijelölt ideig — a horda nem fogy el.',
-    elite: 'vadászd le az elit célpontokat — dupla zsákmány.',
-    boss: 'semmisítsd meg a fertőzés forrását — a Vezért.',
-    free: 'gyűjts ellátmányt és érmét, ameddig bírod.',
-  };
+  /* ---------- DAY-alapú campaign board (i18n) ---------- */
   let curDay = 1;
 
   function recommendedWeapon(level) {
@@ -464,11 +472,12 @@ ZD.ui = (() => {
     return w ? w.name : 'Vipera SMG';
   }
 
-  function modeGlyph(mode, theme) {
-    return mode === 'boss' ? '☠' : mode === 'defense' ? '🛡' : mode === 'elite' ? '⭐' : mode === 'survive' ? '⏱' : LOC_GLYPH[theme];
-  }
-  function modeLabel(mode) {
-    return mode === 'boss' ? '☠ vezér' : mode === 'defense' ? '🛡 védelem' : mode === 'elite' ? '⭐ elit' : mode === 'survive' ? '⏱ túlélés' : '🏙 irtás';
+  function modeLabel(mode) { return T('mode.' + mode); }
+  function modeThumb(mode) { return mode === 'boss' ? IC('skull') : (mode === 'free' || mode === 'scavenge') ? IC('crate') : IC('campaign'); }
+  function boardDayName(day) { return day === 1 ? T('day1.name') : C.dayName(day); }
+  function boardMissionName(level) {
+    const day = C.dayOf(level), m = C.missionInDay(level);
+    return day === 1 ? T('day1.m' + m) : C.missionTitle(level);
   }
 
   function currentDay() { return C.dayOf(Math.min(S().stages.unlocked, C.STAGES)); }
@@ -512,24 +521,41 @@ ZD.ui = (() => {
     el.style.top = cfg.y + '%';
     let cls, emblem;
     if (isFree) {
-      cls = 'is-scavenge'; emblem = '📦';
+      cls = 'is-scavenge'; emblem = IC('crate');
     } else {
       const ms = missionStateOf(cfg.level);
       const boss = C.modeFor(cfg.level) === 'boss';
       cls = `is-${ms}${boss ? ' is-boss' : ''}`;
-      emblem = boss ? '☠' : ms === 'done' ? '✓' : ms === 'locked' ? '🔒' : String(cfg.slot);
+      emblem = boss ? IC('skull') : ms === 'done' ? IC('check') : ms === 'locked' ? IC('lock') : String(cfg.slot);
     }
     el.className = 'hotspot ' + cls;
     el.dataset.level = String(cfg.level);
-    el.setAttribute('aria-label', isFree ? 'Zsákmány zóna' : C.missionTitle(cfg.level));
+    el.setAttribute('aria-label', isFree ? T('scav.title') : boardMissionName(cfg.level));
     el.innerHTML = '<span class="hs-halo"></span><span class="hs-emblem">' + emblem + '</span>';
     el.addEventListener('click', () => { ZD.audio.play('click'); selectHotspot(el); showBriefing(cfg.level); });
     return el;
   }
 
+  /* a board HUD/nav ikonjai + i18n feliratai (nyelvváltásra is frissül) */
+  function fillBoardChrome() {
+    const scr = screens.stages;
+    scr.querySelector('.bhud-back').innerHTML = IC('back');
+    scr.querySelector('.bhud-gear').innerHTML = IC('gear');
+    $('#bd-num').textContent = T('day.label') + ' 1';
+    $('#bd-name').textContent = boardDayName(1).toUpperCase();
+    $('#bhud-coin').innerHTML = IC('coin', 'coin-ic') + `<b>${fmt(S().coins)}</b>`;
+    $('#bhud-shop-ic').innerHTML = IC('armory');
+    $('#bhud-shop-t').textContent = T('board.shop');
+    $('#nav-camp-ic').innerHTML = IC('campaign'); $('#nav-camp-t').textContent = T('nav.campaign');
+    $('#nav-scav-ic').innerHTML = IC('scavenge'); $('#nav-scav-t').textContent = T('nav.scavenge');
+    $('#nav-set-ic').innerHTML = IC('gear'); $('#nav-set-t').textContent = T('nav.settings');
+    $('#sp-close').innerHTML = IC('close');
+  }
+
   /* A jelenlegi board-artwork Day 1 — a hotspotok a Day 1 misszióira mutatnak. */
   function renderBoard() {
     curDay = 1;
+    fillBoardChrome();
     const host = $('#board-hotspots');
     host.innerHTML = '';
     HOTSPOTS.forEach((h) => host.appendChild(makeHotspot({ level: C.levelOf(1, h.slot), x: h.x, y: h.y, slot: h.slot })));
@@ -577,52 +603,50 @@ ZD.ui = (() => {
 
     const thumb = $('#sp-thumb');
     thumb.className = 'sp-thumb m-' + d.mode;
-    thumb.textContent = d.isFree ? '📦' : modeGlyph(d.mode, d.theme);
+    thumb.innerHTML = modeThumb(d.mode);
 
     const stc = $('#sp-status');
-    if (d.isFree) { stc.className = 'sp-status farm'; stc.textContent = '📦 FARM ZÓNA'; }
-    else if (d.locked) { stc.className = 'sp-status locked'; stc.textContent = '🔒 ZÁRT'; }
-    else if (d.done) { stc.className = 'sp-status done'; stc.textContent = '✔ TELJESÍTVE'; }
-    else if (d.next) { stc.className = 'sp-status next'; stc.textContent = '► KÖVETKEZŐ'; }
-    else { stc.className = 'sp-status open'; stc.textContent = 'ELÉRHETŐ'; }
+    if (d.isFree) { stc.className = 'sp-status farm'; stc.textContent = T('state.farmzone'); }
+    else if (d.locked) { stc.className = 'sp-status locked'; stc.textContent = T('state.locked'); }
+    else if (d.done) { stc.className = 'sp-status done'; stc.textContent = T('state.completed'); }
+    else if (d.next) { stc.className = 'sp-status next'; stc.textContent = T('state.next'); }
+    else { stc.className = 'sp-status open'; stc.textContent = T('state.available'); }
 
     if (d.isFree) {
-      $('#sp-day').textContent = 'KÜLÖN MÓD · nem old fel napot';
-      $('#sp-title').textContent = 'SCAVENGE ZÓNA';
-      $('#sp-mode').textContent = '📦 Supply run · végtelen farm';
+      $('#sp-day').textContent = T('brief.extMode');
+      $('#sp-title').textContent = T('scav.title');
+      $('#sp-mode').textContent = T('brief.farmSub');
     } else {
       const day = C.dayOf(level);
       const m = C.missionInDay(level);
-      $('#sp-day').textContent = `DAY ${day} — ${C.dayName(day).toUpperCase()} · ${d.boss ? 'DAY FINALE' : `Mission ${m}/${C.CAMPAIGN.MISSIONS_PER_DAY}`}`;
-      $('#sp-title').textContent = `${m}. ${C.missionTitle(level)}`;
-      $('#sp-mode').textContent = `${modeLabel(d.mode)}${d.mod ? ` · ${C.MODS[d.mod].icon} ${C.MODS[d.mod].name}` : ''}`;
+      $('#sp-day').textContent = `${T('day.label')} ${day} — ${boardDayName(day).toUpperCase()} · ${d.boss ? T('brief.finale') : `${T('brief.mission')} ${m}/${C.CAMPAIGN.MISSIONS_PER_DAY}`}`;
+      $('#sp-title').textContent = `${m}. ${boardMissionName(level)}`;
+      $('#sp-mode').textContent = `${modeLabel(d.mode)}${d.mod ? ` · ${C.MODS[d.mod].name}` : ''}`;
     }
 
-    $('#sp-obj').innerHTML = `<b>Cél:</b> ${OBJECTIVE[d.mode]}`;
+    $('#sp-obj').innerHTML = `<b>${T('brief.objective')}:</b> ${T('obj.' + d.mode)}`;
 
     const skulls = d.isFree ? 3 : d.diff;
-    $('#sp-danger').innerHTML = '<span class="lbl">VESZÉLY</span>' +
-      Array.from({ length: 5 }, (_, i) => `<span class="sk${i < skulls ? ' on' : ''}">☠</span>`).join('') +
-      `<b>${d.isFree ? '∞' : DIFF_LABELS[d.diff]}</b>`;
+    $('#sp-danger').innerHTML = `<span class="lbl">${T('brief.danger')}</span>` +
+      Array.from({ length: 5 }, (_, i) => `<span class="sk${i < skulls ? ' on' : ''}">${IC('skull')}</span>`).join('') +
+      `<b>${d.isFree ? T('diff.inf') : T('diff.' + d.diff)}</b>`;
     $('#sp-reward').innerHTML = d.isFree
-      ? '<span class="lbl">ZSÁKMÁNY</span> <b>🪙 farm</b>'
-      : `<span class="lbl">ZSÁKMÁNY</span> <b>🪙 ~${fmt(d.reward)}</b> <b class="xp">XP ~${Math.round(d.reward * 0.15)}</b>`;
+      ? `<span class="lbl">${T('brief.reward')}</span> <b class="cn">${IC('coin', 'coin-ic')}farm</b>`
+      : `<span class="lbl">${T('brief.reward')}</span> <b class="cn">${IC('coin', 'coin-ic')}~${fmt(d.reward)}</b> <b class="xp">XP ~${Math.round(d.reward * 0.15)}</b>`;
     $('#sp-rec').innerHTML = d.isFree
-      ? '<span class="lbl">AJÁNLOTT</span> <b>🔫 gyors fegyver</b>'
-      : `<span class="lbl">AJÁNLOTT</span> <b>🔫 ${recommendedWeapon(level)}</b>`;
+      ? `<span class="lbl">${T('brief.suggested')}</span> <b>${T('brief.recFast')}</b>`
+      : `<span class="lbl">${T('brief.suggested')}</span> <b>${recommendedWeapon(level)}</b>`;
 
     const lk = $('#sp-locked');
     const start = $('#sp-start');
     if (d.locked) {
       lk.classList.remove('hidden');
-      lk.innerHTML = C.missionInDay(level) === 1
-        ? '🔒 Zárt — előbb biztosítsd az előző nap fináléját.'
-        : '🔒 Zárt — előbb teljesítsd az előző missziót ezen a napon.';
+      lk.textContent = C.missionInDay(level) === 1 ? T('brief.lockedPrevDay') : T('brief.lockedPrevMission');
       start.classList.add('hidden');
     } else {
       lk.classList.add('hidden');
       start.classList.remove('hidden');
-      start.textContent = d.isFree ? 'FARM ►' : d.boss ? 'BOSS ►' : d.done ? 'ÚJRA ►' : 'START ►';
+      start.textContent = d.isFree ? T('brief.startFarm') : d.boss ? T('brief.startBoss') : d.done ? T('brief.startReplay') : T('brief.start');
       start.onclick = () => {
         ZD.audio.play('click');
         pv.classList.add('hidden');
@@ -646,8 +670,13 @@ ZD.ui = (() => {
 
     refresh_armory() {
       refreshCoins(screens.armory);
+      screens.armory.querySelector('#arm-back').innerHTML = IC('back');
+      $('#arm-title').textContent = T('arm.title');
+      $('#arm-tab-w').textContent = T('arm.weapons');
+      $('#arm-tab-a').textContent = T('arm.ammo');
       const list = $('#weaponlist');
       list.innerHTML = '';
+      const COIN = IC('coin', 'coin-ic');
 
       if (armTab === 'weapons') {
         C.WEAPONS.forEach((w) => {
@@ -657,27 +686,27 @@ ZD.ui = (() => {
           const dps = Math.round(w.dmg * w.rps * (w.pellets || 1));
           const pool = w.ammo < 0 ? '∞' : fmt(S().ammo[w.id] || 0);
           const tags = [
-            w.splash ? '💥 robbanó' : '',
-            w.pierce ? '➤ átütő' : '',
-            w.kind === 'flame' ? '🔥 égető' : '',
-            (w.pellets || 1) > 1 ? `⁂ ${w.pellets} lövedék` : '',
+            w.splash ? 'splash' : '',
+            w.pierce ? 'pierce' : '',
+            w.kind === 'flame' ? 'burn' : '',
+            (w.pellets || 1) > 1 ? `${w.pellets}× pellet` : '',
           ].filter(Boolean).join(' · ');
           const item = el(`
             <div class="card wcard${equipped ? ' equipped' : ''}${owned ? ' owned' : ''}" data-id="${w.id}">
-              ${equipped ? '<span class="badge">KÉZBEN</span>' : owned ? '<span class="badge dim">MEGVAN</span>' : ''}
+              ${equipped ? `<span class="badge">${T('arm.equipped')}</span>` : ''}
               <div class="wicon"><img alt="" src="${wIcon(w)}" /></div>
               <div class="wname">${w.name}</div>
               <div class="wstats">
-                ${bar('SEBZÉS', w.dmg * (w.pellets || 1), 140, w.dmg + ((w.pellets || 1) > 1 ? `×${w.pellets}` : ''))}
-                ${bar('TEMPÓ', w.rps, 18, w.rps + '/mp')}
+                ${bar('DMG', w.dmg * (w.pellets || 1), 140, w.dmg + ((w.pellets || 1) > 1 ? `×${w.pellets}` : ''))}
+                ${bar('RATE', w.rps, 18, w.rps + '/s')}
                 ${bar('DPS', dps, 340, '~' + dps)}
               </div>
               <div class="wtags">${tags || '&nbsp;'}</div>
               <div class="wact">
                 ${owned
-                  ? `<button class="btn ${equipped ? 'ghost' : 'primary'}" data-equip="${w.id}" ${equipped ? 'disabled' : ''}>${equipped ? '✔ KÉZBEN' : 'KIVÁLASZT'}</button>`
-                  : `<span class="price${afford ? '' : ' na'}">🪙 ${fmt(w.price)}</span><button class="btn primary" data-buy="${w.id}" ${afford ? '' : 'disabled'}>MEGVESZ</button>`}
-                <span class="ammoinfo-sm">Lőszerkészlet: ${owned || w.id === 'pistol' ? pool : (w.ammo + ' induló')}</span>
+                  ? `<button class="btn ${equipped ? 'ghost' : 'primary'}" data-equip="${w.id}" ${equipped ? 'disabled' : ''}>${equipped ? T('arm.equipped') : T('arm.select')}</button>`
+                  : `<span class="price${afford ? '' : ' na'}">${COIN} ${fmt(w.price)}</span><button class="btn primary" data-buy="${w.id}" ${afford ? '' : 'disabled'}>${T('arm.buy')}</button>`}
+                <span class="ammoinfo-sm">${T('lo.ammo')}: ${owned || w.id === 'pistol' ? pool : w.ammo}</span>
               </div>
             </div>`);
           list.appendChild(item);
@@ -686,7 +715,7 @@ ZD.ui = (() => {
         /* LŐSZER tab — birtokolt (nem pisztoly) fegyverek csomagjai */
         const ownedW = C.WEAPONS.filter((w) => w.id !== 'pistol' && S().weapons.owned.includes(w.id));
         if (!ownedW.length) {
-          list.appendChild(el('<p class="empty-hint">Előbb vegyél egy fegyvert — a pisztolyhoz nem kell lőszer. 🔫</p>'));
+          list.appendChild(el(`<p class="empty-hint">${T('arm.emptyHint')}</p>`));
         }
         ownedW.forEach((w) => {
           const pool = S().ammo[w.id] || 0;
@@ -699,14 +728,14 @@ ZD.ui = (() => {
             <div class="card acard" data-id="ammo-${w.id}">
               <div class="wicon"><img alt="" src="${wIcon(w)}" /></div>
               <div class="wname">${w.name}</div>
-              <div class="apool${low ? ' low' : ''}">Készlet: <b>${fmt(pool)}</b> lövés${low ? ' ⚠' : ''}</div>
+              <div class="apool${low ? ' low' : ''}">${T('lo.ammo')}: <b>${fmt(pool)}</b></div>
               <div class="ammo-buys">
                 <div class="ammo-buy">
-                  <span class="price${afford ? '' : ' na'}">🪙 ${fmt(w.packPrice)}</span>
+                  <span class="price${afford ? '' : ' na'}">${COIN} ${fmt(w.packPrice)}</span>
                   <button class="btn" data-ammo="${w.id}" ${afford ? '' : 'disabled'}>+${w.pack}</button>
                 </div>
                 <div class="ammo-buy">
-                  <span class="price${affordBig ? '' : ' na'}">🪙 ${fmt(w.packBigPrice)}${save > 0 ? ` <em>−${save}%</em>` : ''}</span>
+                  <span class="price${affordBig ? '' : ' na'}">${COIN} ${fmt(w.packBigPrice)}${save > 0 ? ` <em>−${save}%</em>` : ''}</span>
                   <button class="btn primary" data-ammobig="${w.id}" ${affordBig ? '' : 'disabled'}>+${w.packBig}</button>
                 </div>
               </div>
@@ -771,8 +800,11 @@ ZD.ui = (() => {
 
     refresh_lab() {
       refreshCoins(screens.lab);
+      screens.lab.querySelector('#lab-back').innerHTML = IC('back');
+      $('#lab-title').textContent = T('lab.title');
       const list = $('#upglist');
       list.innerHTML = '';
+      const COIN = IC('coin', 'coin-ic');
       C.UPGRADES.forEach((u) => {
         const lvl = S().upg[u.id] || 0;
         const maxed = lvl >= u.max;
@@ -789,8 +821,8 @@ ZD.ui = (() => {
             </div>
             <div class="wact">
               ${maxed
-                ? '<span class="badge">MAX</span>'
-                : `<span class="price${afford ? '' : ' na'}">🪙 ${fmt(cost)}</span><button class="btn primary" data-upg="${u.id}" ${afford ? '' : 'disabled'}>FEJLESZT</button>`}
+                ? `<span class="badge">${T('lo.max')}</span>`
+                : `<span class="price${afford ? '' : ' na'}">${COIN} ${fmt(cost)}</span><button class="btn primary" data-upg="${u.id}" ${afford ? '' : 'disabled'}>${T('lab.upgrade')}</button>`}
             </div>
           </div>`);
         list.appendChild(item);
@@ -821,20 +853,57 @@ ZD.ui = (() => {
     },
 
     refresh_settings() {
-      $('#btn-sound').textContent = S().sound ? '🔊 BE' : '🔇 KI';
+      const s = S();
+      const setTxt = (id, k) => { const e = $(id); if (e) e.textContent = T(k); };
+      $('#set-back').innerHTML = IC('back');
+      setTxt('#set-title', 'set.title');
+      setTxt('#set-lang-l', 'set.language');
+      setTxt('#set-sound-l', 'set.sound');
+      setTxt('#set-savefile-l', 'set.saveFile');
+      setTxt('#btn-savefile', 'set.download');
+      setTxt('#set-loadfile-l', 'set.loadFile');
+      setTxt('#btn-loadfile', 'set.chooseFile');
+      setTxt('#set-sep', 'set.orCode');
+      setTxt('#set-export-l', 'set.exportCode');
+      setTxt('#btn-export', 'set.copy');
+      setTxt('#set-import-l', 'set.importCode');
+      setTxt('#btn-import', 'set.import');
+      setTxt('#set-wipe-l', 'set.wipe');
+      setTxt('#btn-reset', 'set.wipeBtn');
+      $('#btn-sound').textContent = s.sound ? T('set.on') : T('set.off');
+      screens.settings.querySelectorAll('.lang-opt').forEach((o) => o.classList.toggle('active', o.dataset.lang === (s.lang || 'en')));
       const hint = $('#backup-hint');
       if (hint) {
-        if (S().everBackedUp) {
-          hint.className = 'backup-hint ok';
-          hint.innerHTML = '✔ Van fájl-mentésed. A haladás böngészőben tárolódik + IndexedDB-tükör; a <b>fájl</b> a legbiztosabb — tartsd frissen.';
-        } else {
-          hint.className = 'backup-hint warn';
-          hint.innerHTML = '⚠ Nincs még biztonsági mentésed! A haladásod a böngészőben van — ha törlöd a PWA-t vagy a böngészőadatot, elveszhet. <b>Mentsd fájlba</b> és tedd biztos helyre (Fájlok app).';
-        }
+        hint.className = 'backup-hint ' + (s.everBackedUp ? 'ok' : 'warn');
+        hint.textContent = T(s.everBackedUp ? 'set.backupOk' : 'set.backupWarn');
       }
     },
 
-    refresh_title() {},
+    refresh_title() {
+      const s = S();
+      const hasProgress = s.stages.unlocked > 1 || s.stages.cleared.length > 0;
+      const curDay = C.dayOf(Math.min(s.stages.unlocked, C.STAGES));
+      const btns = [];
+      if (hasProgress) btns.push({ go: 'stages', primary: true, icon: 'play', label: T('menu.continue'), sub: T('menu.continueSub', { d: curDay }), cls: 'm-continue' });
+      else btns.push({ go: 'stages', primary: true, icon: 'play', label: T('menu.newGame'), sub: T('menu.newGameSub'), cls: 'm-continue' });
+      btns.push({ go: 'stages', icon: 'campaign', label: T('menu.campaign'), sub: T('menu.campaignSub'), cls: 'm-campaign' });
+      btns.push({ action: 'scavenge', icon: 'scavenge', label: T('menu.scavenge'), sub: T('menu.scavengeSub'), cls: 'm-scavenge' });
+      btns.push({ go: 'armory', icon: 'armory', label: T('menu.armory'), sub: T('menu.armorySub'), cls: 'm-armory' });
+      btns.push({ go: 'lab', icon: 'lab', label: T('menu.lab'), sub: T('menu.labSub'), cls: 'm-lab' });
+      btns.push({ go: 'settings', icon: 'settings', label: T('menu.settings'), sub: T('menu.settingsSub'), cls: 'm-settings' });
+      $('#title-menu').innerHTML = btns.map((b) =>
+        `<button class="menu-btn${b.primary ? ' primary' : ''} ${b.cls || ''}"${b.go ? ` data-go="${b.go}"` : ''}${b.action ? ` data-action="${b.action}"` : ''}>` +
+          `<span class="mb-ic">${IC(b.icon)}</span>` +
+          `<span class="mb-tx"><b>${b.label}</b><small>${b.sub}</small></span>` +
+          `<span class="mb-arrow">${IC('chevron')}</span>` +
+        '</button>').join('');
+      $('#title-coin').innerHTML = `${IC('coin', 'coin-ic')}<b>${fmt(s.coins)}</b>`;
+      $('#title-gear').innerHTML = IC('gear');
+      $('#title-note').textContent = T('menu.note');
+      $('#title-save').innerHTML =
+        `<span class="ts-ic">${IC('save')}</span>` +
+        `<span class="ts-tx"><b>${T('menu.saveOk')}</b><small>${T('menu.saveLast')}</small></span>`;
+    },
 
     /* háttér-helyreállítás után az épp látható képernyő frissítése */
     refreshActive() {
@@ -848,7 +917,12 @@ ZD.ui = (() => {
   };
 
   /* ---------- modálok ---------- */
-  function showPause() { screens.pause.classList.remove('hidden'); }
+  function showPause() {
+    $('#pause-title').textContent = T('pause.title');
+    $('#btn-resume').textContent = T('pause.resume');
+    $('#btn-quit').textContent = T('pause.quit');
+    screens.pause.classList.remove('hidden');
+  }
   function hidePause() { screens.pause.classList.add('hidden'); }
 
   function showResult(won, earned, bonus, stats, opts = {}) {
@@ -856,21 +930,23 @@ ZD.ui = (() => {
     const w = won === true;
     $('#result-box').classList.toggle('win', w || isFree);
     $('#result-box').classList.toggle('lose', won === false);
-    $('#result-icon').textContent = isFree ? '♾' : w ? '🏅' : '☠';
-    $('#result-title').textContent = isFree ? 'FARM VÉGE' : w ? 'PÁLYA TELJESÍTVE' : 'ELESTÉL';
+    $('#result-icon').innerHTML = isFree ? IC('crate') : w ? IC('check') : IC('skull');
+    $('#result-title').textContent = isFree ? T('res.farmEnd') : w ? T('res.victory') : T('res.defeat');
     const statLine = stats
-      ? `<span class="statline">☠ ${fmt(stats.kills)} kiiktatva · 🔫 ${fmt(stats.shots)} lövés · 💥 ${fmt(stats.dmg)} sebzés</span><br/>`
+      ? `<span class="statline">${fmt(stats.kills)} ${T('res.statKills')} · ${fmt(stats.shots)} ${T('res.statShots')} · ${fmt(stats.dmg)} ${T('res.statDmg')}</span><br/>`
       : '';
     if (isFree) {
       $('#result-sub').innerHTML =
-        `<span class="statline">⏱ ${Math.round(opts.time || 0)} mp túlélés · ♾ ${fmt(opts.wave || 1)}. hullám</span><br/>`
-        + statLine + `Idő-bónusz: 🪙 ${fmt(bonus)}`;
+        `<span class="statline">${Math.round(opts.time || 0)} ${T('res.statSurv')} · ${fmt(opts.wave || 1)}. ${T('res.statWave')}</span><br/>`
+        + statLine + `${T('res.timeBonus')}: ${IC('coin', 'coin-ic')} ${fmt(bonus)}`;
     } else {
       $('#result-sub').innerHTML = w
-        ? `${statLine}Teljesítési bónusz: 🪙 ${fmt(bonus)}`
-        : `${statLine}A zsákmányod megmarad.<br/>Fejlessz a laborban, és próbáld újra!`;
+        ? `${statLine}${T('res.clearBonus')}: ${IC('coin', 'coin-ic')} ${fmt(bonus)}`
+        : `${statLine}${T('res.lootKept')}<br/>${T('res.upgradeHint')}`;
     }
-    $('#btn-next').textContent = isFree ? '♾ ÚJRA FARM' : w ? 'KÖVETKEZŐ PÁLYA ▶' : 'ÚJRA PRÓBÁLOM';
+    $('#btn-next').textContent = isFree ? T('res.farmAgain') : w ? T('res.next') : T('res.tryAgain');
+    $('#btn-retry').textContent = T('res.retry');
+    $('#result-menu').textContent = T('res.mainmenu');
     $('#btn-retry').style.display = w ? '' : 'none';
 
     /* érme-számláló animáció */

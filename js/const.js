@@ -1,4 +1,4 @@
-/* Zombi Krónika — játékadatok és balansz */
+/* ZombieChronicles — játékadatok és balansz */
 window.ZD = window.ZD || {};
 
 ZD.C = {

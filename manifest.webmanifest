@@ -1,7 +1,7 @@
 {
-  "name": "Zombi Krónika",
-  "short_name": "ZombiKrónika",
-  "description": "Retro oldalnézetes zombis akciójáték — saját felhasználásra.",
+  "name": "ZombieChronicles",
+  "short_name": "ZombieChronicles",
+  "description": "ZombieChronicles — a zombie survival arcade game. Personal use.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "fullscreen",

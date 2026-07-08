@@ -11,6 +11,40 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## FÁZIS 4 — Rebrand ZombieChronicles + főmenü + lokalizáció + emoji-mentes UI (2026-07-08)
+- **Rebrand → ZombieChronicles**: index.html `<title>`/meta, manifest name/short_name,
+  const.js fejléc, apple-web-app-title. Új logó: `assets/references/logo.png` (vörös koponya),
+  a főmenüben `mix-blend-mode: lighten`-nel beépítve (fekete háttér eltűnik), reszponzívan.
+  (A save-kulcs/IDB-név VÁLTOZATLAN — a régi mentések nem törnek el.)
+- **Lokalizáció (`js/i18n.js`) — English alap + Magyar**: központi `ZD.i18n` dictionary,
+  `ZD.t(key, vars)` interpolácóval; a nyelv a **save-ban** tárolódik (`data.lang`, def. 'en'),
+  betöltéskor/importkor alkalmazódik. **Beállításokban nyelvválasztó** (English / Magyar),
+  azonnal újrarenderel + ment. Lefedve: főmenü, day board, mission briefing, settings,
+  loadout, result, pause, armory/lab fejléc+gombok, HUD, státusz/nehézség/mód/objektíva szövegek.
+- **Emoji-mentes UI (`js/icons.js`)**: egységes inline **SVG ikonkészlet** (coin, gear, back,
+  play, chevron, campaign/target, scavenge/crate, armory/gun, lab/flask, lock, check, skull,
+  warning, save, fire, grenade, swap, pause, close). Minden UI-emoji lecserélve SVG-re a
+  főmenüben, boardon (HUD/nav/markerek/briefing), settingsben, loadout/result/pause modálban,
+  armory/lab kártyákban és az index.html in-game HUD/kontrollokon. `node --check`: 0 emoji az
+  ui.js-ben és index.html-ben.
+- **Főmenü overhaul (prémium, egyszerű, Zombie Diary-szerű)**: logó + coin + settings HUD;
+  6 nagy gomb (**Continue/New Game · Campaign · Scavenge · Armory · Lab · Settings**) SVG-ikonnal,
+  al-felirattal, típus-accent színnel (green/red/purple/gold/blue), üveg/fém panel + glow + bevel,
+  hover/press; SAVE:OK státusz-pill; a **Scavenge** közvetlenül a free-mode loadoutot indítja.
+  Háttér: az élő animált menü-jelenet (UI-mentes, atmoszférikus). A „main menu.png" referencia
+  kombinált 2-panel kép (mockup + clean) volt, nem különálló 16:9 clean bg — ezért a live scene
+  marad háttérként (megfelel: clean bg + programozott UI + finom effektek).
+- **Day board**: DAY-név/mission-nevek angolul (Quarantine Checkpoint/Abandoned Shop/Ruined
+  Alley/Survivor Holdout/Infected Nest) az i18n-ből; markerek/briefing/HUD/nav SVG-ikonokkal.
+- **TESZTELVE** (böngészőben): rebrand + logó megjelenik; EN alap; HU választható + mentődik;
+  főmenü gombok (Continue→board, Scavenge→loadout, Armory/Lab/Settings) működnek; board i18n+SVG;
+  briefing/loadout/result/pause/armory/lab lokalizált + emoji-mentes; save export/import ép.
+  **0 konzolhiba.** node --check PASS.
+- **Viewport-gate ÁTMENT**: desktop 16:9 (menü kifér, board kitölt); ultrawide 16:9 megőrizve;
+  mobil landscape 812×375 (100% magasság, board kitölt; a menü 6 gombja görgethető — a stage
+  hézagmentesen kitölt, nincs „kicsi középen").
+- sw.js cache: **zk-v16** (i18n.js/icons.js/logo.png precache). `node --check` OK.
+
 ## FÁZIS 3.1 — Campaign UI polish (prémium overlay) (2026-07-08) — mi került bele
 - **Csak a programozott UI overlay vizuális minőségét húztuk fel** (a clean board-artwork
   háttér és a funkciók VÁLTOZATLANOK; semmi nincs a képre égetve).
