@@ -206,7 +206,8 @@ const MANUAL = [
    ~204px belső tartalommal → EGYSÉGES méret, ≥26px padding, object-fit: contain.
    A menü-dobozok bővebbek (sötét gombon a margó nem látszik); a board-hexeknél
    szűkebb (a városi háttéren a sötét margó minimális). */
-const CANVAS = 256, TARGET = 238;   // ~9px egységes canvas-padding; a forrás-doboz garantálja a nem-vágást
+const CANVAS = 256, TARGET = 200;   // az ikon a 256 vászon ~70%-át tölti ki → BŐSÉGES átlátszó
+                                    // padding, így a RENDERELT UI-ban sosem ér a badge/hexagon széléhez
 const MSB = [180, 136];   // menü octagon forrás-doboz (octagon ~160×120 + margó, pontos rács-középpont)
 const SSB = [120, 112];   // state hexagon forrás-doboz (hex ~114×106 + szűk margó, városi háttérhez)
 const PAD = [

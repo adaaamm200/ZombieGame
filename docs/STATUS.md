@@ -11,6 +11,31 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## RENDERED ICON CLIPPING + BACK-BUTTON FIX (2026-07-08)
+- **Ok**: a korábbi QA "crop PASS"-t adott (az asset-PNG-k középen voltak), de a
+  TÉNYLEGES renderelt UI-ban több ikon a badge széléhez ért / túl nagy volt, és a
+  back-gomb felrobbant. Új QA-szabály: egy ikon csak akkor PASS, ha a valós UI
+  containerben teljesen látszik (nem csak a forrás-PNG-ben).
+- **Back-button bug (C1) JAVÍTVA**: az Armory/Lab/Settings back-gombja a 256px-es
+  `m-back` assetet **natural méreten** renderelte (gomb ~294×278, széttörte a topbart),
+  mert a `.aic-btn` csak a board/title HUD-ban volt méretezve. Fix (CSS): új
+  `.btn .aic-btn, .backbtn .aic-btn { width:26px; height:26px }` + base `.aic`-hez
+  `max-width/height: 100%` biztonsági sapka. **Most: gomb 64×48, ikon 26×26.** (Screenshot-igazolt.)
+- **Rendered clipping / inner-scale fix**: az ikonok ~83%-on renderelődtek (a badge
+  széléhez értek). A padded-ikon `TARGET` 238→**200** (a crop.js-ben) → minden ikon a
+  256 vászon **~70%-át** tölti ki, bőséges átlátszó paddinggel → a valós UI-ban SOSEM
+  ér a badge/hexagon/octagon széléhez, teljesen látszik. `object-fit: contain` marad
+  (nem tud vágni). A menü/nav/hotspot/boss/scavenge/briefing ikonok újragenerálva.
+- **TESZTELVE (screenshot, minden érintett képernyő)**: főmenü (ikonok tiszta peremmel),
+  campaign board (nav + hexagon markerek + boss + scavenge teljesen látszik), Armory/
+  Settings (back-gomb rendben, topbar nem törik), briefing thumb 78px tiszta, in-game
+  HUD (regresszió: OK, 2×2 vezérlő-klaszter érintetlen). **0 konzolhiba.**
+- **Viewport-gate**: desktop 16:9, mobil landscape 812×375 = 100% magasság (hotspot 56px,
+  armory back 64×48), ultrawide 1600×600 = 16:9. Nincs kicsi középen.
+- Frissítve: `docs/qa/VISUAL_QA_CHECKLIST.md` (új szabály: rendered-UI clipping + kisebb
+  inner-scale). Csak asset-tartalom + CSS + tool változott — gameplay ÉRINTETLEN.
+- sw.js cache: **zk-v23**. `node --check` mind a JS-re OK.
+
 ## SAFE PADDED ICON BOXES — egységes 256×256 canvas, külön fájlok (2026-07-08)
 - **Döntés**: elég a precíz auto-crop csiszolásából. Áttértünk **biztonságos, paddolt,
   egységes ikon-dobozokra**: minden menü/board ikon **külön PNG**, EGYSÉGES **256×256
