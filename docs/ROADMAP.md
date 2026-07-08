@@ -34,6 +34,13 @@
   zóna-sávok (szektorok), marker-node-ok, boss=fertőzött gócpont, atmoszféra
   (grid/scanline/köd), kamera-fókusz a következő misszióra, feljavított preview
   (misszió-név, veszélymérő, ajánlott fegyver), Scavenge Zóna farm-belépő. ✔
+- **FÁZIS 2.7 — DAY-alapú campaign board ✅**: a lineáris roadmap helyett Zombie
+  Diary-szerű nap-alapú board (1 nap = 5 misszió, az 5. DAY FINALE/boss). DAY selector
+  strip, day board 5 helyszín-kártyával, mission briefing panel, külön Scavenge Zóna.
+  **Végső vízió: akár 100 nap × 5 misszió (500 mission)** — a rendszer skálázható
+  `MAX_DAYS=100`-ig; most aktívan **20 nap / 100 misszió** támogatott (1–10 kézzel
+  finomítva, 11–20 formula), soft-cap balansszal a magas napokhoz. Később bővíthető
+  és polisholható (több kézi nap, egyedi asset-ek, animációk). ✔
 - Lásd a részleteket: [`docs/STATUS.md`](STATUS.md).
 
 ## FÁZIS 3 — Valódi játékmód-identitás

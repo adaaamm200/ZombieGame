@@ -9,3 +9,6 @@ Thumbs.db
 
 # Logok
 *.log
+
+# Letöltött mentés-biztonságimentések (Beállítások → fájlba mentés)
+zombikronika-mentes-*.txt

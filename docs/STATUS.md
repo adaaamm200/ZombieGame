@@ -11,6 +11,44 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## FÁZIS 2.7 — DAY-alapú campaign board (2026-07-08) — mi került bele
+- **A lineáris roadmap/mission-hub lecserélve DAY-alapú kampányboardra** (Zombie
+  Diary-szerű chapter-flow, de saját UI/asset). A kígyózó node-lánc, a zöld progress-
+  vonal és az 1–40 roadmap KIVÉVE.
+- **Struktúra (const.js CAMPAIGN)**: 1 nap = 5 misszió; az 5. mindig DAY FINALE (boss).
+  `MISSIONS_PER_DAY=5`, `ACTIVE_DAYS=20` (=100 misszió), `MAX_DAYS=100` skálázhatóság.
+  A save VÁLTOZATLAN numerikus mission-ID (level) — a UI day/mission formában mutatja.
+  Helperek: `dayOf/missionInDay/levelOf/dayName/missionTitle`. Napok 1–10 kézzel
+  finomított névvel + 5 misszió-címmel; 11–20 formula (ZONE_POOL/MISSION_POOL).
+- **A meglévő motor 5-ös csoportjaira képződik**: `isBossLevel`=minden 5. (=finálé),
+  `themeFor`=naponta téma, `modeFor`=napon belül irtás/védelem/túlélés/elit/boss.
+  Nem kellett új progress-rendszer → visszafelé kompatibilis a régi mentésekkel.
+- **STAGES 40→100** + **biztonságos soft-capek** a magas napokhoz: `dmgMul/quota/bossDmg`
+  az 1–40 tartományban VÁLTOZATLAN (verifikált balansz), 40 fölött lágyítva
+  (pl. quota 100=266 vs 410; bossDmg 100=106 vs 148) → kemény, de nem lehetetlen.
+- **DAY selector strip**: 20 vízszintes lapozható nap-kártya (◀▶ nyilak + tap/scroll),
+  aktuális kiemelve, zárt/„✔ biztosítva" jelöléssel; a kiválasztott középre görget.
+- **DAY board**: fejléc (DAY NN · NÉV · téma + haladás-pöttyök + „x/5 biztosítva”),
+  4 mission **helyszín-kártya** 2×2 rácsban (ikon+cím+típus+állapot) + teljes szélességű
+  **DAY FINALE / BOSS** landmark (nagyobb, vörös, pulzáló). Nem node-lánc.
+- **Mission briefing** (bottom-sheet): DAY szám+név, Mission x/5, pálya #, cím, státusz-
+  chip, **objektíva**, hangulati leírás, VESZÉLY-mérő, helyszín, várható zsákmány,
+  **ajánlott fegyver**. Boss=vörös vészkártya, zártnál indok + rejtett Start.
+- **Progresszió**: Day 1 mission 1 induláskor elérhető; napon belül sorban nyílnak a
+  missziók; a finálé teljesítése után a nap „BIZTOSÍTVA” és a következő nap feloldódik
+  (a meglévő szekvenciális unlock adja). Régi mentés → helyesen day/mission-re képződik.
+- **Free Mode = külön „SCAVENGE ZÓNA”** gomb a board alatt, saját briefinggel; NEM old
+  fel napot/missziót (nem kampányprogress).
+- **TESZTELVE** (böngészőben): 20 nap-tab, DAY 02 board (4 kártya+finálé, 2/5), briefing
+  (nap/mission/objektíva/veszély/ajánlott fegyver), finálé vörös boss-kártya + zárt indok,
+  nap-lapozás (DAY 03 ZÁRT), mission→BEVETÉS→loadout→game (lvl8), Free→loadout→game,
+  **régi formátumú mentés import** (backward-compat) + board-leképezés, export/import
+  roundtrip egyezik, friss játék (Day1 M1 elérhető, többi zárt). 0 konzolhiba.
+- **Viewport-gate ÁTMENT**: desktop 16:9=100%×100%; ultrawide 1600×600=16:9 megőrizve,
+  kifér; mobil landscape 812×375=100% magasság, `@media (max-height:620px)` kompakt
+  board (tap-kártyák), minden kifér. Nincs „kicsi középen”; `#stage` közös doboz.
+- sw.js cache: **zk-v11**. `node --check` mind a JS-re OK.
+
 ## Robusztus mentésrendszer — adatvesztés-védelem (2026-07-08) — mi került bele
 - **Miért**: iOS-en a PWA kezdőképernyőről törlése kiüríti a `localStorage`-t → egy
   játékos elvesztette a haladását (5. pálya). Nincs backend (projektszabály), így

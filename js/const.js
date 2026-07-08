@@ -10,7 +10,7 @@ ZD.C = {
   GROUND_Y: 234,
   WORLD_W: 1040,
   GRAVITY: 620,
-  STAGES: 40,
+  STAGES: 100,        // = CAMPAIGN.ACTIVE_DAYS × MISSIONS_PER_DAY (20 nap × 5 misszió)
 
   /* meccs közbeni (emergency) lőszervásárlás felára a bolti kis-pack árához képest */
   AMMO_EMERGENCY: 1.25,
@@ -36,6 +36,48 @@ ZD.C = {
     return 'survival';
   },
   surviveTime(level) { return Math.round(40 + level * 1.5); },
+
+  /* ---- DAY-alapú kampány (skálázható 100 napig) ----
+     1 nap = 5 misszió; az 5. misszió mindig DAY FINALE (boss). A save továbbra is
+     numerikus mission ID (level) alapú — a UI day/mission formában mutatja. */
+  CAMPAIGN: {
+    MISSIONS_PER_DAY: 5,
+    ACTIVE_DAYS: 20,     // most aktívan támogatott napok (× 5 = 100 misszió)
+    MAX_DAYS: 100,       // a rendszer eddig skálázható
+    /* kézzel finomított napok (1–10): név + 5 misszió-cím (az 5. a finálé) */
+    DAYS: [
+      { name: 'Karantén Utca',         missions: ['Karantén Utca', 'Elhagyott Bolt', 'Lerombolt Sikátor', 'Védelmi Pont', 'Gócpont — Boss Fészek'] },
+      { name: 'Elhagyott Labor',       missions: ['Labor Bejárat', 'Mintatároló', 'Generátor Terem', 'Vészfolyosó', 'Mutáns Gócpont'] },
+      { name: 'Romváros',              missions: ['Beomlott Negyed', 'Tűzfészek', 'Barikád-vonal', 'Utolsó Menedék', 'Romvárosi Fészek'] },
+      { name: 'Metrózóna',             missions: ['Metró Lejáró', 'Peron', 'Sötét Alagút', 'Roncs Szerelvény', 'Mélységi Gócpont'] },
+      { name: 'Katonai Ellenőrzőpont', missions: ['Sorompó', 'Őrbódé', 'Fegyverraktár', 'Parancsnokság', 'Karantén-áttörés'] },
+      { name: 'Kórháznegyed',          missions: ['Sürgősségi', 'Fertőző Osztály', 'Vérbank', 'Műtőblokk', 'A Fertőzés Forrása'] },
+      { name: 'Ipari Terület',         missions: ['Rakodó', 'Öntödecsarnok', 'Tartálymező', 'Erőmű', 'Ipari Gócpont'] },
+      { name: 'Fertőzött Lakótelep',   missions: ['Belső Udvar', 'Lépcsőház', 'Tetőszint', 'Pincerendszer', 'Panel-fészek'] },
+      { name: 'Kikötői Raktárak',      missions: ['Konténersor', 'Rakpart', 'Hajóhíd', 'Raktárcsarnok', 'Kikötői Gócpont'] },
+      { name: 'Fő Gócpont',            missions: ['Külső Védvonal', 'Belső Zóna', 'Fertőzött Mag', 'Utolsó Barikád', 'A Végső Vezér'] },
+    ],
+    /* formula-napok (11+): zóna-nevek + generikus misszió-címek */
+    ZONE_POOL: ['Külső Szektor', 'Karantén Övezet', 'Halott Negyed', 'Vörös Zóna', 'Kitörési Pont', 'Végveszély Övezet', 'Utolsó Bástya', 'Sötét Szektor', 'Peremvidék', 'Pokoltorok'],
+    MISSION_POOL: ['Előretörés', 'Tisztogatás', 'Áttörés', 'Kitartás', 'Felderítés', 'Utóvéd', 'Roham', 'Kitörés'],
+  },
+  dayOf(level) { return Math.ceil(level / this.CAMPAIGN.MISSIONS_PER_DAY); },
+  missionInDay(level) { return ((level - 1) % this.CAMPAIGN.MISSIONS_PER_DAY) + 1; },
+  levelOf(day, m) { return (day - 1) * this.CAMPAIGN.MISSIONS_PER_DAY + m; },
+  dayName(day) {
+    const D = this.CAMPAIGN.DAYS[day - 1];
+    if (D) return D.name;
+    const pool = this.CAMPAIGN.ZONE_POOL;
+    return `${pool[(day - 1) % pool.length]} ${day}`;
+  },
+  missionTitle(level) {
+    const day = this.dayOf(level);
+    const m = this.missionInDay(level);
+    const D = this.CAMPAIGN.DAYS[day - 1];
+    if (D && D.missions[m - 1]) return D.missions[m - 1];
+    if (m === this.CAMPAIGN.MISSIONS_PER_DAY) return `${this.dayName(day)} — Gócpont`;
+    return this.CAMPAIGN.MISSION_POOL[(level * 3) % this.CAMPAIGN.MISSION_POOL.length];
+  },
 
   /* pálya-módosítók — nem minden pályán, determinisztikusan */
   MODS: {
@@ -96,9 +138,14 @@ ZD.C = {
 
   /* Szint-skálázás — érezhető, de tanulható nehézségi ív */
   hpMul(level) { return 1 + 0.16 * (level - 1); },
-  dmgMul(level) { return 1 + 0.10 * (level - 1); },
+  /* dmg/quota/bossDmg: az 1–40 tartomány VÁLTOZATLAN (verifikált balansz);
+     40 fölött lágyabb (soft-cap), hogy a magas napok kemények, de ne lehetetlenek legyenek */
+  dmgMul(level) {
+    const base = 1 + 0.10 * (Math.min(level, 40) - 1);
+    return level <= 40 ? base : base + 0.045 * (level - 40);
+  },
   coinMul(level) { return 1 + 0.10 * (level - 1); },
-  quota(level) { return 10 + 4 * level; },
+  quota(level) { return level <= 40 ? 10 + 4 * level : Math.round(170 + 1.6 * (level - 40)); },
   cap(level) { return Math.min(3 + Math.floor(level / 2), 11); },
   spawnInterval(level) { return Math.max(0.45, 1.6 - level * 0.04); },
   isBossLevel(level) { return level % 5 === 0; },
@@ -112,7 +159,10 @@ ZD.C = {
   /* Boss balansz — fair, tanulható: az első vezér (5. pálya) átlagos játékossal is
      legyőzhető ~45-90 mp alatt; a sebzés nem öl 1-2 ütésből normál HP mellett. */
   bossHp(level) { return Math.round(1400 + level * 130); },
-  bossDmg(level) { return Math.round(18 + level * 1.3); },
+  bossDmg(level) {
+    const base = 18 + 1.3 * Math.min(level, 40);
+    return Math.round(level <= 40 ? base : base + 0.6 * (level - 40));
+  },
 
   /* Fejlesztések (labor) */
   UPGRADES: [
