@@ -11,6 +11,23 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## MASTER PLAN rögzítve — hivatalos hosszú távú terv (2026-07-08)
+- Létrehozva: [`docs/MASTER_PLAN.md`](MASTER_PLAN.md) — **ZombieChronicles — Master
+  Development Plan**. Ez mostantól a játék HIVATALOS fejlesztési terve; minden új
+  feladat előtt EZT + a `STATUS.md`-t kell elolvasni, és csak az aktuálisan megjelölt
+  fázist implementálni (nincs terven kívüli feature, nincs előreugrás külön kérés nélkül).
+- Tartalom: alapvízió (saját név/asset/UI, spiritual successor, NEM live-service:
+  nincs Battle Pass / gem / clan / ranking / starter pack), kötelező technikai
+  invariánsok (viewport/stage scaling, sw cache bump, `node --check`, 0 konzolhiba,
+  STATUS frissítés, push main), jelenlegi állapot, és **M1–M11 hivatalos fázissorrend**:
+  M1 brand/menü/board/lokalizáció, M2 day-based campaign, M3 játékmód-identitás,
+  M4 armory/weapon upgrade, M5 character system, M6 skill/ability upgrade,
+  M7 achievements, M8 daily missions, M9 zombie visual, M10 stage visual polish,
+  M11 combat juice. **Aktuális aktív fázis: M1.**
+- Ebben a körben **NEM** implementáltunk új feature-t — csak dokumentáció (MASTER_PLAN
+  létrehozása + STATUS frissítés). JS/CSS/HTML/sw.js VÁLTOZATLAN → nem kellett cache bump.
+- Ellenőrzés: `node --check` mind a JS-re OK (nem változott kód, sanity check).
+
 ## FÁZIS 4 — Rebrand ZombieChronicles + főmenü + lokalizáció + emoji-mentes UI (2026-07-08)
 - **Rebrand → ZombieChronicles**: index.html `<title>`/meta, manifest name/short_name,
   const.js fejléc, apple-web-app-title. Új logó: `assets/references/logo.png` (vörös koponya),
