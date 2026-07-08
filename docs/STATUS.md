@@ -11,6 +11,35 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## FÁZIS 3.1 — Campaign UI polish (prémium overlay) (2026-07-08) — mi került bele
+- **Csak a programozott UI overlay vizuális minőségét húztuk fel** (a clean board-artwork
+  háttér és a funkciók VÁLTOZATLANOK; semmi nincs a képre égetve).
+- **CSS-változók** a `:root`-ban (újrahasználható Day 2+ esetén is): `--ui-green/-gold/-red/
+  -blue/-purple/-panel/-panel-solid/-border/-glow/-bevel`.
+- **Felső HUD prémium**: fémes/üveg panelek (blur + bevel + belső fény), DAY 1 piros
+  hazard-banner erősebb glow-val, **arany érme-pill** (gold rim + belső fény), **glossy
+  SHOP gomb futó arany-csillanással** (goldShine), back/⚙ fémes kör-gombok hover/press-szel.
+- **Bal nav prémium**: üveg panelek bevel-lel, aktív = arany gradient + fehér accent-csík,
+  Scavenge külön lila/arany loot-glow-val; hover eltolás + press scale.
+- **Prémium mission markerek** (státusz CSS-változókkal `--mk/--mkglow/--halo`): glossy,
+  beveled, belső csillanós badge + ground-glow. **Available/current**: arany badge + pulzáló
+  aura-gyűrű (ringPulse). **Completed**: zöld ✓ + stabil zöld glow. **Locked**: sötétített +
+  🔒, olvasható. **Boss**: nagyobb vörös badge + fenyegető pulzáló vörös aura-gyűrű.
+  **Scavenge**: arany láda + lila loot-glow. Hover scale, selected fehér ring.
+- **Briefing panel prémium**: üveg/fém panel `backdrop-filter: blur`, felső **neon-vonal
+  accent** (mód szerint zöld/vörös/arany), section-separator, **VESZÉLY (koponyák) · AJÁNLOTT
+  fegyver · ZSÁKMÁNY (érme+XP)** ikonos sorok, nagy **glossy START** (mód-színnel: zöld/boss
+  vörös/free arany). Az ajánlott fegyver mostantól látszik.
+- **Animációk** (finomak, mobilbarát): marker-aura pulse, boss-aura pulse, current-glow,
+  hover-scale, selected-flash, briefing slide/fade, gomb-press, SHOP arany-shine.
+- **TESZTELVE** (böngészőben): prémium HUD/nav/markerek/briefing renderelnek; marker-állapotok
+  (open/current/done/locked/boss/scavenge); briefing frissül + ajánlott fegyver; campaign→
+  START→loadout→game (lvl2); boss briefing (n-boss vörös accent); SHOP/⚙/Scavenge/back működik;
+  **0 konzolhiba.**
+- **Viewport-gate ÁTMENT**: desktop 16:9, ultrawide 1600×600 (16:9 megőrizve), mobil landscape
+  812×375 (100% magasság, kompakt HUD/nav). Nincs „kicsi középen".
+- sw.js cache: **zk-v15**. `node --check` mind a JS-re OK.
+
 ## FÁZIS 3.0 — CLEAN board-artwork + teljesen programozott UI overlay (2026-07-08) — mi került bele
 - **Iránykorrekció**: a 2.9-es `day1_board_target.png` egy MOCKUP volt (beégetett festett
   HUD/shop/coin/sidebar/mission-feliratok/briefing). Most a háttér a **tiszta artwork**:

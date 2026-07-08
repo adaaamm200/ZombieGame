@@ -154,7 +154,11 @@ ZD.ui = (() => {
                 <h3 id="sp-title"></h3>
                 <span class="sp-mode" id="sp-mode"></span>
                 <div class="sp-obj" id="sp-obj"></div>
-                <div class="sp-meta"><div class="sp-danger" id="sp-danger"></div><div class="sp-reward" id="sp-reward"></div></div>
+                <div class="sp-meta">
+                  <div class="sp-danger" id="sp-danger"></div>
+                  <div class="sp-rec" id="sp-rec"></div>
+                  <div class="sp-reward" id="sp-reward"></div>
+                </div>
               </div>
               <button class="btn primary sp-start" id="sp-start">START</button>
             </div>
@@ -603,6 +607,9 @@ ZD.ui = (() => {
     $('#sp-reward').innerHTML = d.isFree
       ? '<span class="lbl">ZSÁKMÁNY</span> <b>🪙 farm</b>'
       : `<span class="lbl">ZSÁKMÁNY</span> <b>🪙 ~${fmt(d.reward)}</b> <b class="xp">XP ~${Math.round(d.reward * 0.15)}</b>`;
+    $('#sp-rec').innerHTML = d.isFree
+      ? '<span class="lbl">AJÁNLOTT</span> <b>🔫 gyors fegyver</b>'
+      : `<span class="lbl">AJÁNLOTT</span> <b>🔫 ${recommendedWeapon(level)}</b>`;
 
     const lk = $('#sp-locked');
     const start = $('#sp-start');
