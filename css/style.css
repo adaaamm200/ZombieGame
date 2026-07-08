@@ -126,19 +126,40 @@ html, body {
 .hudbtn:active { transform: translateY(1px); box-shadow: none; }
 
 #weaponchip {
-  position: absolute; top: 36px; left: calc(10px + var(--sal));
-  display: flex; align-items: center; gap: 7px;
-  background: rgba(10, 16, 10, .62);
-  border: 1.5px solid rgba(60, 80, 56, .7);
-  border-radius: 8px; padding: 3px 10px 3px 4px;
-  backdrop-filter: blur(2px);
+  position: absolute; top: 38px; left: calc(10px + var(--sal));
+  display: flex; align-items: center; gap: 8px; overflow: hidden;
+  background: linear-gradient(180deg, rgba(20,28,22,.78), rgba(8,13,9,.85));
+  border: 1.5px solid rgba(90, 120, 84, .55);
+  border-radius: 11px; padding: 4px 12px 4px 6px;
+  box-shadow: 0 3px 10px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
 }
-#weaponchip img { width: 44px; height: 22px; image-rendering: pixelated; }
-#weaponchip .wc-text { display: flex; flex-direction: column; line-height: 1.25; }
-#weaponname { font-size: 9.5px; font-weight: bold; color: var(--text); }
-#ammocount { font-size: 11px; font-weight: bold; color: var(--amber); }
+#weaponchip img { width: 50px; height: 25px; image-rendering: pixelated; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+#weaponchip .wc-text { display: flex; flex-direction: column; line-height: 1.28; }
+#weaponname { font-size: 10px; font-weight: bold; letter-spacing: .5px; color: var(--text); text-shadow: 0 1px 1px rgba(0,0,0,.6); }
+#ammocount { font-size: 13px; font-weight: bold; color: var(--amber); text-shadow: 0 1px 1px rgba(0,0,0,.6); }
 #ammocount.low { color: var(--red); animation: ammo-blink .7s steps(2) infinite; }
 @keyframes ammo-blink { 50% { opacity: .35; } }
+/* reload-jelző a fegyver-chipen — swap/újratöltés közben animált sweep */
+#reloadwrap {
+  position: absolute; inset: 0; display: none; align-items: center; justify-content: center; gap: 6px;
+  background: linear-gradient(180deg, rgba(30,20,6,.9), rgba(14,9,2,.92)); border-radius: 11px;
+}
+#weaponchip.reloading #reloadwrap { display: flex; }
+#reloadwrap #reloadfill {
+  position: absolute; left: 0; bottom: 0; height: 3px; width: 0%;
+  background: linear-gradient(90deg, #ffd97a, #f2b736); box-shadow: 0 0 8px rgba(255,190,60,.7);
+}
+#weaponchip.reloading #reloadfill { animation: reload-sweep .5s linear forwards; }
+@keyframes reload-sweep { from { width: 0%; } to { width: 100%; } }
+#reloadlbl {
+  font-size: 10px; font-weight: bold; letter-spacing: 2px; color: #ffe29a; text-shadow: 0 1px 2px #000;
+  animation: reload-pulse .5s ease-in-out infinite alternate;
+}
+#reloadlbl::before { content: ''; display: inline-block; width: 11px; height: 11px; margin-right: 5px; vertical-align: -1px;
+  border: 2px solid #ffe29a; border-top-color: transparent; border-radius: 50%; animation: reload-spin .5s linear infinite; }
+@keyframes reload-spin { to { transform: rotate(360deg); } }
+@keyframes reload-pulse { to { opacity: .55; } }
 
 /* ============ Irányítás ============ */
 #controls { position: absolute; inset: 0; z-index: 4; }
@@ -162,27 +183,37 @@ html, body {
   display: flex; align-items: flex-end; gap: 12px;
 }
 .ctlbtn {
+  --ctl: #7ddb4f;
   border-radius: 50%;
-  border: 2.5px solid rgba(125, 219, 79, .55);
-  background: radial-gradient(circle at 42% 32%, rgba(46, 66, 38, .72), rgba(14, 22, 12, .72) 72%);
-  color: var(--text); font-weight: bold;
+  border: 2.5px solid color-mix(in srgb, var(--ctl) 55%, transparent);
+  background:
+    radial-gradient(circle at 42% 30%, color-mix(in srgb, var(--ctl) 20%, rgba(30,42,26,.82)), rgba(10,16,10,.82) 74%);
+  color: color-mix(in srgb, var(--ctl) 55%, #fff 45%); font-weight: bold;
   display: flex; align-items: center; justify-content: center; position: relative;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .1);
-  transition: transform .06s;
+  box-shadow: 0 5px 16px rgba(0, 0, 0, .5), inset 0 2px 3px rgba(255, 255, 255, .16), inset 0 -4px 8px rgba(0,0,0,.45), 0 0 16px color-mix(in srgb, var(--ctl) 22%, transparent);
+  transition: transform .06s, box-shadow .1s;
 }
-.ctlbtn.big { width: 82px; height: 82px; font-size: 32px; border-color: rgba(255, 193, 77, .55); }
-.ctlbtn.small { width: 54px; height: 54px; font-size: 21px; }
+.ctlbtn svg { filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+/* felső gloss */
+.ctlbtn::before { content: ''; position: absolute; top: 8%; left: 18%; right: 18%; height: 34%; border-radius: 50%; background: linear-gradient(180deg, rgba(255,255,255,.28), transparent); pointer-events: none; }
+.ctlbtn.big { --ctl: #ff5a3c; width: 86px; height: 86px; font-size: 36px; color: #ffd9c0; }
+.ctlbtn.small { width: 56px; height: 56px; font-size: 23px; }
+.ctl-gren { --ctl: #ff5a4a; }
+.ctl-ammo { --ctl: #ffc14d; }
+.ctl-swap { --ctl: #5bc8ff; }
 .ctlbtn:active {
-  transform: scale(.92);
-  background: radial-gradient(circle at 42% 32%, rgba(105, 150, 80, .8), rgba(40, 62, 32, .8) 72%);
-  box-shadow: 0 0 18px rgba(125, 219, 79, .35);
+  transform: scale(.9);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--ctl) 55%, transparent), inset 0 2px 6px rgba(0,0,0,.5);
+  filter: brightness(1.2);
 }
-.ctlbtn.big:active { box-shadow: 0 0 22px rgba(255, 193, 77, .4); }
 .ctlbtn em {
-  position: absolute; top: -4px; right: -4px; font-style: normal; font-size: 11px;
-  background: var(--amber); color: #201400; border-radius: 10px; padding: 1px 6px; font-weight: bold;
-  box-shadow: 0 1px 3px rgba(0,0,0,.5);
+  position: absolute; top: -5px; right: -5px; font-style: normal; font-size: 11px; min-width: 18px; text-align: center;
+  background: linear-gradient(180deg, #ffe27a, #f2b736); color: #201400; border-radius: 10px; padding: 1.5px 6px; font-weight: bold;
+  border: 1.5px solid rgba(255,240,180,.7); box-shadow: 0 2px 5px rgba(0,0,0,.55);
 }
+/* fire gomb: pulzáló tüzelés-glow amikor lenyomva */
+#btn-fire:active { animation: fire-pulse .18s ease-out; }
+@keyframes fire-pulse { 0% { box-shadow: 0 0 34px rgba(255,90,60,.75), inset 0 2px 6px rgba(0,0,0,.5); } 100% { box-shadow: 0 0 24px rgba(255,90,60,.5), inset 0 2px 6px rgba(0,0,0,.5); } }
 
 /* ============ Képernyők ============ */
 .screen {
@@ -231,36 +262,55 @@ html, body {
 }
 @keyframes logo-in { from { opacity: 0; transform: translateY(-20px) scale(1.06); } to { opacity: 1; transform: none; } }
 
-.menu { display: flex; flex-direction: column; gap: 8px; margin-top: 2vh; width: min(430px, 92vw); }
+.menu { display: flex; flex-direction: column; gap: 9px; margin-top: 2vh; width: min(438px, 93vw); }
 .menu-btn {
-  position: relative; overflow: hidden; display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; cursor: pointer; font-family: inherit;
-  padding: 10px 13px; border-radius: 13px; color: var(--text);
-  background: var(--ui-panel); border: 1.5px solid var(--ui-border);
-  box-shadow: 0 4px 12px rgba(0,0,0,.5), var(--ui-bevel); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  position: relative; overflow: hidden; display: flex; align-items: center; gap: 13px; width: 100%; text-align: left; cursor: pointer; font-family: inherit;
+  padding: 11px 14px 11px 12px; border-radius: 14px; color: var(--text);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent, #7ddb4f) 12%, rgba(20,26,22,.92)), rgba(9,13,10,.95));
+  border: 1.5px solid color-mix(in srgb, var(--accent, #7ddb4f) 32%, rgba(150,180,150,.2));
+  box-shadow: 0 5px 16px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.1), inset 0 -2px 6px rgba(0,0,0,.5);
+  -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px);
   animation: rise .4s both; transition: transform .1s, filter .12s, box-shadow .15s;
 }
 .menu-btn:nth-child(1) { animation-delay: .05s; } .menu-btn:nth-child(2) { animation-delay: .1s; }
 .menu-btn:nth-child(3) { animation-delay: .15s; } .menu-btn:nth-child(4) { animation-delay: .2s; }
-.menu-btn:nth-child(5) { animation-delay: .25s; } .menu-btn:nth-child(6) { animation-delay: .3s; }
-.menu-btn::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent, transparent); opacity: .85; }
+.menu-btn:nth-child(5) { animation-delay: .25s; } .menu-btn:nth-child(6) { animation-delay: .3s; } .menu-btn:nth-child(7) { animation-delay: .35s; }
+/* bal accent-csík */
+.menu-btn::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 4px; border-radius: 0 4px 4px 0; background: var(--accent, transparent); box-shadow: 0 0 10px var(--accent, transparent); opacity: .95; }
+/* prémium ikon-badge: accent-gradiens korong, sötét glyph, belső fény + gyűrű */
 .menu-btn .mb-ic {
-  flex: none; width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; font-size: 22px;
-  color: var(--accent, var(--ui-green)); background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.08);
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent, var(--ui-green)) 40%, transparent));
+  flex: none; width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; font-size: 25px; position: relative;
+  color: #0d130c;
+  background:
+    radial-gradient(120% 120% at 50% 22%, color-mix(in srgb, var(--accent, #7ddb4f) 92%, #fff 8%), color-mix(in srgb, var(--accent, #7ddb4f) 60%, #000 40%));
+  border: 1.5px solid color-mix(in srgb, var(--accent, #7ddb4f) 60%, #fff 40%);
+  box-shadow: 0 3px 9px rgba(0,0,0,.5), inset 0 1px 2px rgba(255,255,255,.5), 0 0 14px color-mix(in srgb, var(--accent, #7ddb4f) 45%, transparent);
 }
+.menu-btn .mb-ic::after { content: ''; position: absolute; top: 3px; left: 6px; right: 6px; height: 40%; border-radius: 50%; background: linear-gradient(180deg, rgba(255,255,255,.5), transparent); pointer-events: none; }
+.menu-btn .mb-ic svg { position: relative; filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
 .menu-btn .mb-tx { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
-.menu-btn .mb-tx b { font-size: 16px; letter-spacing: 1px; }
-.menu-btn .mb-tx small { font-size: 9.5px; letter-spacing: .5px; color: var(--muted); font-weight: normal; margin-top: 1px; }
-.menu-btn .mb-arrow { flex: none; font-size: 15px; color: var(--muted); }
+.menu-btn .mb-tx b { font-size: 17px; letter-spacing: 1.5px; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.menu-btn .mb-tx small { font-size: 9.5px; letter-spacing: .5px; color: var(--muted); font-weight: normal; margin-top: 2px; }
+.menu-btn .mb-arrow { flex: none; font-size: 16px; color: color-mix(in srgb, var(--accent, #7ddb4f) 70%, var(--muted)); opacity: .85; }
 .menu-btn.m-continue { --accent: var(--ui-green); }
 .menu-btn.m-campaign { --accent: var(--ui-red); }
 .menu-btn.m-scavenge { --accent: var(--ui-purple); }
 .menu-btn.m-armory { --accent: var(--ui-gold); }
 .menu-btn.m-lab { --accent: var(--ui-blue); }
 .menu-btn.m-settings { --accent: #9fb4a0; }
-.menu-btn.primary { border-color: rgba(138,224,94,.5); box-shadow: 0 4px 12px rgba(0,0,0,.5), 0 0 20px rgba(125,219,79,.26), var(--ui-bevel); }
-.menu-btn.primary .mb-tx b { color: var(--ui-green); }
-@media (hover: hover) { .menu-btn:hover { transform: translateX(3px); filter: brightness(1.12); } }
+.menu-btn.primary {
+  border-color: color-mix(in srgb, var(--accent, #7ddb4f) 55%, #fff 20%);
+  box-shadow: 0 5px 18px rgba(0,0,0,.55), 0 0 26px color-mix(in srgb, var(--accent, #7ddb4f) 32%, transparent), inset 0 1px 0 rgba(255,255,255,.14), inset 0 -2px 6px rgba(0,0,0,.5);
+}
+.menu-btn.primary .mb-tx b { color: color-mix(in srgb, var(--accent, #7ddb4f) 55%, #fff); }
+/* futó fény a primary gombon */
+.menu-btn.primary::after {
+  content: ''; position: absolute; top: 0; left: -50%; width: 32%; height: 100%; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.13), transparent); transform: skewX(-20deg);
+  animation: goldShine 5s ease-in-out infinite;
+}
+@media (hover: hover) { .menu-btn:hover { transform: translateX(4px); filter: brightness(1.14); box-shadow: 0 6px 20px rgba(0,0,0,.6), 0 0 24px color-mix(in srgb, var(--accent, #7ddb4f) 30%, transparent), var(--ui-bevel); } }
 .menu-btn:active { transform: scale(.98); }
 
 .title-save {
@@ -276,6 +326,13 @@ html, body {
 
 /* --- általános programozott UI ikon-igazítás --- */
 .ui-ic, .mb-ic svg, .bhud-coin svg, .coin-ic, .title-coin svg { display: inline-block; vertical-align: -0.14em; }
+/* board nav / hud ikonok: finom mélység (nem lapos) */
+.bnav-item .i svg { filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+.bnav-item.active .i svg { filter: drop-shadow(0 1px 1px rgba(0,0,0,.45)); }
+.bhud-back svg, .bhud-gear svg, .bhud-shop svg, .title-gear svg { filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+.coin-ic { filter: drop-shadow(0 1px 2px rgba(120,80,0,.4)); }
+#coininfo .coin-ic { font-size: 15px; }
+#coininfo { display: inline-flex; align-items: center; gap: 4px; }
 .bhud-coin { display: inline-flex; align-items: center; gap: 5px; }
 .bhud-coin .coin-ic { font-size: 16px; }
 .bhud-shop { display: inline-flex; align-items: center; gap: 6px; }

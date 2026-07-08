@@ -36,9 +36,10 @@ ZD.input = (() => {
 
   /* ---------- virtuális joystick ---------- */
   let joyTouch = null;
-  let joyOrigin = { x: 0, y: 0 };
+  let joyOrigin = { x: 0, y: 0 };   // az érintés kezdőpontja (viewport-koordináta)
   let touchAxis = 0;
-  const RADIUS = 36;
+  const RADIUS = 40;                 // joystick kitérési sugár (px)
+  const BASE_HALF = 48;              // a #joybase (96px) fele — a bázis középre igazításához
 
   function setup() {
     const zone = document.getElementById('joyzone');
@@ -51,13 +52,20 @@ ZD.input = (() => {
       touchAxis = Math.abs(cl) < 6 ? 0 : cl / RADIUS;
     }
 
+    /* KRITIKUS: a #joybase a #joyzone-hoz (offset parent) képest pozicionálódik,
+       de a pointer clientX/Y a VIEWPORT-hoz mért. Ha a stage letterboxolva/középre
+       van igazítva, a kettő eltér → a joystick "mellé" került. A zóna bounding-rectjét
+       kivonva a bázis pontosan az ujj alá kerül. (A #stage nincs skálázva, csak
+       eltolva, így 1 CSS px = 1 képernyő px → a tengely-delta helyes.) */
     zone.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
       ZD.audio.unlock();
       joyTouch = e.pointerId;
       joyOrigin = { x: e.clientX, y: e.clientY };
+      const zr = zone.getBoundingClientRect();
       base.style.display = 'block';
-      base.style.left = `${e.clientX - 46}px`;
-      base.style.top = `${e.clientY - 46}px`;
+      base.style.left = `${e.clientX - zr.left - BASE_HALF}px`;
+      base.style.top = `${e.clientY - zr.top - BASE_HALF}px`;
       moveKnob(0);
       zone.setPointerCapture(e.pointerId);
     });

@@ -829,10 +829,21 @@ ZD.sprites = (() => {
     ctx.fillRect(bx, by, bw, 3);
     ctx.fillStyle = r > 0.5 ? '#5bc8d8' : r > 0.25 ? '#ffc14d' : '#e5484d';
     ctx.fillRect(bx, by, bw * r, 3);
-    ctx.font = 'bold 6px "Courier New", monospace';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#9fb8c8';
-    ctx.fillText('🛡', gen.x, by - 3);
+    /* rajzolt pajzs-jel (emoji helyett) */
+    const sc = r > 0.5 ? '#8fd8e8' : r > 0.25 ? '#ffd98a' : '#ff8a7a';
+    const sx = gen.x, sy = by - 7;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy - 3.5);
+    ctx.lineTo(sx + 3, sy - 2);
+    ctx.lineTo(sx + 3, sy + 1.5);
+    ctx.quadraticCurveTo(sx + 3, sy + 3.5, sx, sy + 4.5);
+    ctx.quadraticCurveTo(sx - 3, sy + 3.5, sx - 3, sy + 1.5);
+    ctx.lineTo(sx - 3, sy - 2);
+    ctx.closePath();
+    ctx.fillStyle = sc;
+    ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.fillRect(sx - 0.5, sy - 2, 1, 5.5);
   }
 
   /* lőszerláda pickup */

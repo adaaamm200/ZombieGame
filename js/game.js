@@ -133,11 +133,12 @@ ZD.game = (() => {
     if (st.player.weapons[st.player.wi].ammo === 0) st.player.wi = 0;
 
     const M = C.MODES[mode];
-    const modTxt = mod ? `${C.MODS[mod].icon} ${C.MODS[mod].name}` : null;
+    const T = ZD.i18n.t;
+    const modTxt = mod ? C.MODS[mod].name : null;
     st.banner = isFree
-      ? { text: `${M.icon} ${M.name}`, t: 2, total: 2, sub: '1. HULLÁM — gyűjts érmét!' }
+      ? { text: T('mode.free'), t: 2, total: 2, sub: T('game.wave1') }
       : {
-          text: mode === 'survival' ? `${level}. PÁLYA` : `${M.icon} ${M.name}`,
+          text: mode === 'survival' ? T('game.stage', { n: level }) : T('mode.' + mode).toUpperCase(),
           t: 2, total: 2,
           sub: modTxt || (mode === 'survival' ? null : M.desc),
         };
@@ -232,13 +233,13 @@ ZD.game = (() => {
         ZD.audio.play('lowammo');
         st.nums.push({
           x: p.x, y: C.GROUND_Y - C.PLAYER.h - 14,
-          vx: 0, vy: -26, life: 1.2, max: 1.2, val: 'KEVÉS LŐSZER — 📦/B: VÉGY', warn: true,
+          vx: 0, vy: -26, life: 1.2, max: 1.2, val: ZD.i18n.t('hud.lowAmmo'), warn: true,
         });
       }
       if (w.ammo === 0) {
         st.nums.push({
           x: p.x, y: C.GROUND_Y - C.PLAYER.h - 14,
-          vx: 0, vy: -26, life: 1.3, max: 1.3, val: 'ELFOGYOTT — 📦/B: VÉGY (∞ pisztoly)', warn: true,
+          vx: 0, vy: -26, life: 1.3, max: 1.3, val: ZD.i18n.t('hud.outAmmo'), warn: true,
         });
       }
     }
@@ -264,8 +265,25 @@ ZD.game = (() => {
       });
     }
 
-    /* visszarúgás-effektek */
-    if (def.shake) st.shake = Math.max(st.shake, def.shake);
+    /* visszarúgás-effektek + torkolattűz-punch (szikrák, füst, fény) */
+    st.shake = Math.max(st.shake, def.shake ? def.shake : 1.2);
+    const mx = p.x + p.facing * 15, my = gy;
+    st.muzzle = { x: mx, y: my, t: 0.07, big: (def.pellets || 1) > 1 || def.kind === 'rocket' || (def.shake || 0) > 6 };
+    if (def.kind !== 'flame') {
+      const nsp = (def.pellets || 1) > 1 ? 4 : 2;
+      for (let i = 0; i < nsp; i++) {
+        st.parts.push({
+          x: mx, y: my + rand(-2, 2),
+          vx: p.facing * rand(140, 260), vy: rand(-45, 45),
+          life: rand(0.05, 0.14), color: chance(0.5) ? '#fff4d0' : '#ffcf6a', size: rand(1, 2.4), grav: 0,
+        });
+      }
+      if (chance(0.5)) st.parts.push({
+        x: mx + p.facing * 4, y: my - 2,
+        vx: p.facing * rand(8, 34), vy: rand(-28, -6),
+        life: rand(0.28, 0.55), color: '#6b6255', size: rand(1.6, 3.2), grav: 0,
+      });
+    }
     if (def.casing) {
       st.shells.push({
         x: p.x + p.facing * 4, y: gy - 2,
@@ -288,7 +306,16 @@ ZD.game = (() => {
       x: p.x, y: C.GROUND_Y - 20,
       vx: p.facing * 150, vy: -180,
     });
-    ZD.audio.play('click');
+    /* dobás-feedback: kis por-pukkanás a kéznél + könnyű rúgás */
+    const hx = p.x + p.facing * 12, hy = C.GROUND_Y - 22;
+    for (let i = 0; i < 4; i++) {
+      st.parts.push({
+        x: hx, y: hy, vx: p.facing * rand(20, 70), vy: rand(-40, 0),
+        life: rand(0.2, 0.4), color: '#7a7264', size: rand(1.4, 2.6), grav: 0,
+      });
+    }
+    st.shake = Math.max(st.shake, 2);
+    ZD.audio.play('throw');
     ZD.ui.updateHud();
   }
 
@@ -307,7 +334,7 @@ ZD.game = (() => {
     const p = st.player;
     const w = curWeapon();
     if (w.def.id === 'pistol') {
-      floatMsg('PISZTOLY: ∞ LŐSZER', 'ammo');
+      floatMsg(ZD.i18n.t('hud.pistolInf'), 'ammo');
       ZD.audio.play('click');
       return;
     }
@@ -317,11 +344,11 @@ ZD.game = (() => {
       S().coins -= price;
       w.ammo += amt;
       w.warned = false;
-      floatMsg(`+${amt} LŐSZER`, 'ammo');
+      floatMsg(ZD.i18n.t('hud.ammoAdded', { n: amt }), 'ammo');
       ZD.audio.play('ammo');
     } else {
       st.errFlash = 0.45;
-      floatMsg('NINCS ELÉG 🪙', 'warn');
+      floatMsg(ZD.i18n.t('hud.noCoins'), 'warn');
       ZD.audio.play('lowammo');
     }
     ZD.ui.updateHud();
@@ -337,8 +364,8 @@ ZD.game = (() => {
     st.earned += bonus; S().coins += bonus;
     const mini = st.wave % C.FREE.miniBossEvery === 0;
     st.banner = {
-      text: `${st.wave}. HULLÁM`, t: 1.5, total: 1.5,
-      sub: mini ? `⚠ MINI-BOSS · +${bonus} 🪙` : `+${bonus} 🪙`,
+      text: ZD.i18n.t('hud.wave', { n: st.wave }), t: 1.5, total: 1.5,
+      sub: mini ? `${ZD.i18n.t('hud.miniBoss')} · +${bonus}` : `+${bonus}`,
     };
     ZD.audio.play('stage');
     if (mini) { spawnZombie('brute'); ZD.audio.play('roar'); }
@@ -358,13 +385,30 @@ ZD.game = (() => {
 
   function explode(x, y, dmg, radius, big) {
     ZD.audio.play('boom');
-    st.shake = Math.max(st.shake, big ? 11 : 8);
-    st.hitstop = Math.max(st.hitstop, 0.05);
+    st.shake = Math.max(st.shake, big ? 14 : 9);
+    st.hitstop = Math.max(st.hitstop, big ? 0.075 : 0.05);
     st.booms.push({ x, y: Math.min(y, C.GROUND_Y - 4), t: 0, scale: big ? 1.6 : 1 });
-    for (let i = 0; i < (big ? 34 : 22); i++) {
+    const cy = Math.min(y, C.GROUND_Y - 4);
+    /* tűz + törmelék */
+    for (let i = 0; i < (big ? 46 : 30); i++) {
       st.parts.push({
-        x, y: y - 4, vx: rand(-150, 150), vy: rand(-210, -20),
-        life: rand(0.3, 0.8), color: chance(0.4) ? '#ffb84d' : chance(0.5) ? '#ff7433' : '#5a5148', size: rand(1.5, 4), grav: 1,
+        x, y: y - 4, vx: rand(-190, 190), vy: rand(-230, -20),
+        life: rand(0.3, 0.85), color: chance(0.4) ? '#ffb84d' : chance(0.5) ? '#ff7433' : '#5a5148', size: rand(1.5, 4.2), grav: 1,
+      });
+    }
+    /* fényes mag-szikrák (additív-jellegű világos) */
+    for (let i = 0; i < (big ? 14 : 9); i++) {
+      const ang = rand(0, 6.28), sp = rand(60, big ? 260 : 180);
+      st.parts.push({
+        x, y: cy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 40,
+        life: rand(0.12, 0.3), color: chance(0.5) ? '#fff6d8' : '#ffe08a', size: rand(1.5, 3), grav: 0,
+      });
+    }
+    /* földi porgyűrű */
+    for (let i = 0; i < (big ? 10 : 6); i++) {
+      st.parts.push({
+        x: x + rand(-6, 6), y: C.GROUND_Y - 2, vx: rand(-140, 140), vy: rand(-30, -4),
+        life: rand(0.35, 0.7), color: '#6b6255', size: rand(2, 3.6), grav: 0,
       });
     }
     st.zombies.forEach((z) => {
@@ -393,6 +437,15 @@ ZD.game = (() => {
       vx: rand(-8, 8), vy: -38, life: crit ? 0.85 : 0.65, max: crit ? 0.85 : 0.65,
       val: Math.round(dmg), crit,
     });
+    /* becsapódási szikrák — rövid, fényes "punch" a találatnál */
+    const hy = C.GROUND_Y - z.def.h * 0.6;
+    for (let i = 0; i < (crit ? 4 : 2); i++) {
+      st.parts.push({
+        x: z.x, y: hy,
+        vx: (dir !== 0 ? dir : (chance(0.5) ? 1 : -1)) * rand(60, 180), vy: rand(-70, 30),
+        life: rand(0.06, 0.16), color: crit ? '#fff2c8' : '#ffd98a', size: rand(1, 2.2), grav: 0,
+      });
+    }
     /* irányított vérfröccsenés — a lövés irányába spriccel */
     for (let i = 0; i < (crit ? 10 : 7); i++) {
       const away = dir !== 0 ? dir * rand(15, 95) : rand(-60, 60);
@@ -528,6 +581,7 @@ ZD.game = (() => {
         p.reloadT = 0.5;
         ZD.audio.play('reload');
         ZD.ui.updateHud();
+        if (ZD.ui.flashReload) ZD.ui.flashReload(0.5);
       }
       if (inp.buyammo) { inp.buyammo = false; buyAmmoInMatch(); }
     } else {
@@ -550,6 +604,7 @@ ZD.game = (() => {
     if (p.fireCd > 0) p.fireCd -= dt;
     if (p.fireAnim > 0) p.fireAnim -= dt;
     if (p.reloadT > 0) p.reloadT -= dt;
+    if (st.muzzle && st.muzzle.t > 0) st.muzzle.t -= dt;
     if (p.invuln > 0) p.invuln -= dt;
     if (p.flash > 0) p.flash -= dt;
     if (st.dying <= 0 && inp.fire && p.fireCd <= 0) shoot();
@@ -576,7 +631,7 @@ ZD.game = (() => {
       st.bossRef = st.zombies[st.zombies.length - 1];
       st.bossBarHp = 1;
       st.shake = 7;
-      st.banner = { text: '⚠ A VEZÉR MEGÉRKEZETT', t: 2.2, total: 2.2, sub: null };
+      st.banner = { text: ZD.i18n.t('game.bossArrived'), t: 2.2, total: 2.2, sub: null };
       ZD.audio.play('roar');
     } else if (st.killed >= st.quota && st.zombies.every((z) => z.dead) && !st.result) {
       win();
@@ -646,7 +701,7 @@ ZD.game = (() => {
           z.enrage = true;
           z.dmg *= 1.25;
           z.speed *= 1.25;
-          st.banner = { text: '⚠ A VEZÉR MEGDÜHÖDÖTT', t: 1.6, total: 1.6, sub: null };
+          st.banner = { text: ZD.i18n.t('game.bossEnraged'), t: 1.6, total: 1.6, sub: null };
           st.shake = Math.max(st.shake, 6);
           ZD.audio.play('roar');
         }
@@ -982,7 +1037,7 @@ ZD.game = (() => {
       g.hp = 0;
       st.booms.push({ x: g.x, y: C.GROUND_Y - 14, t: 0, scale: 1.4 });
       ZD.audio.play('boom');
-      st.banner = { text: '✖ A GENERÁTOR MEGSEMMISÜLT', t: 1.4, total: 1.4, sub: null };
+      st.banner = { text: ZD.i18n.t('game.genDestroyed'), t: 1.4, total: 1.4, sub: null };
       lose();
     }
   }
@@ -1101,6 +1156,20 @@ ZD.game = (() => {
       });
     }
 
+    /* torkolattűz-fény (additív, rövid) */
+    if (st.muzzle && st.muzzle.t > 0) {
+      const m = st.muzzle;
+      const a = Math.min(1, m.t / 0.07);
+      const r = m.big ? 11 : 6.5;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = a * 0.85;
+      SP.pxCircle(ctx, m.x, m.y, r, '#ffcf6a', 1);
+      ctx.globalAlpha = a;
+      SP.pxCircle(ctx, m.x, m.y, r * 0.5, '#fff6d8', 1);
+      ctx.restore();
+    }
+
     /* lövedékek */
     st.bullets.forEach((b) => {
       if (b.kind === 'flame') {
@@ -1128,15 +1197,18 @@ ZD.game = (() => {
         SP.px(ctx, b.x - Math.sign(b.vx) * 7, b.y - 1.5, 5, 3, '#ffb84d');
         ctx.restore();
       } else {
-        /* golyó: hosszú, fényes tracer */
+        /* golyó: hosszú, fényes tracer + izzó mag */
+        const sg = Math.sign(b.vx);
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = 0.22;
-        SP.px(ctx, b.x - Math.sign(b.vx) * 16, b.y - 1, 16, 2, b.color);
-        ctx.globalAlpha = 0.55;
-        SP.px(ctx, b.x - Math.sign(b.vx) * 9, b.y - 0.5, 9, 1.5, b.color);
+        ctx.globalAlpha = 0.18;
+        SP.px(ctx, b.x - sg * 24, b.y - 1.5, 24, 3, b.color);
+        ctx.globalAlpha = 0.42;
+        SP.px(ctx, b.x - sg * 15, b.y - 1, 15, 2, b.color);
+        ctx.globalAlpha = 0.85;
+        SP.px(ctx, b.x - sg * 7, b.y - 0.5, 7, 1.5, '#fff2c8');
         ctx.globalAlpha = 1;
-        SP.px(ctx, b.x - 2.5, b.y - 1, 5, 2, '#fff6d8');
+        SP.px(ctx, b.x - 3, b.y - 1.5, 6, 3, '#ffffff');
         ctx.restore();
       }
     });
@@ -1218,28 +1290,40 @@ ZD.game = (() => {
       ctx.restore();
     }
 
-    /* boss HP-sáv */
+    /* boss HP-sáv (prémium: keret + gloss + vörös glow + lag-csík) */
     if (st.bossRef && !st.bossRef.dead) {
-      const bw = 190, bx = C.VIEW_W / 2 - bw / 2, by = 9;
-      ctx.fillStyle = 'rgba(8,4,4,.82)';
-      ctx.fillRect(bx - 4, by - 4, bw + 8, 15);
-      ctx.fillStyle = '#3a1212';
-      ctx.fillRect(bx, by, bw, 7);
-      /* fehér "lag" csík mutatja a friss sebzést */
-      ctx.fillStyle = '#e8d8c8';
-      ctx.fillRect(bx, by, bw * Math.max(0, st.bossBarHp), 7);
+      const bw = 196, bx = C.VIEW_W / 2 - bw / 2, by = 10;
       const hpr = Math.max(0, st.bossRef.hp / st.bossRef.maxHp);
-      const grd = ctx.createLinearGradient(0, by, 0, by + 7);
-      grd.addColorStop(0, '#ff6a4a');
-      grd.addColorStop(1, '#c22e18');
+      ctx.save();
+      /* külső fémes keret + vörös glow */
+      ctx.shadowColor = 'rgba(255,50,40,.5)'; ctx.shadowBlur = 8;
+      ctx.fillStyle = 'rgba(10,4,4,.9)';
+      ctx.fillRect(bx - 5, by - 4, bw + 10, 14);
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(255,120,90,.55)'; ctx.lineWidth = 1;
+      ctx.strokeRect(bx - 4.5, by - 3.5, bw + 9, 13);
+      /* üres sáv */
+      ctx.fillStyle = '#2a0e0e';
+      ctx.fillRect(bx, by, bw, 6);
+      /* fehér "lag" csík mutatja a friss sebzést */
+      ctx.fillStyle = '#f0d8c8';
+      ctx.fillRect(bx, by, bw * Math.max(0, st.bossBarHp), 6);
+      /* aktuális HP gradiens */
+      const grd = ctx.createLinearGradient(0, by, 0, by + 6);
+      grd.addColorStop(0, '#ff8a5a'); grd.addColorStop(0.5, '#ff4a2a'); grd.addColorStop(1, '#b81e12');
       ctx.fillStyle = grd;
-      ctx.fillRect(bx, by, bw * hpr, 7);
+      ctx.fillRect(bx, by, bw * hpr, 6);
+      /* felső gloss */
+      ctx.fillStyle = 'rgba(255,255,255,.22)';
+      ctx.fillRect(bx, by, bw * hpr, 2);
+      ctx.restore();
+      const lbl = ZD.i18n.t('game.bossLabel');
       ctx.font = 'bold 7px "Courier New", monospace';
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#141210';
-      ctx.fillText('☠ VEZÉR', C.VIEW_W / 2 + 0.6, by + 15.6);
+      ctx.fillStyle = '#180a08';
+      ctx.fillText(lbl, C.VIEW_W / 2 + 0.6, by + 15.6);
       ctx.fillStyle = '#ffd8d0';
-      ctx.fillText('☠ VEZÉR', C.VIEW_W / 2, by + 15);
+      ctx.fillText(lbl, C.VIEW_W / 2, by + 15);
     }
 
     /* cinematikus banner (pályakezdés, boss) */

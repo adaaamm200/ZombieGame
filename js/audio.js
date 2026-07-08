@@ -99,6 +99,7 @@ ZD.audio = (() => {
     pdie()      { tone(300, 60, 0.7, 'sawtooth', 0.28); burst(0.25, 0.5, 400); },
     genhit()    { burst(0.3, 0.1, 700); tone(180, 90, 0.08, 'square', 0.14); },
     stage()     { tone(320, 320, 0.09, 'square', 0.14); setTimeout(() => ctx && tone(480, 480, 0.12, 'square', 0.15), 120); },
+    throw()     { tone(520, 180, 0.14, 'sine', 0.14); burst(0.12, 0.1, 900); },
   };
 
   const throttleMs = { uzi: 45, minigun: 40, flame: 70, hit: 50, shot: 60, rifle: 60, coin: 60, groan: 800, genhit: 120 };

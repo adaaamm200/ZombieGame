@@ -1,42 +1,55 @@
-/* ZombieChronicles — egységes inline SVG ikonok (emoji helyett).
-   ZD.icon(name, extraClass) → SVG string. currentColor öröklődik. */
+/* ZombieChronicles — prémium inline SVG ikonkészlet (emoji helyett).
+   ZD.icon(name, extraClass) → SVG string. currentColor öröklődik.
+   Cél: vastag, jól olvasható, sötét háttéren is látszó, játékba illő ikonok
+   (nem vékony fehér utility-ikonok). A CSS glow/shadow/badge réteget ad hozzá. */
 window.ZD = window.ZD || {};
 
 ZD.icon = (() => {
-  const V = 'viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"';
+  /* vastagabb kontúr = markánsabb, játékos hatás */
+  const V = 'viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"';
   const Vf = 'viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" stroke="none"';
+  /* kettős rétegű ikonokhoz: telt alap + finom kontúr */
 
   const P = {
-    /* nav / general */
-    back: `<svg ${V}><path d="M14 6l-6 6 6 6"/></svg>`,
-    play: `<svg ${Vf}><path d="M8 5v14l11-7z"/></svg>`,
-    chevron: `<svg ${V}><path d="M9 6l6 6-6 6"/></svg>`,
-    gear: `<svg ${V}><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M4.4 7.2l2 1.2M17.6 15.6l2 1.2M4.4 16.8l2-1.2M17.6 8.4l2-1.2"/></svg>`,
-    settings: `<svg ${V}><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M4.4 7.2l2 1.2M17.6 15.6l2 1.2M4.4 16.8l2-1.2M17.6 8.4l2-1.2"/></svg>`,
+    /* ---- nav / general ---- */
+    back: `<svg ${V}><path d="M13.5 5l-7 7 7 7"/><path d="M7 12h11" opacity=".55"/></svg>`,
+    play: `<svg ${Vf}><path d="M7 4.5v15a1 1 0 001.5.87l12-7.5a1 1 0 000-1.74l-12-7.5A1 1 0 007 4.5z"/></svg>`,
+    chevron: `<svg ${V}><path d="M9 5.5l6.5 6.5L9 18.5"/></svg>`,
+    gear: `<svg ${Vf}><path d="M12 8.2A3.8 3.8 0 1012 15.8 3.8 3.8 0 0012 8.2zm0 2.2a1.6 1.6 0 110 3.2 1.6 1.6 0 010-3.2z"/><path d="M10.6 1.8h2.8l.5 2.6c.5.17.98.4 1.42.68l2.4-1.1 2 2-1.1 2.4c.28.44.5.92.68 1.42l2.6.5v2.8l-2.6.5c-.17.5-.4.98-.68 1.42l1.1 2.4-2 2-2.4-1.1c-.44.28-.92.5-1.42.68l-.5 2.6h-2.8l-.5-2.6c-.5-.17-.98-.4-1.42-.68l-2.4 1.1-2-2 1.1-2.4c-.28-.44-.5-.92-.68-1.42l-2.6-.5v-2.8l2.6-.5c.17-.5.4-.98.68-1.42l-1.1-2.4 2-2 2.4 1.1c.44-.28.92-.5 1.42-.68z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>`,
+    settings: `<svg ${Vf}><path d="M12 8.2A3.8 3.8 0 1012 15.8 3.8 3.8 0 0012 8.2zm0 2.2a1.6 1.6 0 110 3.2 1.6 1.6 0 010-3.2z"/><path d="M10.6 1.8h2.8l.5 2.6c.5.17.98.4 1.42.68l2.4-1.1 2 2-1.1 2.4c.28.44.5.92.68 1.42l2.6.5v2.8l-2.6.5c-.17.5-.4.98-.68 1.42l1.1 2.4-2 2-2.4-1.1c-.44.28-.92.5-1.42.68l-.5 2.6h-2.8l-.5-2.6c-.5-.17-.98-.4-1.42-.68l-2.4 1.1-2-2 1.1-2.4c-.28-.44-.5-.92-.68-1.42l-2.6-.5v-2.8l2.6-.5c.17-.5.4-.98.68-1.42l-1.1-2.4 2-2 2.4 1.1c.44-.28.92-.5 1.42-.68z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>`,
     plus: `<svg ${V}><path d="M12 5v14M5 12h14"/></svg>`,
-    close: `<svg ${V}><path d="M6 6l12 12M18 6L6 18"/></svg>`,
-    globe: `<svg ${V}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.4 2.6 15.6 0 18M12 3c-2.6 2.4-2.6 15.6 0 18"/></svg>`,
-    /* currency / meta */
-    coin: `<svg ${Vf}><circle cx="12" cy="12" r="9" fill="currentColor"/><circle cx="12" cy="12" r="9" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="1.4"/><path d="M9.4 9.2a3.4 3.4 0 100 5.6" fill="none" stroke="rgba(60,40,0,.75)" stroke-width="1.8" stroke-linecap="round"/><path d="M8.2 12h3.4" stroke="rgba(60,40,0,.75)" stroke-width="1.6" stroke-linecap="round"/></svg>`,
-    save: `<svg ${V}><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg>`,
-    file: `<svg ${V}><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg>`,
-    /* mission markers */
-    check: `<svg ${V}><path d="M5 12.5l4.5 4.5L19 6.5"/></svg>`,
-    lock: `<svg ${V}><rect x="5.5" y="10.5" width="13" height="9.5" rx="1.6"/><path d="M8.2 10.5V8a3.8 3.8 0 017.6 0v2.5"/></svg>`,
-    skull: `<svg ${Vf}><path d="M12 2.6C7 2.6 3.4 6 3.4 10.6c0 2.6 1.2 4.4 2.8 5.6v2.4c0 .9.7 1.6 1.6 1.6h.9v-2.2h1.5v2.2h3.6v-2.2h1.5v2.2h.9c.9 0 1.6-.7 1.6-1.6v-2.4c1.6-1.2 2.8-3 2.8-5.6C20.6 6 17 2.6 12 2.6z"/><circle cx="8.6" cy="11" r="1.9" fill="#0a0a0a"/><circle cx="15.4" cy="11" r="1.9" fill="#0a0a0a"/><path d="M12 13.5l-1.1 2.2h2.2z" fill="#0a0a0a"/></svg>`,
-    crate: `<svg ${V}><path d="M4 8.5L12 5l8 3.5v7L12 19l-8-3.5z"/><path d="M4 8.5l8 3.5 8-3.5M12 12v7M8 6.7v6.9M16 6.7v6.9"/></svg>`,
-    warning: `<svg ${V}><path d="M12 4L2.7 20h18.6z"/><path d="M12 10v4.5M12 17.4v.2"/></svg>`,
-    /* nav item glyphs */
-    campaign: `<svg ${V}><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.4"/><path d="M12 2.4v3M12 18.6v3M2.4 12h3M18.6 12h3"/></svg>`,
-    scavenge: `<svg ${V}><path d="M4 8.5L12 5l8 3.5v7L12 19l-8-3.5z"/><path d="M4 8.5l8 3.5 8-3.5M12 12v7"/></svg>`,
-    armory: `<svg ${V}><path d="M3 9h13l3 2v2h-2l-2 3h-3l-1-3H6l-1 2H3z"/><path d="M8 13v3"/></svg>`,
-    lab: `<svg ${V}><path d="M10 3h4M10.5 3v6L6 18a2 2 0 001.8 3h8.4A2 2 0 0018 18l-4.5-9V3"/><path d="M8.4 14h7.2"/></svg>`,
-    /* in-game controls */
-    fire: `<svg ${Vf}><path d="M12 2.4c1.6 3 .3 4.8-.9 6.2-1.3 1.5-2.7 3-2.7 5.4A4.6 4.6 0 0012 18.6a4.6 4.6 0 003.6-7.4c-.6-.9-1.3-1.6-1.3-2.7 0-.9.4-1.7.4-1.7s-2 .6-2.7 2.2c-.5-1.5.4-4.6 0-6.6z"/></svg>`,
-    grenade: `<svg ${V}><circle cx="12" cy="14" r="6"/><path d="M9.5 8.5l1.5-1.5h2l1.5 1.5M14.5 6.5l2-2 1.5 1.5-2 2M12 5.5V7"/></svg>`,
-    swap: `<svg ${V}><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>`,
-    pause: `<svg ${Vf}><rect x="6.5" y="5" width="3.5" height="14" rx="1"/><rect x="14" y="5" width="3.5" height="14" rx="1"/></svg>`,
-    heart: `<svg ${Vf}><path d="M12 20.5l-1.5-1.3C5.4 14.7 2.8 12.3 2.8 9.2 2.8 6.8 4.7 5 7 5c1.6 0 3.1.9 3.9 2.3H13C13.9 5.9 15.4 5 17 5c2.3 0 4.2 1.8 4.2 4.2 0 3.1-2.6 5.5-7.7 10z"/></svg>`,
+    close: `<svg ${V}><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>`,
+    globe: `<svg ${V}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.7 2.5 2.7 15.5 0 18M12 3c-2.7 2.5-2.7 15.5 0 18"/></svg>`,
+
+    /* ---- currency / meta ---- */
+    coin: `<svg ${Vf}><circle cx="12" cy="12" r="9.4" fill="currentColor"/><circle cx="12" cy="12" r="9.4" fill="none" stroke="rgba(120,80,0,.55)" stroke-width="1.4"/><circle cx="12" cy="12" r="6.6" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1"/><path d="M13.6 9.1a3.3 3.3 0 100 5.8" fill="none" stroke="rgba(70,46,0,.85)" stroke-width="2" stroke-linecap="round"/><path d="M9 12h3.6" stroke="rgba(70,46,0,.85)" stroke-width="1.9" stroke-linecap="round"/></svg>`,
+    save: `<svg ${V}><path d="M5 4.2h10.2L19 8v11.8H5z"/><path d="M8.2 4.2v4.4h6V4.4M8.2 19.8v-5.4h7.6v5.4"/></svg>`,
+    file: `<svg ${V}><path d="M6.5 3h6.5l4.5 4.5V21H6.5z"/><path d="M13 3v4.8h4.5"/></svg>`,
+
+    /* ---- mission markerek / állapotok ---- */
+    check: `<svg ${V} stroke-width="2.8"><path d="M4.5 12.5l4.8 4.8L19.5 6.5"/></svg>`,
+    lock: `<svg ${Vf}><rect x="4.8" y="10.2" width="14.4" height="10.4" rx="2.2"/><path d="M7.6 10.2V7.8a4.4 4.4 0 018.8 0v2.4" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><circle cx="12" cy="15" r="1.7" fill="rgba(0,0,0,.55)"/></svg>`,
+    skull: `<svg ${Vf}><path d="M12 2.4C6.7 2.4 3 6 3 10.7c0 2.7 1.3 4.6 2.9 5.8v2.5c0 1 .8 1.8 1.8 1.8h.9v-2.3h1.6v2.3h3.6v-2.3h1.6v2.3h.9c1 0 1.8-.8 1.8-1.8v-2.5c1.6-1.2 2.9-3.1 2.9-5.8C21 6 17.3 2.4 12 2.4z"/><circle cx="8.4" cy="11" r="2.1" fill="#0a0a0a"/><circle cx="15.6" cy="11" r="2.1" fill="#0a0a0a"/><path d="M12 13.6l-1.3 2.4h2.6z" fill="#0a0a0a"/></svg>`,
+    crate: `<svg ${V}><path d="M3.5 8L12 4l8.5 4v8L12 20l-8.5-4z"/><path d="M3.5 8l8.5 4 8.5-4M12 12v8" stroke-width="2"/><path d="M8 6v6.8M16 6v6.8" opacity=".6" stroke-width="1.7"/></svg>`,
+    warning: `<svg ${Vf}><path d="M12 3.2a1.5 1.5 0 011.3.76l8.5 14.7A1.5 1.5 0 0120.5 21H3.5a1.5 1.5 0 01-1.3-2.3l8.5-14.7A1.5 1.5 0 0112 3.2z"/><path d="M12 9v5" stroke="#1a0f00" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="17.4" r="1.35" fill="#1a0f00"/></svg>`,
+
+    /* ---- nav item glyphs ---- */
+    campaign: `<svg ${V}><path d="M5 4v16M5 5l8 3-8 3" fill="currentColor" fill-opacity=".22"/><path d="M5 5l8 3-3 2.2 5 1.8-9 3" fill="currentColor" fill-opacity=".85" stroke-width="1.4"/></svg>`,
+    scavenge: `<svg ${V}><path d="M3.5 8L12 4l8.5 4v8L12 20l-8.5-4z"/><path d="M3.5 8l8.5 4 8.5-4M12 12v8" stroke-width="2"/></svg>`,
+    armory: `<svg ${Vf}><path d="M2.5 9.2h12.3l1.4-2h4.3l.9 1.2-1.4 1.6h-1.5v2.2l-2.6 2.8h-3.1l-1-2.5H8.3l-1.1 2.2H5l1-2.2H2.5z"/><rect x="8" y="13.4" width="1.9" height="3.4" rx=".6"/></svg>`,
+    lab: `<svg ${V}><path d="M9.5 3h5M10.4 3v6.2L5.7 17.6A2 2 0 007.5 20.6h9a2 2 0 001.8-3L13.6 9.2V3"/><path d="M8 14.4h8" stroke-width="2"/><circle cx="11" cy="16.3" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="17.4" r=".8" fill="currentColor" stroke="none"/></svg>`,
+
+    /* ---- in-game vezérlők / HUD ---- */
+    fire: `<svg ${Vf}><path d="M12 2.2c1.9 3.3.5 5.3-.9 6.9-1.5 1.7-3 3.4-3 6A5.1 5.1 0 0012 21a5.1 5.1 0 004-8.2c-.7-1-1.5-1.8-1.5-3 0-1 .5-2 .5-2s-2.2.7-3 2.5c-.6-1.7.4-5.1 0-8.1z"/><path d="M12 21a2.6 2.6 0 002.6-2.6c0-1.5-1.3-2.3-1.3-3.7 0 0-1.1.5-1.5 1.6-.3-.8-.9-1.3-.9-1.3s-1.5 1.4-1.5 3.4A2.6 2.6 0 0012 21z" fill="#1a0a00" fill-opacity=".28"/></svg>`,
+    grenade: `<svg ${Vf}><path d="M11.8 7.8a6.4 6.4 0 106.4 6.4 6.4 6.4 0 00-6.4-6.4z"/><path d="M8.6 8.4l-1.4-1.4 1.6-1.6 1.4 1.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 5.4h3.4l1.6 1.6M14.8 4.6l2.4-2 1.6 1.7-2.2 2.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="11.8" cy="14.2" r="2.4" fill="rgba(255,255,255,.25)" stroke="none"/></svg>`,
+    swap: `<svg ${V}><path d="M4 8.5h13l-3.2-3.2M20 15.5H7l3.2 3.2" stroke-width="2.4"/></svg>`,
+    pause: `<svg ${Vf}><rect x="6" y="4.5" width="4" height="15" rx="1.4"/><rect x="14" y="4.5" width="4" height="15" rx="1.4"/></svg>`,
+    heart: `<svg ${Vf}><path d="M12 20.8l-1.6-1.4C5.2 14.8 2.5 12.3 2.5 9 2.5 6.5 4.5 4.6 7 4.6c1.7 0 3.3 1 4.1 2.5h1.8C13.7 5.6 15.3 4.6 17 4.6c2.5 0 4.5 1.9 4.5 4.4 0 3.3-2.7 5.8-7.9 10.4z"/><path d="M9 8.5a2.6 2.6 0 012.4 1.6" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.4" stroke-linecap="round"/></svg>`,
+    medkit: `<svg ${Vf}><rect x="2.5" y="6.5" width="19" height="13" rx="2.4"/><path d="M8 6.5V5a1.6 1.6 0 011.6-1.6h4.8A1.6 1.6 0 0116 5v1.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 9.5v7M8.5 13h7" stroke="#0e1a0c" stroke-width="2.4" stroke-linecap="round"/></svg>`,
+    ammo: `<svg ${Vf}><path d="M8.5 3.6h3l1 2.2v3.4l1.1 1.2v8.4a1.4 1.4 0 01-1.4 1.4H7.8a1.4 1.4 0 01-1.4-1.4v-8.4l1.1-1.2V5.8z"/><path d="M8 11.6h4" stroke="rgba(0,0,0,.4)" stroke-width="1.4"/><path d="M9 6.4h1.8" stroke="rgba(255,255,255,.4)" stroke-width="1.4" stroke-linecap="round"/></svg>`,
+    reload: `<svg ${V}><path d="M20 5.5v4.6h-4.6" stroke-width="2.4"/><path d="M19.4 10a7.6 7.6 0 10.3 5" fill="none" stroke-width="2.4"/></svg>`,
+    boss: `<svg ${Vf}><path d="M12 2.2C6.5 2.2 2.6 6 2.6 10.9c0 2.8 1.4 4.8 3 6v2.6c0 1 .85 1.9 1.9 1.9h1v-2.4h1.7v2.4h3.6v-2.4h1.7v2.4h1c1.05 0 1.9-.85 1.9-1.9v-2.6c1.6-1.2 3-3.2 3-6C21.4 6 17.5 2.2 12 2.2z"/><circle cx="8.2" cy="11.2" r="2.3" fill="#ff2a2a"/><circle cx="15.8" cy="11.2" r="2.3" fill="#ff2a2a"/><circle cx="8.2" cy="11.2" r=".9" fill="#3a0000"/><circle cx="15.8" cy="11.2" r=".9" fill="#3a0000"/><path d="M12 14l-1.4 2.6h2.8z" fill="#3a0000"/></svg>`,
+    objective: `<svg ${V}><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="4.4"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><path d="M12 1.6v2.6M12 19.8v2.6M1.6 12h2.6M19.8 12h2.6" stroke-width="2"/></svg>`,
   };
 
   return function icon(name, cls) {

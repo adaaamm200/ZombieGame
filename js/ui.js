@@ -925,6 +925,19 @@ ZD.ui = (() => {
   }
   function hidePause() { screens.pause.classList.add('hidden'); }
 
+  /* reload-jelző villantása a fegyver-chipen (fegyverváltás/újratöltéskor) —
+     önmagát törli, nem függ a frame-enkénti updateHud-tól */
+  let reloadTimer = null;
+  function flashReload(dur) {
+    const chip = $('#weaponchip');
+    if (!chip) return;
+    chip.classList.remove('reloading');
+    void chip.offsetWidth;               // animáció újraindítása
+    chip.classList.add('reloading');
+    if (reloadTimer) clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(() => { chip.classList.remove('reloading'); reloadTimer = null; }, Math.max(120, dur * 1000));
+  }
+
   function showResult(won, earned, bonus, stats, opts = {}) {
     const isFree = won === 'free';
     const w = won === true;
@@ -966,5 +979,5 @@ ZD.ui = (() => {
     screens.result.classList.remove('hidden');
   }
 
-  return Object.assign(api, { build, show, enterGame, updateHud, showPause, hidePause, showResult });
+  return Object.assign(api, { build, show, enterGame, updateHud, showPause, hidePause, showResult, flashReload });
 })();

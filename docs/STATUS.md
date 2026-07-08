@@ -11,6 +11,53 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## M1B — Prémium UI + gameplay feel + KRITIKUS input fix (2026-07-08)
+- **KRITIKUS touch-input fix (`js/input.js`)**: a virtuális joystick a pointer
+  `clientX/Y` (VIEWPORT-koordináta) alapján pozicionálta a `#joybase`-t, ami a
+  `#joyzone`-hoz (offset parent) képest van elhelyezve. Mivel a `#stage` középre
+  igazított/letterboxolt, a kettő eltért → a joystick „mellé" került. Javítás: a
+  bázis a zóna `getBoundingClientRect()`-jéhez relatívan kerül az ujj alá
+  (`clientX - zr.left - BASE_HALF`). A `#stage` nincs skálázva (csak eltolva), így
+  a tengely-delta változatlanul helyes. **Böngészőben igazolva**: az érintési pont
+  és a bázisközéppont eltérése **0px** desktopon (640px stage-offsetnél), mobil
+  landscape-en (73px oldalsó letterboxnál) és ultrawide-on is. RADIUS 36→40.
+- **Prémium ikonrendszer (`js/icons.js` újraírva)**: vastagabb kontúr (stroke 1.9→2.3),
+  telt/kettős rétegű, sötét háttéren is olvasható, játékba illő ikonok; új ikonok:
+  `reload`, `ammo`, `medkit`, `boss`, `objective`. A vékony fehér placeholder-hatás
+  megszűnt. A CSS glow/shadow/badge réteget ad (nem lapos).
+- **Főmenü gyökeres UI polish (`css/style.css`)**: a menügombok accent-gradiens
+  üvegpanelek lettek (accent-színnel átszínezett háttér + erős border-highlight +
+  belső fény + mélység); az ikonok **prémium accent-gradiens badge**-ekben ülnek
+  (korong + gloss + gyűrű + glow), sötét glyph-fel. Primary gombon futó fény
+  (goldShine). Erősebb hover/press, tisztább vizuális hierarchia.
+- **Gameplay HUD polish (`index.html` + CSS)**: prémiumabb fegyver-chip (nagyobb
+  ikon, glossy panel), **animált RELOAD-jelző** a chipen (forgó spinner + sweep-sáv;
+  önmagát törli, `ZD.ui.flashReload()` fegyverváltáskor). Vezérlőgombok (fire/gránát/
+  lőszer/swap) **accent-színes prémium korongok** (fire=vörös, gránát=vörös, lőszer=
+  arany, swap=kék) gloss + glow + press-pulzálással; nagyobb, olvashatóbb glyphek.
+- **Combat feel turbó (`js/game.js` + `audio.js`)**: torkolattűz-punch (additív
+  muzzle-glow + szikrák + füst + min. shake minden lövésnél), erősebb/hosszabb golyó-
+  tracer izzó maggal, becsapódási szikrák a találatnál, **erősebb robbanás** (fényes
+  mag-szikrák + porgyűrű + több törmelék + nagyobb shake/hitstop), **gránátdobás-
+  feedback** (por-pukkanás + rúgás + új `throw` hang), prémiumabb boss HP-sáv
+  (keret + gloss + vörös glow + lag-csík).
+- **Emoji-mentesítés + i18n a gameplayben**: az összes maradék in-game emoji
+  eltávolítva (📦/🪙/⚠/✖/☠ float-feliratok és canvas-bannerek, a generátor 🛡
+  rajzolt pajzzsá). Az in-game HUD-feliratok és bannerek most **lokalizáltak**
+  (EN-default konzisztencia): `hud.*` + `game.*` kulcsok EN+HU (LOW AMMO, OUT,
+  +N AMMO, MINI-BOSS, WAVE N, STAGE N, THE BOSS HAS ARRIVED/ENRAGED, GENERATOR
+  DESTROYED, BOSS bar-címke).
+- **TESZTELVE** (böngészőben, valós motor): 0 konzolhiba; főmenü 6 prémium gomb
+  gradiens ikon-badge-ekkel; board 6 hotspot + 3 nav + briefing az új ikonokkal;
+  játék indul, HUD/vezérlők láthatók, reload-flash működik; 70+ frame lövés/gránát/
+  render (boss-szint) hibamentes; EN↔HU nyelvváltás. **Screenshot a folyamatos
+  canvas-animáció miatt időtúllépik (tooling-korlát) — a render() hibamentesen fut,
+  DOM/eval-verifikációval igazolva.**
+- **Viewport-gate ÁTMENT**: desktop 16:9 (kitölt); mobil landscape 812×375 = 100%
+  magasság, 16:9, input-hiba 0px; ultrawide 1600×600 = 16:9 megőrizve, teljes
+  magasság. Nincs „kicsi középen"; a `#stage` közös doboz.
+- sw.js cache: **zk-v17** (JS/CSS/HTML változott). `node --check` mind a JS-re OK.
+
 ## MASTER PLAN rögzítve — hivatalos hosszú távú terv (2026-07-08)
 - Létrehozva: [`docs/MASTER_PLAN.md`](MASTER_PLAN.md) — **ZombieChronicles — Master
   Development Plan**. Ez mostantól a játék HIVATALOS fejlesztési terve; minden új
