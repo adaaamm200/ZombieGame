@@ -11,6 +11,28 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## ICON CROP / ALIGNMENT FIX — production-ready, középre igazított kivágások (2026-07-08)
+- **Probléma**: a menü/board asset-ikonok kivágásai el voltak csúszva / eltérő fekete
+  peremmel (fix méretű manuális dobozok pontatlan koordinátákkal) → „odadobott kép" hatás.
+- **Megoldás (NEM CSS-hack, hanem tiszta asset-előkészítés, `tools/crop.js`)**:
+  - **Sor-sűrűség profil**: a sheet vízszintes sávjaiból meghatározva a PONTOS ikon-Y-sávok
+    (menü-octagon y≈147–270, state-hexagon y≈387–493) — így a fejléc/feliratok NEM lógnak bele.
+  - **Centroid + FIX doboz**: a fénylő pixelek súlypontja adja a stabil optikai középpontot
+    (szimmetrikus ikonoknál a keret színétől/fényességétől függetlenül), majd minden ikon
+    **azonos méretű** dobozba kerül (menü 172×132, state 130×120) → egységes padding/optikai súly.
+  - **Kézi középpont-felülírás** a halvány/aszimmetrikus ikonokhoz (m-back chevron, m-continue),
+    ahol a centroid megbízhatatlan lett.
+  - A sötét-keretes **kör-vezérlők** (ic-*) fix kalibrált dobozok maradtak (ott jók voltak).
+- **Eredmény**: minden menü-octagon és board-hexagon **középen, egységes mérettel/peremmel**,
+  nincs beégett felirat/perem. (Screenshot-igazolt: menü + campaign board.)
+- **TESZTELVE** (böngésző + screenshot): főmenü (6 octagon egységes), board (nav-octagon +
+  hexagon markerek: boss/scavenge/locked/done/current mind középen), briefing thumb, in-game
+  vezérlő-ikonok (regresszió: OK). Flow board→loadout→game ✔. **0 konzolhiba.**
+- **Viewport-gate ÁTMENT**: desktop 16:9 (1280×720), mobil landscape 812×375 = 100% magasság
+  (hexagon 56px tap-target, nav nem takar), ultrawide 16:9. Csak asset-tartalom + tool változott
+  — DOM/CSS-integráció és gameplay ÉRINTETLEN.
+- sw.js cache: **zk-v21** (az asset-PNG-k tartalma frissült). `node --check` mind a JS-re OK.
+
 ## ICON CONSISTENCY PASS — egységes prémium asset-ikonnyelv minden UI-felületen (2026-07-08)
 - **Cél**: a már javított in-game asset-ikonstílus (ingame_icons.png) következetes
   átvitele a főmenüre, boardra, briefingre, loadoutra, armory/lab-ra — hogy a teljes

@@ -84,18 +84,75 @@ function crop(src, x, y, cw, ch) {
   return { buf: out, cw, ch };
 }
 
+/* A megadott régión belül megkeresi a TARTALOM bounding-boxát (a sötét sheet-háttér
+   fölött világos/telített ikon-pixelek). Sor/oszlop-projekcióval, hogy a texturális
+   zaj (magányos fényes pixelek) ne rontsa el. */
+function contentBBox(src, rx, ry, rw, rh, th, minCount) {
+  const { w, bpp } = src;
+  rx = Math.max(0, rx); ry = Math.max(0, ry); rw = Math.min(rw, src.w - rx); rh = Math.min(rh, src.h - ry);
+  const col = new Int32Array(rw), row = new Int32Array(rh);
+  for (let j = 0; j < rh; j++) {
+    for (let i = 0; i < rw; i++) {
+      const o = ((ry + j) * w + (rx + i)) * bpp;
+      const r = src.px[o], g = src.px[o + 1], b = src.px[o + 2];
+      const bright = Math.max(r, g, b);
+      /* CSAK fényesség: a metál keret + belső artwork fényes, a színes külső GLOW
+         viszont sötétebb → így a bbox a szolid ikonra szűkül (nem a glow-ra). */
+      if (bright > th) { col[i]++; row[j]++; }
+    }
+  }
+  let x0 = 0; while (x0 < rw && col[x0] < minCount) x0++;
+  let x1 = rw - 1; while (x1 > x0 && col[x1] < minCount) x1--;
+  let y0 = 0; while (y0 < rh && row[y0] < minCount) y0++;
+  let y1 = rh - 1; while (y1 > y0 && row[y1] < minCount) y1--;
+  if (x1 <= x0 || y1 <= y0) return null;
+  return { x: rx + x0, y: ry + y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+}
+
+/* A fénylő pixelek SÚLYPONTJA (centroid) a régión belül — szimmetrikus ikonoknál
+   stabil középpont, a keret fényességétől/színétől függetlenül (a ring-alak és a
+   feliratkizárt Y-sáv miatt nem torzul). */
+function centroid(src, rx, ry, rw, rh, th) {
+  const { w, bpp } = src;
+  rx = Math.max(0, rx); ry = Math.max(0, ry); rw = Math.min(rw, src.w - rx); rh = Math.min(rh, src.h - ry);
+  let sx = 0, sy = 0, n = 0;
+  for (let j = 0; j < rh; j++) for (let i = 0; i < rw; i++) {
+    const o = ((ry + j) * w + (rx + i)) * bpp;
+    if (Math.max(src.px[o], src.px[o + 1], src.px[o + 2]) > th) { sx += rx + i; sy += ry + j; n++; }
+  }
+  if (!n) return null;
+  return { cx: sx / n, cy: sy / n, n };
+}
+
+/* Auto-crop: centroid + FIX (egységes) doboz → minden ikon azonos méretű, optikailag
+   középre igazított kivágás (konzisztens padding/optikai súly). */
+function autoCrop(src, region) {
+  const [bw, bh] = region.box;
+  let cx, cy, n = 0;
+  if (region.center) {           // kézi középpont-felülírás (halvány/aszimmetrikus ikonokhoz)
+    cx = region.center[0]; cy = region.center[1];
+  } else {
+    const c = centroid(src, region.x, region.y, region.w, region.h, region.th || 108);
+    cx = c ? c.cx : region.x + region.w / 2;
+    cy = c ? c.cy : region.y + region.h / 2;
+    n = c ? c.n : 0;
+  }
+  const x = Math.round(cx - bw / 2), y = Math.round(cy - bh / 2);
+  const r = crop(src, x, y, bw, bh);
+  return { buf: r.buf, cw: r.cw, ch: r.ch, cx: Math.round(cx), cy: Math.round(cy), n };
+}
+
 /* ---- feldolgozandó kivágások ---- */
 const REF = 'assets/references';
 const OUT = 'assets/ui';
 if (!fs.existsSync(OUT)) fs.mkdirSync(OUT, { recursive: true });
 
-const JOBS = [
-  // forrás, kimenet, x, y, w, h
-  // app_logos.png (1672x941) — Logo A (piros koponya + ZOMBIE CHRONICLES + tagline)
+/* MANUÁLIS crop (kompozíciók + a sötét-keretes kör-vezérlők, ahol a tartalom-
+   detektálás megbízhatatlan; ezek fix, kalibrált dobozok). */
+const MANUAL = [
   { src: 'app_logos.png', out: 'logo.png', x: 58, y: 176, w: 352, h: 368 },
-  // App Icon A (piros koponya, lekerekített négyzet, bal-lent)
   { src: 'app_logos.png', out: 'appicon.png', x: 84, y: 618, w: 214, h: 214 },
-  // ingame_icons.png (1672x941) — kör alakú vezérlő-gombok (3. sor)
+  // kör alakú vezérlő-gombok (3. sor) — kalibrált fix dobozok
   { src: 'ingame_icons.png', out: 'ic-fire.png',    x: 48,  y: 598, w: 104, h: 104 },
   { src: 'ingame_icons.png', out: 'ic-ammo.png',    x: 182, y: 598, w: 104, h: 104 },
   { src: 'ingame_icons.png', out: 'ic-swap.png',    x: 313, y: 598, w: 104, h: 104 },
@@ -104,30 +161,48 @@ const JOBS = [
   { src: 'ingame_icons.png', out: 'ic-pause.png',   x: 703, y: 598, w: 104, h: 104 },
   { src: 'ingame_icons.png', out: 'ic-medkit.png',  x: 823, y: 598, w: 104, h: 104 },
   { src: 'ingame_icons.png', out: 'ic-coin.png',    x: 934, y: 598, w: 104, h: 104 },
-  // --- MAIN MENU IKONOK (1. sor, octagon) ---
-  { src: 'ingame_icons.png', out: 'm-continue.png', x: 78,   y: 143, w: 150, h: 150 },
-  { src: 'ingame_icons.png', out: 'm-campaign.png', x: 283,  y: 143, w: 150, h: 150 },
-  { src: 'ingame_icons.png', out: 'm-scavenge.png', x: 488,  y: 143, w: 150, h: 150 },
-  { src: 'ingame_icons.png', out: 'm-armory.png',   x: 690,  y: 143, w: 150, h: 150 },
-  { src: 'ingame_icons.png', out: 'm-lab.png',      x: 895,  y: 143, w: 150, h: 150 },
-  { src: 'ingame_icons.png', out: 'm-shop.png',     x: 1118, y: 143, w: 150, h: 150 },
-  { src: 'ingame_icons.png', out: 'm-settings.png', x: 1290, y: 143, w: 150, h: 150 },
-  { src: 'ingame_icons.png', out: 'm-back.png',     x: 1466, y: 143, w: 150, h: 150 },
-  // --- BOARD MARKER / MISSION STATE (2. sor, hexagon) ---
-  { src: 'ingame_icons.png', out: 's-done.png',     x: 92,   y: 388, w: 124, h: 108 },
-  { src: 'ingame_icons.png', out: 's-current.png',  x: 262,  y: 388, w: 124, h: 108 },
-  { src: 'ingame_icons.png', out: 's-locked.png',   x: 458,  y: 388, w: 124, h: 108 },
-  { src: 'ingame_icons.png', out: 's-boss.png',     x: 628,  y: 388, w: 124, h: 108 },
-  { src: 'ingame_icons.png', out: 's-loot.png',     x: 802,  y: 388, w: 124, h: 108 },
-  { src: 'ingame_icons.png', out: 's-danger.png',   x: 972,  y: 388, w: 124, h: 108 },
+];
+
+/* AUTO crop — a fényes menü-octagonok (1. sor) és színes state-hexagonok (2. sor).
+   A régió Y-sávja PONTOSAN az ikon-sávra van állítva (sor-sűrűség profilból),
+   így a fejléc/felirat NEM lóg bele; az auto-crop középre igazít + EGYSÉGES padding.
+   Row1 octagon: y 147..270 ; Row2 hexagon: y 387..493 (a feliratok kívül). */
+/* box = FIX kimeneti dobozméret [w,h] — minden ikon azonos, a centroidra igazítva.
+   Menü-octagon ~160×120 → box 170×130 (~5% egységes padding).
+   State-hexagon ~114×106 → box 128×118. A Y-sáv a feliratokat kizárja. */
+const MENU_BOX = [172, 132], STATE_BOX = [130, 120];
+const AUTO = [
+  // MAIN MENU octagon (1. sor) — régió a teljes ikont tartalmazza, szomszéd nélkül
+  { src: 'ingame_icons.png', out: 'm-continue.png', x: 65,   y: 148, w: 176, h: 120, box: MENU_BOX, center: [157, 201] },
+  { src: 'ingame_icons.png', out: 'm-campaign.png', x: 270,  y: 148, w: 176, h: 120, box: MENU_BOX },
+  { src: 'ingame_icons.png', out: 'm-scavenge.png', x: 475,  y: 148, w: 176, h: 120, box: MENU_BOX },
+  { src: 'ingame_icons.png', out: 'm-armory.png',   x: 677,  y: 148, w: 176, h: 120, box: MENU_BOX },
+  { src: 'ingame_icons.png', out: 'm-lab.png',      x: 882,  y: 148, w: 176, h: 120, box: MENU_BOX },
+  { src: 'ingame_icons.png', out: 'm-shop.png',     x: 1105, y: 148, w: 168, h: 120, box: MENU_BOX },
+  { src: 'ingame_icons.png', out: 'm-settings.png', x: 1277, y: 148, w: 168, h: 120, box: MENU_BOX },
+  { src: 'ingame_icons.png', out: 'm-back.png',     x: 1453, y: 148, w: 168, h: 120, box: MENU_BOX, center: [1541, 206] },
+  // BOARD MARKER / MISSION STATE hexagon (2. sor)
+  { src: 'ingame_icons.png', out: 's-done.png',     x: 79,   y: 392, w: 150, h: 96, box: STATE_BOX },
+  { src: 'ingame_icons.png', out: 's-current.png',  x: 249,  y: 392, w: 150, h: 96, box: STATE_BOX },
+  { src: 'ingame_icons.png', out: 's-locked.png',   x: 445,  y: 392, w: 150, h: 96, box: STATE_BOX },
+  { src: 'ingame_icons.png', out: 's-boss.png',     x: 615,  y: 392, w: 150, h: 96, box: STATE_BOX },
+  { src: 'ingame_icons.png', out: 's-loot.png',     x: 789,  y: 392, w: 150, h: 96, box: STATE_BOX },
+  { src: 'ingame_icons.png', out: 's-danger.png',   x: 959,  y: 392, w: 150, h: 96, box: STATE_BOX },
 ];
 
 const cache = {};
-for (const j of JOBS) {
-  if (!cache[j.src]) { cache[j.src] = readPNG(path.join(REF, j.src)); console.log('read', j.src, cache[j.src].w + 'x' + cache[j.src].h, 'colorType', cache[j.src].colorType); }
-  const s = cache[j.src];
+function load(src) { if (!cache[src]) { cache[src] = readPNG(path.join(REF, src)); console.log('read', src, cache[src].w + 'x' + cache[src].h, 'colorType', cache[src].colorType); } return cache[src]; }
+
+for (const j of MANUAL) {
+  const s = load(j.src);
   const c = crop(s, j.x, j.y, j.w, j.h);
   writePNG(path.join(OUT, j.out), c.cw, c.ch, s.bpp, s.colorType, c.buf);
-  console.log('  ->', j.out, c.cw + 'x' + c.ch);
+  console.log('  M', j.out, c.cw + 'x' + c.ch);
+}
+for (const j of AUTO) {
+  const s = load(j.src);
+  const c = autoCrop(s, j);
+  writePNG(path.join(OUT, j.out), c.cw, c.ch, s.bpp, s.colorType, c.buf);
+  console.log('  A', j.out, c.cw + 'x' + c.ch, 'center=(' + c.cx + ',' + c.cy + ') n=' + c.n);
 }
 console.log('done');
