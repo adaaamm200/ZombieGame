@@ -11,6 +11,22 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## Auto Mode + rendering-invariáns rögzítve (2026-07-08) — mi került bele
+- **Auto Mode Safety Rules** bekerült a [`CLAUDE.md`](../CLAUDE.md)-be: csak a repón
+  belül dolgozunk, nincs dependency-telepítés / build tool / framework / force-push /
+  remote-módosítás / titok-hozzáférés; a normál repo-lokális edit/check/docs/commit/push
+  engedélyezett. Zero-dependency (HTML5 canvas + vanilla JS + PWA) marad. Veszélyes/
+  destruktív műveletnél mindig megállás + kérdés.
+- **Canvas / Viewport Invariant** rögzítve új fájlban: [`docs/RENDERING_RULES.md`](RENDERING_RULES.md).
+  Tiltott regresszió: kicsi kép középen, nagy fekete keret, szétesett skálázás
+  (canvas vs HUD vs touch külön), camera-zoommal „javított" kis kép. A camera zoom
+  (ZOOM=1.75) ≠ canvas scaling; előbb a stage/viewport méretezést kell rendbe tenni.
+  A doksi a valós kódhoz igazítva dokumentálja a pipeline-t (fix 960×540 buffer +
+  `fit()` stage-skálázás a main.js-ben, egy közös `#stage` doboz).
+- **KÖTELEZŐ ezentúl**: minden gameplay/UI/map/ammo/boss/shop/grafikai módosítás UTÁN
+  viewport-regresszió ellenőrzés a RENDERING_RULES.md „Regresszió-ellenőrzés" lépései
+  szerint (node --check + preview desktop + mobil/landscape).
+
 ## Balansz-finomhangolás — fegyver-ív (2026-07-08) — mi került bele
 - **Progresszió-inverzió javítva** a fegyvertáblában (const.js WEAPONS). Headless
   DPS/TTK-analízis (`scratchpad/balance.js`) mutatta ki: a két legdrágább fegyver

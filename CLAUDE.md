@@ -111,3 +111,24 @@ Projektmappán belül: dolgozz szabadon, hatékonyan, állandó engedélykérés
 Projektmappán kívül: ne csinálj semmit. Engedélyt csak destruktív, külső, érzékeny,
 hálózati, függőség-telepítő, deploy, vagy projekten kívüli műveletekhez kérj.
 (A saját repóba pusholás automatikus.)
+
+## Auto Mode Safety Rules
+
+- Work only inside this repository: C:\Claude Munka\ZombieGame
+- Do not modify files outside the repository.
+- Do not run destructive delete commands without explicit confirmation.
+- Do not install dependencies.
+- Do not add build tools or frameworks.
+- Do not force push.
+- Do not change git remotes.
+- Do not touch secrets, credentials, tokens or system files.
+- Normal repo-local edits, checks, docs updates, commits and normal push are allowed.
+- Before work: check git status.
+- After work: run node --check on all JS files, update docs/STATUS.md, commit and push.
+
+Stay zero-dependency: HTML5 canvas + vanilla JS + PWA. No bundler, framework or
+package manager. Stop and ask before any destructive/irreversible action, a full
+service-worker/cache rewrite, or a large architectural rewrite.
+
+See also: [`docs/RENDERING_RULES.md`](docs/RENDERING_RULES.md) — the Canvas / Viewport
+invariant that MUST be re-checked after every gameplay/UI/map/ammo/boss/shop/graphics change.
