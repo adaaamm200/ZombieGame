@@ -232,13 +232,13 @@ ZD.game = (() => {
         ZD.audio.play('lowammo');
         st.nums.push({
           x: p.x, y: C.GROUND_Y - C.PLAYER.h - 14,
-          vx: 0, vy: -26, life: 1, max: 1, val: 'KEVÉS LŐSZER!', warn: true,
+          vx: 0, vy: -26, life: 1.2, max: 1.2, val: 'KEVÉS LŐSZER — 📦/B: VÉGY', warn: true,
         });
       }
       if (w.ammo === 0) {
         st.nums.push({
           x: p.x, y: C.GROUND_Y - C.PLAYER.h - 14,
-          vx: 0, vy: -26, life: 1.1, max: 1.1, val: 'LŐSZER ELFOGYOTT', warn: true,
+          vx: 0, vy: -26, life: 1.3, max: 1.3, val: 'ELFOGYOTT — 📦/B: VÉGY (∞ pisztoly)', warn: true,
         });
       }
     }

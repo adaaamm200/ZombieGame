@@ -11,6 +11,30 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## FÁZIS 1 teljes verifikáció + low-ammo hint (2026-07-08) — mi került bele
+- **Viewport-gate (RENDERING_RULES.md) ELLENŐRIZVE, hibátlan**: 16:9 (1280×720) →
+  fillW/fillH 100% (left:0, top:0), mobil landscape (812×375) → 100% magasság +
+  kontrollált oldalsó letterbox, közel négyzetes → 100% szélesség. A `#stage` egy
+  közös dobozban tartja a canvast/HUD-ot/touch-ot. NEM „kicsi középen". Screenshot:
+  cím, pályaválasztó (mód-ikonok, Free Mode banner), loadout, in-game HUD (📦 ár-badge).
+- **FÁZIS 1 minden minőségi kapu VERIFIKÁLVA** valós kódutakon (headless teszt-harness
+  a böngészőben, a valódi ZD.game motort hajtva; a valós mentés export/import-tal
+  védve/visszaállítva):
+  - pisztoly ∞ (ammo -1 marad) ✔ · rifle lőszerfogyás ✔ · in-match vétel PÉNZZEL
+    (−400🪙 = ceil(320×1.25), +120 lőszer) ✔ · in-match vétel PÉNZ NÉLKÜL (errFlash
+    0.45, pénz változatlan, „NINCS ELÉG 🪙") ✔
+  - Free Mode: isFree, hullámbónusz +72, csepegő +12, `freeEnd`→'free' eredményképernyő
+    (túlélési idő + hullám + kill/lövés/sebzés + idő-bónusz + össz-érme) ✔
+  - Boss (5. pálya): HP 2050 = bossHp(5) pontosan, boss-bar, dmg 25 (nem 1-2 shot),
+    NINCS időlimit (surviveT csak `survive` módban), valós golyókkal megölve → 'win' ✔
+  - Economy: jutalom 352 = clearBonus(5)×clearMult(boss) ✔ · save: ammo+coins perzisztál ✔
+  - 📦 gomb (btn-ammo) pointerdown → `buyammo` flag beáll (megerősítve) ✔
+- **Low/No-ammo feedback bővítve (spec B)**: az üzenetek most a TEENDŐT is mutatják —
+  „KEVÉS LŐSZER — 📦/B: VÉGY" és „ELFOGYOTT — 📦/B: VÉGY (∞ pisztoly)" (game.js shoot()).
+- **PWA cache-lecke**: asset-változás után a service worker cache-verziót bumpolni KELL,
+  különben a cache-first SW a régi fájlt szolgálja ki. Most **zk-v7** (a game.js-hint miatt).
+- Ellenőrzés: `node --check` mind a 11 JS-re OK; 0 konzolhiba; viewport 100% @ 16:9.
+
 ## Auto Mode + rendering-invariáns rögzítve (2026-07-08) — mi került bele
 - **Auto Mode Safety Rules** bekerült a [`CLAUDE.md`](../CLAUDE.md)-be: csak a repón
   belül dolgozunk, nincs dependency-telepítés / build tool / framework / force-push /
