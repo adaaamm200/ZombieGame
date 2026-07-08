@@ -11,6 +11,23 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## Balansz-finomhangolás — fegyver-ív (2026-07-08) — mi került bele
+- **Progresszió-inverzió javítva** a fegyvertáblában (const.js WEAPONS). Headless
+  DPS/TTK-analízis (`scratchpad/balance.js`) mutatta ki: a két legdrágább fegyver
+  gyengébb volt a jóval olcsóbb minigunnál (225 DPS). Javítás:
+  - **Ion Lézer** (65 000🪙, csúcsfegyver): dmg 34→48, rps 4.5→5.0 → **153→240 DPS** +
+    pierce 99 → most a legjobb egycélpont ÉS sor-clear fegyver, méltó a 65k árhoz.
+  - **RPG Vulkán** (38 000🪙): dmg 130→170, rps 0.9→1.0 → **117→170 DPS** + splash 82 →
+    a horda-nuke szerep megmarad, de az ár is indokolt (rifle és minigun között).
+  - **Őrszem Sörétes** (2000🪙): dmg 9→10 → **70→78 DPS**, hogy ne legyen papíron
+    gyengébb a 3×-olcsóbb uzinál (80 DPS); a knockback-niche (kb 30, 6 pellet) marad.
+- Új ár/erő görbe MONOTON és niche-tiszta: pisztoly 39 → uzi 80 → sörétes 78 →
+  rifle 132 → lángszóró 90 → minigun 225 → rakéta 170 → **lézer 240**.
+- **Boss-HP érintetlen**: a mért TTK (rifle+közepes upgrade: 10. p. ~12s, 20. ~18s,
+  40. ~30s) fair — nem szorult módosításra. A lézer-buff a bosst is gyorsabban öli
+  (5–17s), de csak a 65k csúcsfegyverrel, ami korán úgysem elérhető → nem trivializál.
+- sw.js cache: **zk-v6**. UI: a bolti DPS-sáv max 340 → nincs túlcsordulás.
+
 ## FÁZIS 1 — Economy overhaul (2026-07-07) — mi került bele
 - **Lőszer-gazdaságtan újraírva, sokkal olcsóbb** (const.js WEAPONS): kezdő lőszerek nagyobbak,
   árak töredékére csökkentek (pl. uzi kis-pack 250→130🪙 / 220 lövés; rifle 750→320; shotgun 420→180).

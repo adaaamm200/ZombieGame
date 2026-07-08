@@ -64,12 +64,12 @@ ZD.C = {
   WEAPONS: [
     { id: 'pistol',  name: 'M9 Pisztoly',       dmg: 13,  rps: 3,    spd: 520,  pellets: 1, spread: 0.012, ammo: -1,  price: 0,     kind: 'bullet', color: '#ffe9a8', shake: 0.5, casing: 1, kb: 14, flashScale: 0.9 },
     { id: 'uzi',     name: 'Vipera SMG',        dmg: 8,   rps: 10,   spd: 540,  pellets: 1, spread: 0.055, ammo: 300, price: 700,   kind: 'bullet', color: '#ffe9a8', shake: 0.6, casing: 1, kb: 9,  flashScale: 0.8, pack: 220, packPrice: 130,  packBig: 700,  packBigPrice: 360 },
-    { id: 'shotgun', name: 'Őrszem Sörétes',    dmg: 9,   rps: 1.3,  spd: 480,  pellets: 6, spread: 0.13,  ammo: 60,  price: 2000,  kind: 'bullet', color: '#ffd27a', shake: 2.6, casing: 1, kb: 30, flashScale: 1.5, pack: 40,  packPrice: 180,  packBig: 130,  packBigPrice: 500 },
+    { id: 'shotgun', name: 'Őrszem Sörétes',    dmg: 10,  rps: 1.3,  spd: 480,  pellets: 6, spread: 0.13,  ammo: 60,  price: 2000,  kind: 'bullet', color: '#ffd27a', shake: 2.6, casing: 1, kb: 30, flashScale: 1.5, pack: 40,  packPrice: 180,  packBig: 130,  packBigPrice: 500 },
     { id: 'rifle',   name: 'AK Farkas',         dmg: 22,  rps: 6,    spd: 640,  pellets: 1, spread: 0.03,  ammo: 220, price: 5000,  kind: 'bullet', color: '#ffe9a8', shake: 1.1, casing: 1, kb: 18, flashScale: 1.1, pack: 120, packPrice: 320,  packBig: 380,  packBigPrice: 850 },
     { id: 'flamer',  name: 'Sárkány Lángszóró', dmg: 5,   rps: 18,   spd: 230,  pellets: 1, spread: 0.10,  ammo: 500, price: 10000, kind: 'flame',  color: '#ff9a3d', range: 105, shake: 0.25, kb: 4, flashScale: 0, pack: 320, packPrice: 220,  packBig: 1000, packBigPrice: 600 },
     { id: 'minigun', name: 'Cerberus Minigun',  dmg: 15,  rps: 15,   spd: 600,  pellets: 1, spread: 0.06,  ammo: 640, price: 22000, kind: 'bullet', color: '#ffe9a8', shake: 1.4, casing: 1, kb: 14, flashScale: 1.3, pack: 420, packPrice: 420,  packBig: 1300, packBigPrice: 1150 },
-    { id: 'rocket',  name: 'RPG Vulkán',        dmg: 130, rps: 0.9,  spd: 330,  pellets: 1, spread: 0.01,  ammo: 20,  price: 38000, kind: 'rocket', color: '#ffb066', splash: 82, shake: 3, kb: 0, flashScale: 1.6, pack: 10, packPrice: 700,  packBig: 32,   packBigPrice: 1900 },
-    { id: 'laser',   name: 'Ion Lézer',         dmg: 34,  rps: 4.5,  spd: 1300, pellets: 1, spread: 0.005, ammo: 160, price: 65000, kind: 'laser',  color: '#7de0ff', pierce: 99, shake: 1.2, kb: 20, flashScale: 1.2, pack: 100, packPrice: 1100, packBig: 320,  packBigPrice: 2900 },
+    { id: 'rocket',  name: 'RPG Vulkán',        dmg: 170, rps: 1.0,  spd: 330,  pellets: 1, spread: 0.01,  ammo: 20,  price: 38000, kind: 'rocket', color: '#ffb066', splash: 82, shake: 3, kb: 0, flashScale: 1.6, pack: 10, packPrice: 700,  packBig: 32,   packBigPrice: 1900 },
+    { id: 'laser',   name: 'Ion Lézer',         dmg: 48,  rps: 5.0,  spd: 1300, pellets: 1, spread: 0.005, ammo: 160, price: 65000, kind: 'laser',  color: '#7de0ff', pierce: 99, shake: 1.2, kb: 20, flashScale: 1.2, pack: 100, packPrice: 1100, packBig: 320,  packBigPrice: 2900 },
   ],
 
   /* Zombik — speed: [min,max], coin: alap érme-érték (méretek ~1.3×, hitbox = látvány) */
