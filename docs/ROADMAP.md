@@ -30,6 +30,10 @@
 - Node-típusok: normál/irtás, védelem, elite, túlélés, boss, + Free Mode akció-node. ✔
 - Stage preview panel (mód, módosító, várható jutalom, nehézség, ajánlott felkészültség). ✔
 - Vizuális progress-érzés: zöld „megtett" út a feloldott pályáig, is-next pulzálás. ✔
+- **FÁZIS 2.5 — interaktív mission hub polish ✅**: fertőzött-város világ-háttér,
+  zóna-sávok (szektorok), marker-node-ok, boss=fertőzött gócpont, atmoszféra
+  (grid/scanline/köd), kamera-fókusz a következő misszióra, feljavított preview
+  (misszió-név, veszélymérő, ajánlott fegyver), Scavenge Zóna farm-belépő. ✔
 - Lásd a részleteket: [`docs/STATUS.md`](STATUS.md).
 
 ## FÁZIS 3 — Valódi játékmód-identitás

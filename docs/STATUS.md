@@ -11,6 +11,41 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## FÁZIS 2.5 — Interaktív mission hub overhaul (2026-07-08) — mi került bele
+- **A Campaign Map roadmap-diagramból interaktív hadműveleti térképpé alakítva**
+  (`js/ui.js` + `css/style.css`). Cím: „HADMŰVELETI TÉRKÉP".
+- **Világ/terület-érzet**: `.map-wrap`-ben fertőzött-város háttér (veszélyzóna-tint +
+  fertőzött-zóna tint + sötét alap) + **zóna-sávok** (`#map-zones`): soronként egy
+  SZEKTOR (téma szerint UTCA/LABOR/ROMVÁROS), felirattal → territóriumérzet.
+- **Atmoszféra-réteg** (`.map-atmos`, finom, nem takar): taktikai grid (maszkolt),
+  mozgó scan-sáv, sodródó köd, vignette + CRT-scanline overlay. „Katonai túlélő-térkép".
+- **Node = mission marker** (nem pötty): `.mn-ring/.mn-core/.mn-glyph` — lekerekített
+  tile-marker típusszínnel + helyszín-glyph (🏙/⚗/🏚) vagy mód-ikon (🛡/⭐/⏱).
+  **Boss = fertőzött gócpont**: nagyobb (72px), kör alakú vörös mag + pulzáló
+  infekció-bloom. Elit: ⚠ veszélyjelző. Módosító-badge sarokban. „Itt vagy" ▾ a
+  következő misszió felett. Node-tap 54px (boss 72px) — mobilbarát.
+- **Interakció/animáció**: node hover/aktív skálázás, **kijelölési fény** (`.sel`),
+  is-next zöld pulzálás, boss-bloom, animált útvonal-szaggatás (mozgó dash), zöld
+  „megtett" út glow-val, Scavenge-node crate-himbálás + supply-glow, sheet-up preview.
+- **Kamera/fókusz**: megnyitáskor a következő misszióra görget (`focusNode`), node
+  kiválasztáskor a kijelölt pontra fókuszál (smooth scroll) + kiemeli.
+- **Preview panel feljavítva**: **misszió-név** (nem pályaszám, pl. „Karantén-szektor",
+  „GÓCPONT: A VEZÉR"), státusz-chip (TELJESÍTVE/KÖVETKEZŐ/ZÁRT/FARM), atmoszférikus
+  leírás, **VESZÉLY-mérő** (színes sáv + címke), helyszín, várható zsákmány, **ajánlott
+  fegyver**, felkészültség-jelző. Boss preview vörös vészstílusú kártya (`.sp-card.n-boss`).
+- **Free Mode = „SCAVENGE ZÓNA / Supply run"** — külön animált lebegő node saját
+  „farm zóna" preview-panellel (nem kampányprogress).
+- **Flow + save VÁLTOZATLAN**: node→preview→`showLoadout()`→`ZD.game.start()`; a map a
+  meglévő `stages.unlocked/cleared`-et olvassa.
+- **TESZTELVE** (böngészőben, valós UI): 40 node + 8 zóna + 5 útvonal-réteg ✔ ·
+  normál preview (misszió-név/veszély/ajánlott fegyver/státusz) ✔ · boss preview (vörös,
+  GÓCPONT, zárt-indok) ✔ · Free/Scavenge preview ✔ · node→INDULÁS→loadout→game (lvl8) ✔ ·
+  Free→loadout→game (isFree) ✔ · export/import roundtrip egyezik ✔ · **0 konzolhiba**.
+- **Viewport-gate ÁTMENT**: 16:9=100%×100%; mobil landscape (812×375)=100% magasság,
+  node-tap 54px/boss 72px; ultrawide (1600×600)=16:9 megőrizve, map-wrap kitölt. Nincs
+  „kicsi középen"; `#stage` közös doboz.
+- sw.js cache: **zk-v9** (JS+CSS változott). `node --check` mind a 11 JS-re OK.
+
 ## FÁZIS 2 — Campaign Map / map-alapú pályaválasztó (2026-07-08) — mi került bele
 - **A sima pályarács lecserélve node-alapú kampánytérképre** (`js/ui.js` + `css/style.css`).
   A 40 pálya kígyózó (serpentine) útvonalon, SVG-vel rajzolt úttal: `#s-stages` →
