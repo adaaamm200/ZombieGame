@@ -117,42 +117,58 @@ ZD.ui = (() => {
         </div>
       </div>`);
 
-    /* Pályaválasztó — DAY-alapú campaign board */
+    /* Pályaválasztó — illusztrált DAY board (referencia: assets/references/day1_board_target.png) */
     screens.stages = el(`
-      <div class="screen stages-screen" id="s-stages">
-        <div class="topbar">
-          <button class="btn backbtn" data-go="title">←</button>
-          <h2>TÚLÉLŐNAPLÓ</h2>
-          <span class="coins">🪙 <span data-coins></span></span>
+      <div class="screen board-screen" id="s-stages">
+        <div class="board-hud">
+          <button class="btn backbtn bh-back" data-go="title">←</button>
+          <div class="bh-logo"><span class="l1">ZOMBI</span><span class="l2">KRÓNIKA</span></div>
+          <div class="bh-day">
+            <button class="bh-arrow" id="day-prev" aria-label="előző nap">◀</button>
+            <div class="bh-daybox"><span class="bh-daynum" id="bh-daynum">DAY 1</span><span class="bh-dayname" id="bh-dayname">KARANTÉN UTCA</span></div>
+            <button class="bh-arrow" id="day-next" aria-label="következő nap">▶</button>
+          </div>
+          <div class="bh-right">
+            <span class="bh-coins">🪙 <b data-coins></b></span>
+            <button class="btn bh-shop" data-go="armory">🔫 <span>SHOP</span></button>
+            <button class="btn bh-gear" data-go="settings">⚙</button>
+          </div>
         </div>
-        <div class="day-strip-wrap">
-          <button class="day-arrow" id="day-prev" aria-label="előző nap">◀</button>
-          <div class="day-strip" id="day-strip"></div>
-          <button class="day-arrow" id="day-next" aria-label="következő nap">▶</button>
+        <div class="board-main">
+          <div class="board-nav">
+            <button class="bn-item active"><span class="ic">📖</span><span class="tx">CAMPAIGN</span></button>
+            <button class="bn-item" id="bn-scavenge"><span class="ic">📦</span><span class="tx">SCAVENGE</span></button>
+            <button class="bn-item" data-go="settings"><span class="ic">⚙</span><span class="tx">BEÁLLÍTÁS</span></button>
+          </div>
+          <div class="board-stage" id="board-stage">
+            <div class="board-scene">
+              <div class="bs-sky"></div>
+              <div class="bs-skyline"></div>
+              <div class="bs-ground"></div>
+              <div class="bs-roads"></div>
+              <div class="bs-nest"></div>
+              <div class="bs-fog"></div>
+              <div class="bs-scan"></div>
+            </div>
+            <div class="board-hotspots" id="board-hotspots"></div>
+          </div>
         </div>
-        <div class="day-board" id="day-board"></div>
-        <button class="scavenge-btn" id="btn-freemode">
-          <span class="sv-ic">📦</span>
-          <span class="sv-tx">SCAVENGE ZÓNA<small>Supply run — érme-farm · nem old fel napot</small></span>
-        </button>
         <div class="stage-preview hidden" id="stage-preview">
           <div class="sp-card" id="sp-card">
             <button class="sp-close" id="sp-close">✕</button>
-            <div class="sp-top">
-              <span class="sp-badge" id="sp-badge"></span>
-              <div class="sp-head">
+            <div class="sp-brief">
+              <div class="sp-thumb" id="sp-thumb"></div>
+              <div class="sp-info">
                 <span class="sp-status" id="sp-status"></span>
                 <span class="sp-day" id="sp-day"></span>
                 <h3 id="sp-title"></h3>
                 <span class="sp-mode" id="sp-mode"></span>
+                <div class="sp-obj" id="sp-obj"></div>
+                <div class="sp-meta"><div class="sp-danger" id="sp-danger"></div><div class="sp-reward" id="sp-reward"></div></div>
               </div>
+              <button class="btn primary sp-start" id="sp-start">START</button>
             </div>
-            <div class="sp-obj" id="sp-obj"></div>
-            <p class="sp-desc" id="sp-desc"></p>
-            <div class="sp-danger" id="sp-danger"></div>
-            <div class="sp-grid" id="sp-grid"></div>
             <div class="sp-locked hidden" id="sp-locked"></div>
-            <button class="btn primary sp-start" id="sp-start">INDULÁS ▶</button>
           </div>
         </div>
       </div>`);
@@ -323,12 +339,12 @@ ZD.ui = (() => {
     $('#btn-resume').addEventListener('click', () => ZD.game.resume());
     $('#btn-quit').addEventListener('click', () => { hidePause(); ZD.game.quit(); });
 
-    /* Scavenge / Free Mode — külön briefing panel */
-    $('#btn-freemode').addEventListener('click', () => {
+    /* Scavenge / Free Mode — bal nav gomb → briefing */
+    $('#bn-scavenge').addEventListener('click', () => {
       ZD.audio.play('click');
       showBriefing('free');
     });
-    /* nap-lapozó nyilak */
+    /* nap-lapozó nyilak (HUD) */
     $('#day-prev').addEventListener('click', () => navDay(-1));
     $('#day-next').addEventListener('click', () => navDay(1));
     /* briefing panel bezárása */
@@ -480,38 +496,64 @@ ZD.ui = (() => {
     return 'open';
   }
 
-  function markStripSel() {
-    $('#day-strip').querySelectorAll('.day-tab').forEach((t) => t.classList.toggle('sel', +t.dataset.day === curDay));
-  }
-  function scrollStripToSel(smooth) {
-    const sel = $('#day-strip').querySelector('.day-tab.sel');
-    if (sel) sel.scrollIntoView({ inline: 'center', block: 'nearest', behavior: smooth ? 'smooth' : 'auto' });
+  /* --- illusztrált Day board: 5 hotspot % pozícióval a diorámán + Scavenge --- */
+  const LAND_GLYPH = { checkpoint: '🚧', store: '🏪', alley: '🧱', tower: '🗼', nest: '🕷', scavenge: '📦' };
+  /* helyszín-elrendezés (a referencia-kompozíció alapján); slotonként fix % pozíció */
+  const HOTSPOTS = [
+    { slot: 1, x: 16, y: 56, land: 'checkpoint' },
+    { slot: 2, x: 40, y: 30, land: 'store' },
+    { slot: 3, x: 33, y: 72, land: 'alley' },
+    { slot: 4, x: 59, y: 52, land: 'tower' },
+    { slot: 5, x: 84, y: 32, land: 'nest' },
+  ];
+  const SCAV_POS = { x: 74, y: 78 };
+
+  function selectHotspot(el) {
+    $('#board-hotspots').querySelectorAll('.hotspot.sel').forEach((n) => n.classList.remove('sel'));
+    if (el) el.classList.add('sel');
   }
 
-  /* DAY selector strip — legalább ACTIVE_DAYS nap, vízszintes lapozható */
-  function buildDayStrip() {
-    const strip = $('#day-strip');
-    strip.innerHTML = '';
-    for (let d = 1; d <= C.CAMPAIGN.ACTIVE_DAYS; d++) {
-      const st = dayStateOf(d);
-      const cls = st.locked ? 'is-locked' : st.cleared ? 'is-cleared' : st.isCurrent ? 'is-current' : 'is-open';
-      const b = document.createElement('button');
-      b.className = `day-tab ${cls}${d === curDay ? ' sel' : ''}`;
-      b.dataset.day = d;
-      b.innerHTML =
-        `<span class="dt-num">DAY ${String(d).padStart(2, '0')}</span>` +
-        `<span class="dt-name">${C.dayName(d)}</span>` +
-        `<span class="dt-badge">${st.locked ? '🔒 zárt' : st.cleared ? '✔ biztosítva' : '► aktív'}</span>`;
-      b.addEventListener('click', () => {
-        ZD.audio.play('click');
-        curDay = d;
-        renderDayBoard(d);
-        markStripSel();
-        scrollStripToSel(true);
-      });
-      strip.appendChild(b);
+  function makeHotspot(cfg) {
+    const isFree = cfg.level === 'free';
+    const el = document.createElement('button');
+    el.style.left = cfg.x + '%';
+    el.style.top = cfg.y + '%';
+    let cls, badge, title, sub, locked = false;
+    if (isFree) {
+      cls = 'land-scavenge is-scavenge m-free';
+      badge = '$'; title = 'ZSÁKMÁNY ZÓNA'; sub = 'LOOT RUN';
+    } else {
+      const lvl = cfg.level;
+      const ms = missionStateOf(lvl);
+      locked = ms === 'locked';
+      const mode = C.modeFor(lvl);
+      const boss = mode === 'boss';
+      cls = `land-${cfg.land} m-${mode} is-${ms}${boss ? ' is-boss' : ''}`;
+      badge = boss ? '☠' : ms === 'done' ? '✔' : cfg.slot;
+      title = C.missionTitle(lvl);
+      sub = boss ? 'BOSS KÜLDETÉS' : ms === 'done' ? 'COMPLETED' : ms === 'locked' ? 'ZÁRVA' : ms === 'current' ? '● AKTÍV' : 'ELÉRHETŐ';
     }
-    requestAnimationFrame(() => scrollStripToSel(false));
+    const glyph = isFree ? '📦' : (LAND_GLYPH[cfg.land] || '');
+    el.className = 'hotspot ' + cls;
+    el.dataset.level = String(cfg.level);
+    el.innerHTML =
+      '<span class="hs-pad"></span>' +
+      `<span class="hs-land">${glyph}</span>` +
+      `<span class="hs-mark"><span class="hs-badge">${badge}</span>${locked ? '<span class="hs-lock">🔒</span>' : ''}</span>` +
+      `<span class="hs-label"><b>${title}</b><i>${sub}</i></span>`;
+    el.addEventListener('click', () => { ZD.audio.play('click'); selectHotspot(el); showBriefing(cfg.level); });
+    return el;
+  }
+
+  function renderBoard(day) {
+    $('#bh-daynum').textContent = 'DAY ' + day;
+    $('#bh-dayname').textContent = C.dayName(day).toUpperCase();
+    const theme = C.themeFor(C.levelOf(day, 1));
+    $('#board-stage').className = `board-stage tz${theme}`;
+    const host = $('#board-hotspots');
+    host.innerHTML = '';
+    HOTSPOTS.forEach((h) => host.appendChild(makeHotspot({ level: C.levelOf(day, h.slot), x: h.x, y: h.y, land: h.land, slot: h.slot })));
+    host.appendChild(makeHotspot({ level: 'free', x: SCAV_POS.x, y: SCAV_POS.y, land: 'scavenge' }));
   }
 
   function navDay(dir) {
@@ -519,62 +561,8 @@ ZD.ui = (() => {
     if (nd === curDay) return;
     curDay = nd;
     ZD.audio.play('click');
-    renderDayBoard(curDay);
-    markStripSel();
-    scrollStripToSel(true);
-  }
-
-  /* DAY board — 5 mission helyszín (4 kártya + finálé), nem node-lánc */
-  function renderDayBoard(day) {
-    const board = $('#day-board');
-    const st = dayStateOf(day);
-    const theme = C.themeFor(C.levelOf(day, 1));
-    board.className = `day-board tz${theme}`;
-
-    let done5 = 0;
-    for (let m = 1; m <= C.CAMPAIGN.MISSIONS_PER_DAY; m++) {
-      if (S().stages.cleared.includes(C.levelOf(day, m))) done5++;
-    }
-    const dots = Array.from({ length: C.CAMPAIGN.MISSIONS_PER_DAY }, (_, i) => `<i class="${i < done5 ? 'on' : ''}"></i>`).join('');
-    const statusTxt = st.cleared ? '✔ BIZTOSÍTVA' : st.locked ? '🔒 ZÁRT NAP' : `${done5}/5 biztosítva`;
-
-    let html =
-      '<div class="db-head">' +
-        `<div class="db-title"><span class="db-day">DAY ${String(day).padStart(2, '0')}</span>` +
-        `<span class="db-name">${C.dayName(day).toUpperCase()}</span>` +
-        `<span class="db-theme">${THEME_NAMES[theme]}</span></div>` +
-        `<div class="db-prog"><span class="db-dots">${dots}</span><span class="db-status">${statusTxt}</span></div>` +
-      '</div><div class="db-missions">';
-
-    for (let m = 1; m < C.CAMPAIGN.MISSIONS_PER_DAY; m++) {
-      const lvl = C.levelOf(day, m);
-      const ms = missionStateOf(lvl);
-      const mode = C.modeFor(lvl);
-      const mod = C.modFor(lvl);
-      const glyph = ms === 'done' ? '✔' : ms === 'locked' ? '🔒' : modeGlyph(mode, C.themeFor(lvl));
-      html +=
-        `<button class="mission-card m-${mode} is-${ms}" data-level="${lvl}">` +
-          `<div class="mc-scene"><span class="mc-glyph">${glyph}</span>${mod ? `<span class="mc-mod">${C.MODS[mod].icon}</span>` : ''}</div>` +
-          `<div class="mc-info"><span class="mc-idx">Mission ${m}/${C.CAMPAIGN.MISSIONS_PER_DAY}</span>` +
-          `<span class="mc-name">${C.missionTitle(lvl)}</span><span class="mc-type">${modeLabel(mode)}</span></div>` +
-          `<span class="mc-badge">${ms === 'current' ? '►' : ms === 'done' ? '✔' : ms === 'locked' ? '🔒' : '·'}</span>` +
-        '</button>';
-    }
-
-    const flvl = C.levelOf(day, C.CAMPAIGN.MISSIONS_PER_DAY);
-    const fs = missionStateOf(flvl);
-    html +=
-      `<button class="finale-card is-${fs}" data-level="${flvl}">` +
-        `<span class="fc-glyph">${fs === 'done' ? '✔' : fs === 'locked' ? '🔒' : '☠'}</span>` +
-        `<div class="fc-info"><span class="fc-tag">DAY ${String(day).padStart(2, '0')} FINALE · BOSS</span>` +
-        `<span class="fc-name">${C.missionTitle(flvl)}</span></div>` +
-        `<span class="fc-go">${fs === 'locked' ? 'ZÁRT' : fs === 'done' ? 'ÚJRA' : 'BOSS ►'}</span>` +
-      '</button></div>';
-
-    board.innerHTML = html;
-    board.querySelectorAll('[data-level]').forEach((el) => {
-      el.addEventListener('click', () => { ZD.audio.play('click'); showBriefing(+el.dataset.level); });
-    });
+    $('#stage-preview').classList.add('hidden');
+    renderBoard(curDay);
   }
 
   /* briefing-adatok egy misszióhoz (vagy 'free') */
@@ -606,67 +594,44 @@ ZD.ui = (() => {
     };
   }
 
-  /* mission briefing panel (bottom-sheet) */
+  /* mission briefing panel (bottom-sheet) — thumb | info | START */
   function showBriefing(level) {
     const d = previewData(level);
-    const M = C.MODES[d.mode];
     const pv = $('#stage-preview');
     $('#sp-card').className = 'sp-card' + (d.boss ? ' n-boss' : d.isFree ? ' n-free' : '');
 
-    const badge = $('#sp-badge');
-    badge.className = 'sp-badge n-' + d.mode;
-    badge.textContent = d.isFree ? '📦' : modeGlyph(d.mode, d.theme);
+    const thumb = $('#sp-thumb');
+    thumb.className = 'sp-thumb m-' + d.mode;
+    thumb.textContent = d.isFree ? '📦' : modeGlyph(d.mode, d.theme);
 
     const stc = $('#sp-status');
     if (d.isFree) { stc.className = 'sp-status farm'; stc.textContent = '📦 FARM ZÓNA'; }
     else if (d.locked) { stc.className = 'sp-status locked'; stc.textContent = '🔒 ZÁRT'; }
     else if (d.done) { stc.className = 'sp-status done'; stc.textContent = '✔ TELJESÍTVE'; }
     else if (d.next) { stc.className = 'sp-status next'; stc.textContent = '► KÖVETKEZŐ'; }
-    else { stc.className = 'sp-status next'; stc.textContent = 'ELÉRHETŐ'; }
+    else { stc.className = 'sp-status open'; stc.textContent = 'ELÉRHETŐ'; }
 
-    const dayEl = $('#sp-day');
     if (d.isFree) {
-      dayEl.textContent = 'KÜLÖN MÓD · nem kampány';
+      $('#sp-day').textContent = 'KÜLÖN MÓD · nem old fel napot';
+      $('#sp-title').textContent = 'SCAVENGE ZÓNA';
+      $('#sp-mode').textContent = '📦 Supply run · végtelen farm';
     } else {
       const day = C.dayOf(level);
       const m = C.missionInDay(level);
-      dayEl.textContent = `DAY ${String(day).padStart(2, '0')} — ${C.dayName(day).toUpperCase()} · ${d.boss ? 'FINALE' : `Mission ${m}/${C.CAMPAIGN.MISSIONS_PER_DAY}`} · pálya #${level}`;
+      $('#sp-day').textContent = `DAY ${day} — ${C.dayName(day).toUpperCase()} · ${d.boss ? 'DAY FINALE' : `Mission ${m}/${C.CAMPAIGN.MISSIONS_PER_DAY}`}`;
+      $('#sp-title').textContent = `${m}. ${C.missionTitle(level)}`;
+      $('#sp-mode').textContent = `${modeLabel(d.mode)}${d.mod ? ` · ${C.MODS[d.mod].icon} ${C.MODS[d.mod].name}` : ''}`;
     }
 
-    $('#sp-title').textContent = d.isFree ? 'SCAVENGE ZÓNA' : C.missionTitle(level);
-    $('#sp-mode').textContent = d.isFree
-      ? 'Supply run · végtelen farm'
-      : `${M.name}${d.mod ? ` · ${C.MODS[d.mod].icon} ${C.MODS[d.mod].name}` : ''}`;
+    $('#sp-obj').innerHTML = `<b>Cél:</b> ${OBJECTIVE[d.mode]}`;
 
-    $('#sp-obj').innerHTML = `<b>Objektíva:</b> ${OBJECTIVE[d.mode]}`;
-
-    $('#sp-desc').innerHTML = d.isFree
-      ? 'Gyűjts ellátmányt és érmét, ameddig bírod. Nem old fel új napot vagy kampánymissziót — a zsákmány mentésbe kerül.'
-      : d.boss
-        ? '⚠ A nap végső fészke. A Vezér telegrafált földcsapással támad — térj ki, majd tüzelj a fázisváltások között.'
-        : THEME_FLAVOR[d.theme] + (d.mod ? `<br/><span class="lo-mod">${C.MODS[d.mod].icon} ${C.MODS[d.mod].desc}</span>` : '');
-
-    const dangerPct = d.isFree ? 42 : (d.diff / 5) * 100;
-    const dangerCol = d.isFree ? 'var(--amber)' : d.diff <= 2 ? 'var(--green)' : d.diff <= 3 ? 'var(--amber)' : 'var(--red)';
-    $('#sp-danger').innerHTML =
-      '<span>VESZÉLY</span>' +
-      `<div class="dbar"><i class="dfill" style="width:${dangerPct}%;background:${dangerCol}"></i></div>` +
+    const skulls = d.isFree ? 3 : d.diff;
+    $('#sp-danger').innerHTML = '<span class="lbl">VESZÉLY</span>' +
+      Array.from({ length: 5 }, (_, i) => `<span class="sk${i < skulls ? ' on' : ''}">☠</span>`).join('') +
       `<b>${d.isFree ? '∞' : DIFF_LABELS[d.diff]}</b>`;
-
-    const rows = [];
-    if (d.isFree) {
-      rows.push(['Zsákmány', '🪙 kill + hullám + túlélési idő']);
-      rows.push(['Ajánlott', 'Gyors tempójú fegyver + tartalék lőszer']);
-      rows.push(['Jelleg', 'Nem kampány — nem old fel napot']);
-    } else {
-      rows.push(['Helyszín', THEME_NAMES[d.theme]]);
-      rows.push(['Várható zsákmány', '~🪙 ' + fmt(d.reward)]);
-      rows.push(['Ajánlott fegyver', recommendedWeapon(level)]);
-      if (d.mod) rows.push(['Módosító', `${C.MODS[d.mod].icon} ${C.MODS[d.mod].name}`]);
-    }
-    $('#sp-grid').innerHTML = rows.map(([k, v]) =>
-      `<div class="sp-row"><span>${k}</span><b>${v}</b></div>`).join('')
-      + (d.isFree ? '' : `<div class="sp-ready ${d.ready ? 'ok' : 'risk'}">${d.ready ? '✔ FELKÉSZÜLVE' : '⚠ AJÁNLOTT FEJLESZTENI / LŐSZERT VENNI'}</div>`);
+    $('#sp-reward').innerHTML = d.isFree
+      ? '<span class="lbl">ZSÁKMÁNY</span> <b>🪙 farm</b>'
+      : `<span class="lbl">ZSÁKMÁNY</span> <b>🪙 ~${fmt(d.reward)}</b> <b class="xp">XP ~${Math.round(d.reward * 0.15)}</b>`;
 
     const lk = $('#sp-locked');
     const start = $('#sp-start');
@@ -679,7 +644,7 @@ ZD.ui = (() => {
     } else {
       lk.classList.add('hidden');
       start.classList.remove('hidden');
-      start.textContent = d.isFree ? '📦 FARM INDÍTÁSA' : d.boss ? '☠ FINALE INDÍTÁSA' : d.done ? '↻ ÚJRA' : '► BEVETÉS';
+      start.textContent = d.isFree ? 'FARM ►' : d.boss ? 'BOSS ►' : d.done ? 'ÚJRA ►' : 'START ►';
       start.onclick = () => {
         ZD.audio.play('click');
         pv.classList.add('hidden');
@@ -699,8 +664,7 @@ ZD.ui = (() => {
     refresh_stages() {
       refreshCoins(screens.stages);
       curDay = currentDay();
-      buildDayStrip();
-      renderDayBoard(curDay);
+      renderBoard(curDay);
     },
 
     refresh_armory() {

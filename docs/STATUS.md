@@ -11,6 +11,35 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## FÁZIS 2.8 — Illusztrált Day 1 board (referencia alapján) (2026-07-08) — mi került bele
+- **Referencia-képek** a repóban: [`assets/references/day1_board_target.png`](../assets/references/day1_board_target.png)
+  a **FŐ vizuális cél** (Day 1 board), [`assets/references/visual_style_sheet.png`](../assets/references/visual_style_sheet.png)
+  a **másodlagos style sheet**. (Ékezetmentes néven; nem shippelt asset, az sw nem cache-eli.)
+- **A 2×2 kártyás board lecserélve illusztrált, hotspot-alapú Day boardra** a referencia
+  kompozíciója szerint (`js/ui.js` + `css/style.css`). Réteges architektúra, nem lapos kép:
+  1) board háttér (dioráma: ég + skyline-sziluett + talaj + halvány út + boss-fészek izzás +
+     köd/parázs/scanline), 2) hotspot-réteg (5 misszió + Scavenge, **% pozícióval** reszponzívan),
+  3) állapot-overlay (locked/current/completed/boss), 4) felső HUD, 5) mission briefing, 6) bal nav.
+- **Felső HUD**: mini-logó · **DAY 1 badge (biohazard, ◀▶ lapozás) + KARANTÉN UTCA** · 🪙érme ·
+  🔫SHOP · ⚙beállítás. **Bal nav**: CAMPAIGN (aktív) · SCAVENGE · BEÁLLÍTÁS.
+- **5 hotspot = konkrét helyszín** (nem node): hexagon marker (szám/☠/✔) + landmark-ikon
+  (🚧 karantén / 🏪 bolt / 🧱 sikátor / 🗼 védelmi pont) + állapot-pad + cím+státusz felirat.
+  Állapotok: locked (szürke+🔒), current (zöld pulzáló pad), completed (zöld ✔), boss.
+  **Boss (Gócpont) = külön fertőzött fészek**: nagyobb vörös izzó landmark + skull marker, pulzál.
+  **Scavenge Zóna = külön loot-hotspot** (amber láda), nem kampányprogress.
+- **Mission briefing bottom-sheet** (referencia szerint): thumbnail · státusz-chip · DAY/mission ·
+  cím · típus · **Cél (objektíva)** · **VESZÉLY (5 koponya)** · **ZSÁKMÁNY (🪙 + XP)** · nagy START.
+  Boss = vörös vészstílus; zártnál indok + rejtett START. Start → a MEGLÉVŐ loadout→game flow.
+- **Ebben a körben csak Day 1** a fókusz (minőségi mintaképernyő); a hotspot-elrendezés bármely
+  napra működik (a nap-nav a HUD ◀▶-vel vált), a save/day-logika VÁLTOZATLAN, visszafelé kompatibilis.
+- **TESZTELVE** (böngészőben): 6 hotspot, briefing (kampány/boss/scavenge/locked), campaign→START→
+  loadout→game (lvl2), Scavenge→loadout→game (isFree), nap-nav (DAY 2), save export/import roundtrip.
+  **0 konzolhiba**. **NEM roadmap** — illusztrált hotspot-board (screenshot-igazolt).
+- **Viewport-gate ÁTMENT**: desktop 16:9=100%×100%; ultrawide 1600×600=16:9 megőrizve, minden
+  hotspot a stage-en belül; mobil landscape 812×375=100% magasság, `@media (max-height:560px)`
+  kompakt HUD/nav/hotspot. Nincs „kicsi középen”; `#stage` közös doboz.
+- sw.js cache: **zk-v12**. `node --check` mind a JS-re OK.
+
 ## FÁZIS 2.7 — DAY-alapú campaign board (2026-07-08) — mi került bele
 - **A lineáris roadmap/mission-hub lecserélve DAY-alapú kampányboardra** (Zombie
   Diary-szerű chapter-flow, de saját UI/asset). A kígyózó node-lánc, a zöld progress-
