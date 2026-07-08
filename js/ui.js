@@ -104,12 +104,14 @@ ZD.ui = (() => {
     /* Főmenü — logó + programozott prémium menü (i18n) */
     screens.title = el(`
       <div class="screen title-screen" id="s-title">
+        <div class="menu-bg"><img class="menu-bg-img" src="assets/references/main menu background.png" alt="" draggable="false" /></div>
+        <div class="menu-bg-scrim"></div>
         <div class="title-topbar">
           <span class="title-coin" id="title-coin"></span>
           <button class="title-gear" id="title-gear" data-go="settings" aria-label="Settings"></button>
         </div>
         <div class="title-inner">
-          <img class="brand-logo" src="assets/references/logo.png" alt="ZombieChronicles" draggable="false" />
+          <img class="brand-logo" src="assets/ui/logo.png" alt="ZombieChronicles" draggable="false" />
           <div class="menu" id="title-menu"></div>
           <button class="title-save" id="title-save" data-go="settings"></button>
           <p class="title-note" id="title-note"></p>

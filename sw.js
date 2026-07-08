@@ -1,5 +1,5 @@
 /* Zombi Krónika — offline service worker (cache-first) */
-const VERSION = 'zk-v18';
+const VERSION = 'zk-v19';
 const ASSETS = [
   './',
   './index.html',
@@ -18,7 +18,15 @@ const ASSETS = [
   './icons/icon-180.png',
   './icons/icon-512.png',
   './assets/references/day1_board_target_clean.png',
-  './assets/references/logo.png',
+  './assets/references/main menu background.png',
+  './assets/ui/logo.png',
+  './assets/ui/appicon.png',
+  './assets/ui/ic-fire.png',
+  './assets/ui/ic-ammo.png',
+  './assets/ui/ic-swap.png',
+  './assets/ui/ic-grenade.png',
+  './assets/ui/ic-pause.png',
+  './assets/ui/ic-coin.png',
 ];
 
 self.addEventListener('install', (e) => {

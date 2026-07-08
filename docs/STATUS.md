@@ -11,6 +11,40 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## ASSET INTEGRATION — logó + menü-háttér + prémium in-game ikonok (2026-07-08)
+- **Új assetek beépítve** (`assets/references/`): `app_logos.png` (brand-koncepció lap),
+  `main menu background.png` (16:9 poszt-apokaliptikus utca), `ingame_icons.png`
+  (prémium UI ikon-sheet). Nem referenciaként — **ténylegesen beépítve**.
+- **Zero-dep PNG-vágó** (`tools/crop.js`, csak beépített `zlib`+`fs`): a sheet-ekből
+  egyedi PNG-ket vág (`assets/ui/`). Kimenet: `logo.png` (Logo A — piros koponya +
+  ZOMBIE CHRONICLES + tagline), `appicon.png` (Icon A), és 8 kör-ikon
+  (`ic-fire/ammo/swap/grenade/dash/pause/medkit/coin.png`). (Nem futásidejű függőség,
+  csak build-idejű asset-előkészítés.)
+- **Logó**: a főmenü logója most az `assets/ui/logo.png` (mix-blend-mode: lighten →
+  a sötét háttér eltűnik, a koponya+felirat a városi háttéren ül), nagyobb (max 26vh),
+  jól komponálva. **Favicon + apple-touch-icon + manifest** → `appicon.png` (branding
+  konzisztencia; a 180/512 fallback marad).
+- **Főmenü háttér**: `main menu background.png` **valódi háttérként** (`<img class="menu-bg-img">`
+  külön wrapperben) + olvashatósági scrim/vignette. **Animálhatóra előkészítve** ÉS
+  azonnali motion polish: lassú ambient zoom/pan (`menuDrift` 28s) + lélegző vörös
+  horizont-glow (`menuGlow` 6s); `prefers-reduced-motion` tisztelve. (Screenshot-igazolt.)
+- **In-game ikonok cseréje**: a touch-gombok (fire/gránát/lőszer/swap) és a HUD
+  (pause, coin) most a **sliced asset-ikonok** — a kör-ikon MAGA a gomb arca (beépített
+  gyűrű+glow), nem CSS-rajz. A régi SVG/placeholder ikonok kiváltva. (Screenshot-igazolt.)
+- **Touch gombok újrapozicionálása**: a bal-alsó egysoros gombsor helyett **2×2 sarok-
+  klaszter** (fire jobb-alsó sarok hüvelykujjnak, gránát mellé, lőszer/swap fölé). A
+  klaszter 333px→**175px** széles → a jobb szélhez húzva (mobilon 49%→72% jobbra),
+  **jóval kevesebb takarás**; fire 96px, mellékgombok 68px (nagyok, de kompaktak).
+  (Screenshot-igazolt.)
+- **TESZTELVE** (böngésző + screenshot, valós motor): főmenü (háttér+logó), in-game HUD
+  (asset-ikonos gombok), 2×2 sarok-klaszter — **vizuálisan igazolt**. Assetek 404 nélkül
+  betöltenek (a szóközös fájlnév is). Flow: board→loadout→game ✔. save export/import ép
+  (adat egyezik). **0 konzolhiba.**
+- **Viewport-gate ÁTMENT**: desktop 16:9; mobil landscape 812×375 = 100% magasság,
+  sarok-klaszter kevés takarással; ultrawide 1600×600 = 16:9 megőrizve. Nincs „kicsi
+  középen". Csak asset/UI/CSS/DOM változott — gameplay/economy/save ÉRINTETLEN.
+- sw.js cache: **zk-v19** (új assetek precache-elve). `node --check` mind a JS-re OK.
+
 ## UI OVERHAUL — a régi zöld UI leváltása prémium, boardhoz illő design systemre (2026-07-08)
 - **Ok**: a prémium board-háttérre eddig a régi „gagyi zöld retro" UI-réteg került → a
   játék vizuálisan szétesett (prémium bg + olcsó overlay). Referencia:
