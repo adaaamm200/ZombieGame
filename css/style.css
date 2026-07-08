@@ -322,32 +322,68 @@ html, body {
 .ammo-buy .price em { font-style: normal; color: var(--green-hi); font-size: 9.5px; }
 .ammo-buy .btn { width: 100%; font-size: 12px; padding: 7px 6px; }
 
-/* ============ Day board — a VALÓDI board-kép a háttér (day1_board_target.png) ============ */
+/* ============ Day board — CLEAN artwork háttér + TELJESEN programozott UI overlay ============ */
 .board-screen { padding: 0; overflow: hidden; align-items: stretch; background: #05070a; }
 .board-bg {
   position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
   object-fit: cover; object-position: center; user-select: none; -webkit-user-drag: none;
 }
+/* finom scrim a UI olvashatóságához (fent/bal/lent) — az artworköt alig sötétíti */
+.board-scrim {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(4,6,9,.74) 0%, rgba(4,6,9,.28) 11%, transparent 22%),
+    linear-gradient(90deg, rgba(4,6,9,.55) 0%, transparent 15%),
+    linear-gradient(0deg, rgba(4,6,9,.55) 0%, transparent 18%);
+}
 .board-overlay { position: absolute; inset: 0; z-index: 2; }
 
-/* funkció-overlay-ek a festett HUD-elemekhez */
-.board-back {
-  position: absolute; top: 8px; left: 8px; z-index: 7; cursor: pointer; font-family: inherit; font-weight: bold;
-  font-size: 13px; letter-spacing: 1px; color: var(--text); padding: 7px 11px; border-radius: 9px;
-  background: rgba(8,12,10,.78); border: 1.5px solid var(--line2); box-shadow: 0 2px 6px rgba(0,0,0,.6);
+/* --- programozott felső HUD --- */
+.bhud {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 6;
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px calc(12px + var(--sar)) 8px calc(10px + var(--sal));
 }
-@media (hover: hover) { .board-back:hover { filter: brightness(1.25); } }
-.board-back:active { transform: translateY(1px); }
-/* élő érme a festett érme-kijelző fölé igazítva (felső sáv) */
-.board-coins {
-  position: absolute; top: 3.4%; left: 59.5%; z-index: 6; font-size: 15px; font-weight: bold; color: #ffd76a;
-  background: rgba(14,10,4,.92); border: 1.5px solid #6a531f; padding: 4px 12px 4px 10px; border-radius: 16px; white-space: nowrap;
+.bhud-back {
+  flex: none; width: 38px; height: 38px; border-radius: 10px; cursor: pointer; font-family: inherit; font-weight: bold; font-size: 17px;
+  color: var(--text); background: rgba(10,14,12,.74); border: 1.5px solid var(--line2); box-shadow: 0 2px 6px rgba(0,0,0,.5);
 }
-/* átlátszó kattintózónák a festett SHOP / fogaskerék fölött */
-.hitzone { position: absolute; z-index: 6; background: transparent; border: none; cursor: pointer; border-radius: 10px; }
-.hz-shop { top: 1.5%; left: 84%; width: 9%; height: 10%; }
-.hz-gear { top: 1.5%; left: 94%; width: 5.5%; height: 10%; }
-@media (hover: hover) { .hitzone:hover { background: rgba(255,255,255,.08); } }
+.bhud-back:active { transform: translateY(1px); }
+.bhud-day {
+  display: flex; flex-direction: column; align-items: center; line-height: 1.05; margin: 0 auto; position: relative;
+  padding: 5px 22px; border-radius: 10px;
+  background: linear-gradient(180deg, #b62430, #7a141c); border: 1.5px solid #e05a52;
+  box-shadow: 0 3px 10px rgba(120,20,20,.5), inset 0 1px 0 rgba(255,255,255,.14);
+}
+.bhud-day::before, .bhud-day::after {
+  content: ''; position: absolute; top: 3px; bottom: 3px; width: 7px; border-radius: 2px; opacity: .85;
+  background: repeating-linear-gradient(-45deg, #1a1206 0 4px, #ffcf3a 4px 8px);
+}
+.bhud-day::before { left: 5px; }
+.bhud-day::after { right: 5px; }
+.bd-num { font-size: 13px; font-weight: bold; letter-spacing: 3px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+.bd-name { font-size: 10px; font-weight: bold; letter-spacing: 1.5px; color: #ffe08a; white-space: nowrap; }
+.bhud-right { display: flex; align-items: center; gap: 8px; flex: none; }
+.bhud-coin { font-size: 14px; font-weight: bold; color: #ffd76a; background: rgba(14,10,4,.82); border: 1.5px solid #6a531f; padding: 5px 12px 5px 10px; border-radius: 16px; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,.4); }
+.bhud-shop { font-family: inherit; font-weight: bold; font-size: 12px; cursor: pointer; color: #241500; padding: 7px 13px; border-radius: 10px; background: linear-gradient(180deg,#ffd24a,#c9880f); border: 1.5px solid #ffe89a; box-shadow: 0 2px 6px rgba(0,0,0,.45); }
+.bhud-shop span { letter-spacing: 1px; }
+.bhud-shop:active { transform: translateY(1px); }
+.bhud-gear { font-family: inherit; font-size: 15px; cursor: pointer; color: var(--text); width: 36px; height: 36px; border-radius: 10px; background: rgba(10,14,12,.74); border: 1.5px solid var(--line2); }
+@media (hover: hover) { .bhud-back:hover, .bhud-shop:hover, .bhud-gear:hover { filter: brightness(1.2); } }
+
+/* --- programozott bal nav --- */
+.bnav { position: absolute; left: calc(8px + var(--sal)); top: 56px; z-index: 5; display: flex; flex-direction: column; gap: 8px; }
+.bnav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px; width: 70px; padding: 9px 4px;
+  border-radius: 11px; cursor: pointer; font-family: inherit; color: #cfe0c8;
+  background: linear-gradient(180deg, rgba(26,34,24,.9), rgba(13,19,13,.9)); border: 1.5px solid #34492f;
+  box-shadow: 0 2px 6px rgba(0,0,0,.45);
+}
+.bnav-item .i { font-size: 19px; }
+.bnav-item .t { font-size: 8px; letter-spacing: .5px; font-weight: bold; }
+.bnav-item.active { color: #241500; background: linear-gradient(180deg,#ffd24a,#c9880f); border-color: #ffe89a; }
+@media (hover: hover) { .bnav-item:not(.active):hover { filter: brightness(1.25); } }
+.bnav-item:active { transform: scale(.96); }
 
 /* --- interaktív hotspotok a helyszínek fölött --- */
 .board-hotspots { position: absolute; inset: 0; z-index: 3; }
@@ -417,8 +453,15 @@ html, body {
 
 /* kompakt (mobil landscape / ultrawide-short) */
 @media (max-height: 560px) {
-  .board-back { padding: 6px 10px; font-size: 11px; }
-  .board-coins { font-size: 13px; top: 9px; padding: 4px 10px; }
+  .bhud { padding: 6px 10px; gap: 8px; }
+  .bhud-back, .bhud-gear { width: 34px; height: 34px; font-size: 14px; }
+  .bhud-day { padding: 4px 18px; }
+  .bhud-coin { font-size: 13px; padding: 4px 10px; }
+  .bhud-shop { font-size: 11px; padding: 6px 11px; }
+  .bnav { top: 48px; gap: 6px; }
+  .bnav-item { width: 58px; padding: 6px 3px; }
+  .bnav-item .i { font-size: 16px; }
+  .bnav-item .t { font-size: 7px; }
   .hotspot { width: 96px; height: 78px; }
   .hs-halo { width: 84px; height: 34px; bottom: 6px; }
   .hs-emblem { width: 27px; height: 27px; font-size: 13px; }

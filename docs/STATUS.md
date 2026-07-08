@@ -11,7 +11,39 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
-## FÁZIS 2.9 — A VALÓDI board-kép közvetlen beépítése (2026-07-08) — mi került bele
+## FÁZIS 3.0 — CLEAN board-artwork + teljesen programozott UI overlay (2026-07-08) — mi került bele
+- **Iránykorrekció**: a 2.9-es `day1_board_target.png` egy MOCKUP volt (beégetett festett
+  HUD/shop/coin/sidebar/mission-feliratok/briefing). Most a háttér a **tiszta artwork**:
+  `assets/references/day1_board_target_clean.png` — CSAK a város/board, semmi UI-szöveg/gomb.
+  A `visual_style_sheet.png` a másodlagos stílusreferencia.
+- **Két külön réteg** (a mockup-UI-t NEM használjuk végleges UI-ként):
+  1) **CLEAN BOARD BACKGROUND**: `<img class="board-bg" object-fit:cover>` a clean artwork
+     (1672×941 = pontosan 16:9 → hézagmentesen kitölti a mindig-16:9 `#stage`-et).
+  2) **PROGRAMOZOTT UI OVERLAY** (valódi DOM/CSS, nem festett, nem hitzone):
+     - **Felső HUD**: ← gomb, **DAY 1 · KARANTÉN UTCA** piros hazard-banner, élő **érme**
+       (data-coins), **SHOP** (arany) → armory, **⚙** → settings.
+     - **Bal nav**: CAMPAIGN (aktív/arany) · SCAVENGE (→ farm briefing) · BEÁLLÍTÁS.
+     - **Mission hotspotok** a clean helyszínek fölött (%-pozíció): 1 barikád, 2 bolt,
+       3 romos sikátor, 4 védelmi tábor, 5 boss-fészek, + Scavenge (supply). Prémium
+       halo+emblem markerek: completed (zöld ✓), current (arany pulzáló), locked (🔒),
+       boss (vörös pulzáló), scavenge (amber).
+     - **Live mission briefing** (bottom-sheet): thumbnail, státusz, DAY/mission, cím,
+       típus, Cél, VESZÉLY (koponyák), ZSÁKMÁNY (érme+XP), nagy START.
+  + finom `board-scrim` a UI olvashatóságához (az artworköt alig sötétíti).
+- **Minden felirat kódból jön** (const.js CAMPAIGN + game-logika): Day-név, mission-név,
+  reward, státusz később cserélhető — semmi nincs a képre égetve. A régi over-painted
+  coin-overlay és a hitzone-ok TÖRÖLVE, helyettük valódi DOM-gombok.
+- **Csak Day 1** (a clean artwork Day 1); save/day/campaign-logika VÁLTOZATLAN, kompatibilis.
+- **TESZTELVE** (böngészőben): clean kép betölt (1672×941) + kitölti a stage-et; nincs
+  beégetett UI a háttéren; programozott HUD/nav/hotspot/briefing működik; boss/locked/scavenge
+  állapot; campaign→START→loadout→game (lvl2); Scavenge→game (isFree); SHOP→armory; ⚙→settings;
+  save export/import roundtrip egyezik. **0 konzolhiba.**
+- **Viewport-gate ÁTMENT**: desktop 16:9 (kitölt); ultrawide 1600×600 (16:9 megőrizve,
+  kép kitölt); mobil landscape 812×375 (100% magasság, kép kitölt, programozott UI). Nincs
+  „kicsi középen"; `#stage` közös 16:9 doboz.
+- sw.js cache: **zk-v14**; a clean board-kép a precache-ben (offline). `node --check` OK.
+
+## FÁZIS 2.9 — A VALÓDI board-kép közvetlen beépítése (MOCKUP-kép, felülírva 3.0-ban) (2026-07-08)
 - **Iránykorrekció**: a korábbi verzió CSS-diorámával „újrarajzolta" a boardot — ez NEM
   volt jó. Most a **megadott board-artwork (`assets/references/day1_board_target.png`) MAGA
   a campaign screen háttere** (`<img class="board-bg" object-fit:cover>`), rá pozicionált

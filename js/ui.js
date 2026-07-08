@@ -117,16 +117,30 @@ ZD.ui = (() => {
         </div>
       </div>`);
 
-    /* Pályaválasztó — a VALÓDI board-artwork a háttér (assets/references/day1_board_target.png),
-       rá pozicionált interaktív hotspot/HUD/briefing overlay-ekkel. */
+    /* Pályaválasztó — CLEAN board-artwork (assets/references/day1_board_target_clean.png)
+       háttérként + TELJESEN programozott UI overlay (HUD, nav, hotspotok, briefing). */
     screens.stages = el(`
       <div class="screen board-screen" id="s-stages">
-        <img class="board-bg" src="assets/references/day1_board_target.png" alt="Day 1 — Karantén Utca" draggable="false" />
+        <img class="board-bg" src="assets/references/day1_board_target_clean.png" alt="" draggable="false" />
+        <div class="board-scrim"></div>
         <div class="board-overlay">
-          <button class="board-back" data-go="title">← MENÜ</button>
-          <span class="board-coins">🪙 <b data-coins></b></span>
-          <button class="hitzone hz-shop" data-go="armory" aria-label="Fegyverbolt"></button>
-          <button class="hitzone hz-gear" data-go="settings" aria-label="Beállítások"></button>
+          <div class="bhud">
+            <button class="bhud-back" data-go="title" aria-label="Főmenü">←</button>
+            <div class="bhud-day">
+              <span class="bd-num">DAY 1</span>
+              <span class="bd-name">KARANTÉN UTCA</span>
+            </div>
+            <div class="bhud-right">
+              <span class="bhud-coin">🪙 <b data-coins></b></span>
+              <button class="bhud-shop" data-go="armory">🔫 <span>SHOP</span></button>
+              <button class="bhud-gear" data-go="settings" aria-label="Beállítások">⚙</button>
+            </div>
+          </div>
+          <div class="bnav">
+            <button class="bnav-item active"><span class="i">📖</span><span class="t">CAMPAIGN</span></button>
+            <button class="bnav-item" id="bn-scavenge"><span class="i">📦</span><span class="t">SCAVENGE</span></button>
+            <button class="bnav-item" data-go="settings"><span class="i">⚙</span><span class="t">BEÁLLÍTÁS</span></button>
+          </div>
           <div class="board-hotspots" id="board-hotspots"></div>
         </div>
         <div class="stage-preview hidden" id="stage-preview">
@@ -315,6 +329,13 @@ ZD.ui = (() => {
     $('#btn-resume').addEventListener('click', () => ZD.game.resume());
     $('#btn-quit').addEventListener('click', () => { hidePause(); ZD.game.quit(); });
 
+    /* Scavenge / Free Mode — bal nav gomb → briefing */
+    $('#bn-scavenge').addEventListener('click', () => {
+      ZD.audio.play('click');
+      const sc = $('#board-hotspots') && $('#board-hotspots').querySelector('.hotspot.is-scavenge');
+      if (sc) selectHotspot(sc);
+      showBriefing('free');
+    });
     /* briefing panel bezárása */
     $('#sp-close').addEventListener('click', () => {
       ZD.audio.play('click');
@@ -467,13 +488,13 @@ ZD.ui = (() => {
   /* --- interaktív hotspotok a VALÓDI board-kép helyszínei fölött (Day 1) ---
      A % pozíciók a day1_board_target.png kompozíciójához igazítva (a helyszínek fölé). */
   const HOTSPOTS = [
-    { slot: 1, x: 24, y: 36 },   // Karantén Ellenőrzőpont (bal-fent, zöld kapu)
-    { slot: 2, x: 51, y: 40 },   // Elhagyott Kisbolt (24/7 bolt)
-    { slot: 3, x: 25, y: 67 },   // Romos Sikátor (bal-lent)
-    { slot: 4, x: 57, y: 68 },   // Túlélők Kitartó Pont (őrtorony/tábor)
-    { slot: 5, x: 85, y: 35 },   // Fertőzött Fészek — Gócpont / boss (jobb-fent)
+    { slot: 1, x: 22, y: 29 },   // Karantén Utca — zöld barikád/kapu (bal-fent)
+    { slot: 2, x: 48, y: 31 },   // Elhagyott Bolt — üzletépület (fent-közép)
+    { slot: 3, x: 28, y: 56 },   // Lerombolt Sikátor — romos épület (bal-közép)
+    { slot: 4, x: 55, y: 66 },   // Védelmi Pont — tábor őrtoronnyal/tűzzel (lent-közép)
+    { slot: 5, x: 82, y: 28 },   // Gócpont — vörös boss-fészek (jobb-fent)
   ];
-  const SCAV_POS = { x: 86, y: 66 };   // Zsákmány Zóna (loot, jobb-lent)
+  const SCAV_POS = { x: 86, y: 68 };   // Zsákmány Zóna — lila supply-ládák (jobb-lent)
 
   function selectHotspot(el) {
     $('#board-hotspots').querySelectorAll('.hotspot.sel').forEach((n) => n.classList.remove('sel'));
