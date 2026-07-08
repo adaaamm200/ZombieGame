@@ -312,23 +312,6 @@ html, body {
 .apool.low b { color: var(--red); }
 .acard .wact { justify-content: center; width: 100%; }
 
-/* --- Free Mode gomb (pályaválasztó) --- */
-.freemode-btn {
-  width: 100%; max-width: 780px; margin: 2px 0 12px;
-  display: flex; align-items: center; gap: 14px; text-align: left;
-  padding: 12px 16px;
-  background: linear-gradient(180deg, #3a2c12, #241a0a);
-  border: 2px solid #7a5e20;
-  box-shadow: 0 3px 0 #140f06, inset 0 1px 0 rgba(255, 220, 130, .12);
-}
-@media (hover: hover) { .freemode-btn:hover { filter: brightness(1.15); } }
-.freemode-btn .fm-ic {
-  font-size: 26px; color: var(--amber); width: 34px; text-align: center; flex: none;
-  text-shadow: 0 0 12px rgba(255, 193, 77, .5);
-}
-.freemode-btn .fm-txt { display: flex; flex-direction: column; line-height: 1.3; color: var(--amber); }
-.freemode-btn .fm-txt small { font-size: 9.5px; font-weight: normal; letter-spacing: .5px; color: #c9a95f; opacity: .85; }
-
 /* --- lőszer-bolt: kis + nagy csomag --- */
 .ammo-buys { display: flex; gap: 8px; width: 100%; margin-top: auto; }
 .ammo-buy {
@@ -339,62 +322,140 @@ html, body {
 .ammo-buy .price em { font-style: normal; color: var(--green-hi); font-size: 9.5px; }
 .ammo-buy .btn { width: 100%; font-size: 12px; padding: 7px 6px; }
 
-/* --- pályaválasztó --- */
-.theme-legend {
-  display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 9.5px; color: var(--muted); margin-bottom: 8px; flex: none;
-  justify-content: center;
+/* --- Campaign Map pályaválasztó --- */
+.stages-screen { overflow: hidden; padding-bottom: 12px; }
+.map-legend {
+  display: flex; flex-wrap: wrap; gap: 5px 12px; justify-content: center;
+  font-size: 9.5px; color: var(--muted); margin-bottom: 7px; flex: none;
 }
-.tl.t0 { color: #7ddb4f; }
-.tl.t1 { color: #5bc8d8; }
-.tl.t2 { color: #e5745e; }
-.stagegrid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
-  gap: 9px; width: 100%; max-width: 780px; margin-top: 2px;
+.map-legend .ml { white-space: nowrap; }
+.map-legend .n-normal { color: var(--green); }
+.map-legend .n-defense { color: var(--cyan); }
+.map-legend .n-elite { color: var(--amber); }
+.map-legend .n-survive { color: #b48ae8; }
+.map-legend .n-boss { color: #ff6a4a; }
+
+.map-wrap {
+  position: relative; width: 100%; max-width: 780px; flex: 1 1 auto; min-height: 0;
+  border: 2px solid var(--line); border-radius: 14px; overflow: hidden;
+  background:
+    radial-gradient(130% 80% at 50% -8%, rgba(46, 66, 34, .38), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.015) 0 2px, transparent 2px 5px),
+    linear-gradient(180deg, #0c130c, #090d09);
+  box-shadow: inset 0 0 40px rgba(0,0,0,.6);
 }
-.stagecell {
-  aspect-ratio: 1; border-radius: 10px; border: 2px solid var(--line);
-  background: linear-gradient(180deg, var(--panel2), var(--panel));
-  color: var(--text);
+.map-scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+.map-scroll::-webkit-scrollbar { display: none; }
+.map-nodes { position: relative; width: 100%; }
+.map-path { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; }
+.map-path path { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.map-path .road-base { stroke: #182317; stroke-width: 15; }
+.map-path .road-dash { stroke: #46603a; stroke-width: 2; stroke-dasharray: 5 8; }
+.map-path .road-done { stroke: var(--green); stroke-width: 5; opacity: .8; filter: drop-shadow(0 0 4px rgba(125,219,79,.5)); }
+
+.map-node {
+  position: absolute; transform: translate(-50%, -50%);
+  width: 50px; height: 50px; border-radius: 50%;
+  border: 2.5px solid var(--line2); color: var(--text);
+  background: radial-gradient(circle at 50% 34%, var(--panel3), var(--panel));
   font-family: inherit; font-weight: bold;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  box-shadow: 0 2px 0 rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.05);
-  transition: transform .08s, filter .12s;
-  position: relative;
+  display: grid; place-items: center; cursor: pointer;
+  box-shadow: 0 3px 0 rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.08);
+  transition: transform .08s, filter .12s, box-shadow .2s;
 }
-.sc-num { font-size: 17px; }
-.stagecell small { font-size: 8px; color: var(--muted); font-weight: normal; }
-.sc-mode {
-  position: absolute; top: 3px; left: 4px; font-size: 9px; line-height: 1;
+.mn-face { font-size: 18px; line-height: 1; }
+.mn-num {
+  position: absolute; top: -7px; left: -7px; font-size: 8.5px; font-weight: bold;
+  background: #0c140a; border: 1.5px solid var(--line2); color: var(--muted);
+  border-radius: 8px; padding: 0 4px; line-height: 1.5;
 }
-.sc-mod {
-  position: absolute; top: 3px; right: 4px; font-size: 9px; line-height: 1;
-  filter: drop-shadow(0 1px 1px #000);
+.mn-mode { position: absolute; bottom: -7px; right: -8px; font-size: 12px; filter: drop-shadow(0 1px 1px #000); }
+.mn-mod { position: absolute; top: -8px; right: -8px; font-size: 12px; filter: drop-shadow(0 1px 1px #000); }
+
+/* típusok */
+.map-node.n-defense { border-color: #2f5c7a; }
+.map-node.n-elite { border-color: #8a6f2a; }
+.map-node.n-survive { border-color: #6b4f9a; }
+.map-node.n-boss {
+  width: 60px; height: 60px; border-color: #b03a3a;
+  background: radial-gradient(circle at 50% 34%, #3a1414, #170a0b);
 }
-.stagecell.m-defense:not(.locked) { border-color: #2a4a66; }
-.stagecell.m-elite:not(.locked) { border-color: #6b5a2a; }
-.stagecell.t0:not(.locked) { border-color: #33502a; }
-.stagecell.t1:not(.locked) { border-color: #2a4a50; }
-.stagecell.t2:not(.locked) { border-color: #55332c; }
-.stagecell.cleared { color: var(--green); }
-.stagecell.cleared small { color: var(--green-dim); }
-.stagecell.locked { opacity: .32; }
-.stagecell.boss:not(.locked) {
-  border-color: #8f3a3a;
-  background: linear-gradient(180deg, #241214, #160b0c);
+.map-node.n-boss .mn-face { color: #ff6a4a; font-size: 24px; }
+
+/* állapotok */
+.map-node.is-done { border-color: var(--green-dim); }
+.map-node.is-done .mn-face { color: var(--green); }
+.map-node.is-locked { border-color: #232b22; filter: grayscale(.6) brightness(.62); }
+.map-node.is-locked .mn-face { color: var(--muted); font-size: 15px; }
+.map-node.is-next:not(.n-boss) { border-color: var(--green-hi); animation: node-pulse 1.5s ease-in-out infinite; }
+@keyframes node-pulse {
+  0%, 100% { box-shadow: 0 3px 0 rgba(0,0,0,.6), 0 0 0 0 rgba(125,219,79,.45); }
+  50% { box-shadow: 0 3px 0 rgba(0,0,0,.6), 0 0 16px 4px rgba(125,219,79,.4); }
 }
-.stagecell.boss .sc-num { color: #ff6a4a; }
-.stagecell.current {
-  border-color: var(--green-hi);
-  animation: cell-pulse 1.6s ease-in-out infinite;
+.map-node.n-boss:not(.is-locked):not(.is-done) { animation: boss-pulse 1.6s ease-in-out infinite; }
+@keyframes boss-pulse {
+  0%, 100% { box-shadow: 0 3px 0 rgba(0,0,0,.6), 0 0 0 0 rgba(229,72,77,.5); }
+  50% { box-shadow: 0 3px 0 rgba(0,0,0,.6), 0 0 18px 5px rgba(229,72,77,.45); }
 }
-@keyframes cell-pulse {
-  0%, 100% { box-shadow: 0 2px 0 rgba(0,0,0,.55), 0 0 0 0 rgba(125, 219, 79, .35); }
-  50% { box-shadow: 0 2px 0 rgba(0,0,0,.55), 0 0 14px 3px rgba(125, 219, 79, .3); }
+@media (hover: hover) { .map-node:hover { transform: translate(-50%, -50%) scale(1.12); filter: brightness(1.2); z-index: 3; } }
+.map-node:active { transform: translate(-50%, -50%) scale(.92); }
+
+/* Free Mode lebegő akció-node */
+.map-free {
+  position: absolute; right: 10px; bottom: 10px; z-index: 4;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; border-radius: 30px;
+  background: linear-gradient(180deg, #4a3813, #291d09);
+  border: 2px solid #8a6a24; color: var(--amber);
+  font-family: inherit; font-weight: bold; letter-spacing: 1px; cursor: pointer;
+  box-shadow: 0 3px 12px rgba(0,0,0,.55), 0 0 16px rgba(255,193,77,.22);
 }
-@media (hover: hover) {
-  .stagecell:not(.locked):hover { transform: translateY(-2px); filter: brightness(1.2); }
+.map-free .mf-ic { font-size: 22px; text-shadow: 0 0 10px rgba(255,193,77,.6); }
+.map-free .mf-tx { font-size: 10px; line-height: 1.05; text-align: left; }
+@media (hover: hover) { .map-free:hover { filter: brightness(1.15); } }
+.map-free:active { transform: translateY(2px); }
+
+/* stage preview bottom-sheet */
+.stage-preview {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 6;
+  padding: 0 8px; animation: sheet-up .22s ease-out;
 }
-.stagecell:not(.locked):active { transform: scale(.94); }
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+.sp-card {
+  position: relative; width: 100%; max-width: 560px; margin: 0 auto;
+  background: linear-gradient(180deg, var(--panel2), var(--panel));
+  border: 2px solid var(--line2); border-bottom: none;
+  border-radius: 16px 16px 0 0; padding: 14px 16px calc(16px + var(--sab));
+  box-shadow: 0 -10px 34px rgba(0,0,0,.65);
+}
+.sp-close {
+  position: absolute; top: 8px; right: 10px; width: 30px; height: 30px; border-radius: 8px;
+  background: #0d130d; border: 1.5px solid var(--line2); color: var(--muted);
+  font-family: inherit; font-size: 14px; cursor: pointer;
+}
+.sp-top { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; padding-right: 34px; }
+.sp-badge {
+  width: 44px; height: 44px; border-radius: 12px; flex: none; display: grid; place-items: center;
+  font-size: 22px; border: 2px solid var(--line2);
+  background: radial-gradient(circle at 50% 34%, var(--panel3), var(--panel));
+}
+.sp-badge.n-boss { border-color: #b03a3a; color: #ff6a4a; background: radial-gradient(circle at 50% 34%, #3a1414, #170a0b); }
+.sp-badge.n-elite { border-color: var(--amber); }
+.sp-badge.n-defense { border-color: var(--cyan); }
+.sp-badge.n-survive { border-color: #8a6ad0; }
+.sp-badge.n-free { border-color: var(--amber); color: var(--amber); }
+.sp-top h3 { font-size: 17px; letter-spacing: 2px; color: var(--green-hi); }
+.sp-mode { font-size: 11px; color: var(--muted); }
+.sp-desc { font-size: 11.5px; color: var(--text); margin-bottom: 10px; line-height: 1.5; }
+.sp-desc .lo-mod { color: var(--amber); font-size: 10.5px; }
+.sp-grid { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.sp-row { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; color: var(--muted); }
+.sp-row b { color: var(--text); text-align: right; }
+.sp-ready { margin-top: 4px; font-size: 11px; font-weight: bold; text-align: center; padding: 5px; border-radius: 8px; }
+.sp-ready.ok { color: var(--green); background: rgba(125,219,79,.1); }
+.sp-ready.risk { color: var(--amber); background: rgba(255,193,77,.1); }
+.sp-locked { text-align: center; color: var(--red); font-size: 12px; padding: 6px 4px 10px; }
+.sp-start { width: 100%; }
 
 /* --- kártyák (bolt, labor) --- */
 .cardgrid {

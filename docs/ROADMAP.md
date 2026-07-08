@@ -24,12 +24,13 @@
   kitérési lehetőség, nincs lehetetlen időlimit, tiszta fázisok és death-feedback.
 - Economy/reward átnézése: 2-4 pálya vagy pár Free Mode futam után érezhető fejlődés.
 
-## FÁZIS 2 — Campaign Map / Pályaválasztás
-- Zombie Diary-szerű, de saját stílusú **map-alapú** kampányképernyő.
-- 40 pálya node-okként, összekötő úttal, lock/unlock rendszerrel.
-- Node-típusok: normál, boss, elite, challenge, free.
-- Stage preview panel (mód, módosító, várható zsákmány, ajánlott felszerelés).
-- Vizuális progress-érzés (megtett út, csillagok/pecsétek).
+## FÁZIS 2 — Campaign Map / Pályaválasztás ✅ (kész)
+- Saját stílusú **map-alapú** kampányképernyő (kígyózó útvonal, SVG úttal). ✔
+- 40 pálya node-okként, összekötő úttal, lock/unlock rendszerrel. ✔
+- Node-típusok: normál/irtás, védelem, elite, túlélés, boss, + Free Mode akció-node. ✔
+- Stage preview panel (mód, módosító, várható jutalom, nehézség, ajánlott felkészültség). ✔
+- Vizuális progress-érzés: zöld „megtett" út a feloldott pályáig, is-next pulzálás. ✔
+- Lásd a részleteket: [`docs/STATUS.md`](STATUS.md).
 
 ## FÁZIS 3 — Valódi játékmód-identitás
 - A meglévő módok legyenek **tényleg** különbözőek — saját cél, tempó, jutalom, veszély.
@@ -58,5 +59,6 @@
 ---
 
 ### Aktuális státusz
-Lásd [`docs/STATUS.md`](STATUS.md). **Most a FÁZIS 1 készül** — a többi fázis
-kizárólag dokumentált terv, azokba még NEM kezdünk bele.
+Lásd [`docs/STATUS.md`](STATUS.md). **A FÁZIS 1 és FÁZIS 2 KÉSZ.** A következő a
+FÁZIS 3 (valódi játékmód-identitás) — a 3–6 fázis egyelőre dokumentált terv, azokba
+csak külön döntés után kezdünk bele.

@@ -117,28 +117,47 @@ ZD.ui = (() => {
         </div>
       </div>`);
 
-    /* Pályaválasztó */
+    /* Pályaválasztó — Campaign Map (node-alapú, útvonalas) */
     screens.stages = el(`
-      <div class="screen" id="s-stages">
+      <div class="screen stages-screen" id="s-stages">
         <div class="topbar">
           <button class="btn backbtn" data-go="title">←</button>
           <h2>HADJÁRAT</h2>
           <span class="coins">🪙 <span data-coins></span></span>
         </div>
-        <div class="theme-legend">
-          <span class="tl t0">■ Utca</span>
-          <span class="tl t1">■ Labor</span>
-          <span class="tl t2">■ Romváros</span>
-          <span class="tl">🛡 védelem</span>
-          <span class="tl">⭐ elit</span>
-          <span class="tl">☠ vezér</span>
-          <span class="tl">⚡🌑💰👥 módosító</span>
+        <div class="map-legend">
+          <span class="ml n-normal">● irtás</span>
+          <span class="ml n-defense">🛡 védelem</span>
+          <span class="ml n-elite">⭐ elit</span>
+          <span class="ml n-survive">⏱ túlélés</span>
+          <span class="ml n-boss">☠ vezér</span>
         </div>
-        <button class="btn freemode-btn" id="btn-freemode">
-          <span class="fm-ic">♾</span>
-          <span class="fm-txt">SZABAD FARM<small>Végtelen hullámok — gyűjts érmét fejlesztésekre</small></span>
-        </button>
-        <div class="stagegrid" id="stagegrid"></div>
+        <div class="map-wrap">
+          <div class="map-scroll" id="map-scroll">
+            <svg class="map-path" id="map-path" preserveAspectRatio="none"></svg>
+            <div class="map-nodes" id="map-nodes"></div>
+          </div>
+          <button class="map-free" id="btn-freemode">
+            <span class="mf-ic">♾</span>
+            <span class="mf-tx">SZABAD<br/>FARM</span>
+          </button>
+        </div>
+        <div class="stage-preview hidden" id="stage-preview">
+          <div class="sp-card">
+            <button class="sp-close" id="sp-close">✕</button>
+            <div class="sp-top">
+              <span class="sp-badge" id="sp-badge"></span>
+              <div>
+                <h3 id="sp-title"></h3>
+                <span class="sp-mode" id="sp-mode"></span>
+              </div>
+            </div>
+            <p class="sp-desc" id="sp-desc"></p>
+            <div class="sp-grid" id="sp-grid"></div>
+            <div class="sp-locked hidden" id="sp-locked"></div>
+            <button class="btn primary sp-start" id="sp-start">INDULÁS ▶</button>
+          </div>
+        </div>
       </div>`);
 
     /* Fegyverbolt — fegyver + lőszer tabokkal */
@@ -284,10 +303,15 @@ ZD.ui = (() => {
     $('#btn-resume').addEventListener('click', () => ZD.game.resume());
     $('#btn-quit').addEventListener('click', () => { hidePause(); ZD.game.quit(); });
 
-    /* Free Mode indítása a pályaválasztóról */
+    /* Free Mode a Campaign Map-en — előbb a preview panel */
     $('#btn-freemode').addEventListener('click', () => {
       ZD.audio.play('click');
-      showLoadout('free');
+      showPreview('free');
+    });
+    /* stage-preview panel bezárása */
+    $('#sp-close').addEventListener('click', () => {
+      ZD.audio.play('click');
+      $('#stage-preview').classList.add('hidden');
     });
 
     /* loadout */
@@ -381,6 +405,153 @@ ZD.ui = (() => {
     screens.loadout.classList.remove('hidden');
   }
 
+  /* ---------- Campaign Map (node-alapú pályaválasztó) ---------- */
+  const MAP = { perRow: 5, cols: [12, 31, 50, 69, 88], rowH: 96, topPad: 56 };
+  const DIFF_LABELS = ['—', 'Könnyű', 'Közepes', 'Nehéz', 'Vad', 'Halálos'];
+  const THEME_NAMES = ['Elhagyott utca', 'Labor-bunker', 'Romos város'];
+
+  /* i (1-alapú) → {x%, y px} kígyózó (serpentine) elrendezés */
+  function nodePos(i) {
+    const idx = i - 1;
+    const r = Math.floor(idx / MAP.perRow);
+    const inRow = idx % MAP.perRow;
+    const c = (r % 2 === 0) ? inRow : (MAP.perRow - 1 - inRow);
+    return { x: MAP.cols[c], y: MAP.topPad + r * MAP.rowH };
+  }
+
+  function buildMap() {
+    const nodes = $('#map-nodes');
+    const svg = $('#map-path');
+    const scroll = $('#map-scroll');
+    nodes.innerHTML = '';
+    const rows = Math.ceil(C.STAGES / MAP.perRow);
+    const H = MAP.topPad + rows * MAP.rowH;
+    nodes.style.height = H + 'px';
+    svg.setAttribute('viewBox', `0 0 100 ${H}`);
+    svg.style.height = H + 'px';
+
+    const unlocked = S().stages.unlocked;
+    const cleared = S().stages.cleared;
+
+    /* útvonal: teljes (dim) + megtett szakasz (zöld) */
+    const pts = [];
+    for (let i = 1; i <= C.STAGES; i++) pts.push(nodePos(i));
+    const dAll = pts.map((p, k) => `${k ? 'L' : 'M'}${p.x} ${p.y}`).join(' ');
+    const doneCount = Math.min(unlocked, C.STAGES);
+    const dDone = pts.slice(0, doneCount).map((p, k) => `${k ? 'L' : 'M'}${p.x} ${p.y}`).join(' ');
+    svg.innerHTML =
+      `<path d="${dAll}" class="road-base" vector-effect="non-scaling-stroke"/>` +
+      `<path d="${dAll}" class="road-dash" vector-effect="non-scaling-stroke"/>` +
+      (doneCount > 1 ? `<path d="${dDone}" class="road-done" vector-effect="non-scaling-stroke"/>` : '');
+
+    let nextY = MAP.topPad;
+    for (let i = 1; i <= C.STAGES; i++) {
+      const p = nodePos(i);
+      const locked = i > unlocked;
+      const done = cleared.includes(i);
+      const mode = C.modeFor(i);
+      const mod = C.modFor(i);
+      const boss = mode === 'boss';
+      const stateCls = locked ? 'is-locked' : done ? 'is-done' : (i === unlocked ? 'is-next' : 'is-open');
+      const b = document.createElement('button');
+      b.className = `map-node n-${mode} ${stateCls}${boss ? ' n-boss' : ''}`;
+      b.style.left = p.x + '%';
+      b.style.top = p.y + 'px';
+      const face = locked ? '🔒' : boss ? '☠' : done ? '✔' : i;
+      const modeIc = C.MODES[mode].icon;
+      const showNum = boss || done || locked;
+      b.innerHTML =
+        `<span class="mn-face">${face}</span>` +
+        (showNum ? `<span class="mn-num">${i}</span>` : '') +
+        (modeIc && !boss ? `<span class="mn-mode">${modeIc}</span>` : '') +
+        (mod ? `<span class="mn-mod" title="${C.MODS[mod].name}">${C.MODS[mod].icon}</span>` : '');
+      b.addEventListener('click', () => { ZD.audio.play('click'); showPreview(i); });
+      nodes.appendChild(b);
+      if (i === unlocked) nextY = p.y;
+    }
+
+    /* a következő pályához görgetés, amint látható a konténer */
+    requestAnimationFrame(() => {
+      const h = scroll.clientHeight || 300;
+      scroll.scrollTop = Math.max(0, nextY - h * 0.5);
+    });
+  }
+
+  /* preview-adatok egy pályához (vagy 'free') */
+  function previewData(level) {
+    const isFree = level === 'free';
+    const mode = isFree ? 'free' : C.modeFor(level);
+    const mod = isFree ? null : C.modFor(level);
+    const boss = mode === 'boss';
+    const locked = !isFree && level > S().stages.unlocked;
+    const done = !isFree && S().stages.cleared.includes(level);
+    let reward = null;
+    if (!isFree) {
+      const avgCoin = 8 * C.coinMul(level);
+      const kills = mode === 'elite' ? C.quota(level) * 0.45
+        : mode === 'survive' ? C.quota(level) * 0.8 : C.quota(level);
+      const clear = C.clearBonus(level) * C.clearMult(mode);
+      reward = Math.round(kills * avgCoin + clear + (boss ? C.ZOMBIES.boss.coin * C.coinMul(level) : 0));
+    }
+    const diff = isFree ? 0 : Math.min(5, Math.ceil(level / 8));
+    const stats = ZD.game.calcStats();
+    const owned = C.WEAPONS.filter((x) => S().weapons.owned.includes(x.id) && (x.ammo < 0 || (S().ammo[x.id] || 0) > 0));
+    const bestDps = owned.length ? Math.max(...owned.map((x) => x.dmg * x.rps * (x.pellets || 1))) : 0;
+    const power = bestDps * stats.dmgMul + stats.maxHp * 0.6;
+    const need = isFree ? 80 : 90 + level * 16;
+    return { isFree, mode, mod, boss, locked, done, reward, diff, ready: power >= need };
+  }
+
+  function showPreview(level) {
+    const d = previewData(level);
+    const M = C.MODES[d.mode];
+    const pv = $('#stage-preview');
+    const badge = $('#sp-badge');
+    badge.className = 'sp-badge n-' + d.mode;
+    badge.textContent = d.isFree ? '♾' : d.boss ? '☠' : (M.icon || '●');
+    $('#sp-title').textContent = d.isFree ? 'SZABAD FARM' : `${level}. PÁLYA`;
+    $('#sp-mode').textContent = d.isFree
+      ? 'Végtelen pénzfarm'
+      : M.name + (d.mod ? ` · ${C.MODS[d.mod].icon} ${C.MODS[d.mod].name}` : '');
+    $('#sp-desc').innerHTML = M.desc + (d.mod
+      ? `<br/><span class="lo-mod">${C.MODS[d.mod].icon} ${C.MODS[d.mod].desc}</span>` : '');
+
+    const rows = [];
+    if (d.isFree) {
+      rows.push(['Cél', 'Érme-farmolás fejlesztésekhez']);
+      rows.push(['Jutalom', '🪙 kill + hullám + idő-bónusz']);
+      rows.push(['Nehézség', '∞ fokozatosan skálázódik']);
+      rows.push(['Jelleg', 'Nem kampánypálya — nem old fel pályát']);
+    } else {
+      rows.push(['Mód', (d.boss ? '☠ ' : '') + M.name]);
+      rows.push(['Téma', THEME_NAMES[C.themeFor(level)]]);
+      rows.push(['Várható jutalom', '~🪙 ' + fmt(d.reward)]);
+      rows.push(['Nehézség', ('☠'.repeat(d.diff) || '—') + ' ' + DIFF_LABELS[d.diff]]);
+      if (d.mod) rows.push(['Módosító', `${C.MODS[d.mod].icon} ${C.MODS[d.mod].name}`]);
+    }
+    $('#sp-grid').innerHTML = rows.map(([k, v]) =>
+      `<div class="sp-row"><span>${k}</span><b>${v}</b></div>`).join('')
+      + (d.isFree ? '' : `<div class="sp-ready ${d.ready ? 'ok' : 'risk'}">${d.ready ? '✔ FELKÉSZÜLVE' : '⚠ AJÁNLOTT FEJLESZTENI / LŐSZERT VENNI'}</div>`);
+
+    const lk = $('#sp-locked');
+    const start = $('#sp-start');
+    if (d.locked) {
+      lk.classList.remove('hidden');
+      lk.innerHTML = `🔒 Zárt — előbb teljesítsd a(z) <b>${Math.max(1, level - 1)}.</b> pályát.`;
+      start.classList.add('hidden');
+    } else {
+      lk.classList.add('hidden');
+      start.classList.remove('hidden');
+      start.textContent = d.isFree ? '♾ FARM INDÍTÁSA' : (d.done ? 'ÚJRA ▶' : 'INDULÁS ▶');
+      start.onclick = () => {
+        ZD.audio.play('click');
+        pv.classList.add('hidden');
+        showLoadout(d.isFree ? 'free' : level);
+      };
+    }
+    pv.classList.remove('hidden');
+  }
+
   /* normalizált stat-sáv (gyökös skála, hogy a kis értékek is látsszanak) */
   function bar(label, val, max, text) {
     const pct = Math.round(Math.sqrt(Math.min(1, val / max)) * 100);
@@ -390,36 +561,7 @@ ZD.ui = (() => {
   const api = {
     refresh_stages() {
       refreshCoins(screens.stages);
-      const grid = $('#stagegrid');
-      grid.innerHTML = '';
-      const current = S().stages.unlocked;
-      for (let i = 1; i <= C.STAGES; i++) {
-        const locked = i > S().stages.unlocked;
-        const cleared = S().stages.cleared.includes(i);
-        const mode = C.modeFor(i);
-        const mod = C.modFor(i);
-        const boss = mode === 'boss';
-        const theme = C.themeFor(i);
-        const b = document.createElement('button');
-        b.className = `stagecell t${theme} m-${mode}${cleared ? ' cleared' : ''}${locked ? ' locked' : ''}${boss ? ' boss' : ''}${i === current && !locked ? ' current' : ''}`;
-        const modeIcon = C.MODES[mode].icon;
-        const sub = boss ? 'VEZÉR'
-          : mode === 'defense' ? 'védelem'
-          : mode === 'elite' ? 'elit'
-          : mode === 'survive' ? 'túlélés'
-          : cleared ? '✔ kész' : `${i}. pálya`;
-        b.innerHTML = `
-          ${modeIcon && !boss ? `<span class="sc-mode">${modeIcon}</span>` : ''}
-          ${mod ? `<span class="sc-mod" title="${C.MODS[mod].name}">${C.MODS[mod].icon}</span>` : ''}
-          <span class="sc-num">${locked ? '🔒' : boss ? '☠' : i}</span><small>${sub}</small>`;
-        if (!locked) {
-          b.addEventListener('click', () => {
-            ZD.audio.play('click');
-            showLoadout(i);
-          });
-        }
-        grid.appendChild(b);
-      }
+      buildMap();
     },
 
     refresh_armory() {

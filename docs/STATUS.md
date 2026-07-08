@@ -11,6 +11,39 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## FÁZIS 2 — Campaign Map / map-alapú pályaválasztó (2026-07-08) — mi került bele
+- **A sima pályarács lecserélve node-alapú kampánytérképre** (`js/ui.js` + `css/style.css`).
+  A 40 pálya kígyózó (serpentine) útvonalon, SVG-vel rajzolt úttal: `#s-stages` →
+  `.map-wrap > .map-scroll > (svg.map-path + .map-nodes)`. A régi `.stagegrid`/
+  `.stagecell`/`.theme-legend`/`.freemode-btn` HTML+CSS eltávolítva.
+- **Útvonal**: 3 SVG-réteg — road-base (útágy), road-dash (szaggatott középvonal),
+  road-done (zöld „megtett" szakasz a feloldott pályáig, glow-val). `preserveAspectRatio="none"`
+  + `vector-effect="non-scaling-stroke"` → a node-ok (`left:%`, `top:px`) és az út
+  koordinátái tökéletesen fedik egymást, méréstől függetlenül (nincs layout-timing bug).
+- **Node-típusok** (szín + méret + ikon): normal/irtás, védelem (🛡, cián), elit (⭐, arany),
+  túlélés (⏱, lila), **boss** (☠, nagyobb 60px, piros, fenyegető pulzálás), + módosító-badge.
+- **Állapotok**: `is-locked` (🔒, szürkített), `is-done` (✔, zöld keret), `is-next`
+  (a következő elérhető pálya, zöld pulzálás), `is-open`. A pályaszám sarok-badge-en
+  mindig látszik. Node-tap-méret 50px (boss 60px) — mobilbarát.
+- **Stage preview bottom-sheet** (`#stage-preview`): node kattintásra felcsúszik —
+  pálya száma, mód (+módosító), leírás, **téma, várható jutalom (~🪙 becslés), nehézség
+  (☠×N + címke), felkészültség-jelző (✔ FELKÉSZÜLVE / ⚠ AJÁNLOTT FEJLESZTENI)**. Zárt
+  pályánál a Start rejtve + „🔒 Zárt — előbb teljesítsd a(z) N. pályát" indok. Start →
+  a MEGLÉVŐ `showLoadout()` → `ZD.game.start()` flow (nincs törés).
+- **Free Mode**: külön lebegő akció-node (♾ SZABAD FARM, jobb-lent), saját preview-panellel
+  („nem kampánypálya — nem old fel pályát", „♾ FARM INDÍTÁSA"). Nem kampányprogress.
+- **Megnyitáskor a következő pályához görget** (requestAnimationFrame + scrollTop).
+- **Save/unlock változatlan** — a map a meglévő `S().stages.unlocked/cleared`-et olvassa;
+  teljesítés után a node `is-done`, a következő `is-next` lesz.
+- **TESZTELVE** (böngészőben, valós UI): 40 node + 3 útvonal ✔ · node→preview ✔ · zárt
+  node indok ✔ · boss preview (piros badge) ✔ · Free Mode preview ✔ · node→INDULÁS→
+  loadout→game (level 8, survival, running) ✔ · win→cleared+unlocked→map frissül
+  (8:is-done, 9:is-next) ✔ · export/import roundtrip egyezik ✔ · **0 konzolhiba**.
+- **Viewport-gate ÁTMENT** (RENDERING_RULES.md): 16:9=100%×100%, mobil landscape
+  (812×375)=100% magasság + 50px tap-node-ok, ultrawide (1600×600)=16:9 megőrizve,
+  map-wrap 780px-re cappelve, középre. Nincs „kicsi középen"; `#stage` közös doboz.
+- sw.js cache: **zk-v8** (JS+CSS változott). `node --check` mind a 11 JS-re OK.
+
 ## FÁZIS 1 teljes verifikáció + low-ammo hint (2026-07-08) — mi került bele
 - **Viewport-gate (RENDERING_RULES.md) ELLENŐRIZVE, hibátlan**: 16:9 (1280×720) →
   fillW/fillH 100% (left:0, top:0), mobil landscape (812×375) → 100% magasság +
