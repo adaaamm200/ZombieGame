@@ -11,7 +11,37 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
-## FÁZIS 2.8 — Illusztrált Day 1 board (referencia alapján) (2026-07-08) — mi került bele
+## FÁZIS 2.9 — A VALÓDI board-kép közvetlen beépítése (2026-07-08) — mi került bele
+- **Iránykorrekció**: a korábbi verzió CSS-diorámával „újrarajzolta" a boardot — ez NEM
+  volt jó. Most a **megadott board-artwork (`assets/references/day1_board_target.png`) MAGA
+  a campaign screen háttere** (`<img class="board-bg" object-fit:cover>`), rá pozicionált
+  interaktív overlay-ekkel. A `visual_style_sheet.png` a másodlagos stílusreferencia.
+- **A régi gagyi CSS-gradient/dioráma háttér teljesen kidobva** (bs-sky/skyline/ground/nest
+  stb. törölve). A board-kép 1672×941 = pontosan 16:9, a `#stage` mindig 16:9 → a kép
+  hézagmentesen kitölti, a hotspotok %-os pozíciója pontosan a festett helyszínekre esik.
+- **Overlay-rétegek a képen** (nem rajzoljuk újra a boardot):
+  1) `board-bg` = a valódi kép; 2) **hotspot-overlay**: 5 misszió + Scavenge, %-pozícióval a
+  festett helyszínek fölött; 3) **állapot/ikon-overlay**: prémium halo + emblem —
+  completed (zöld ✓), current (arany pulzáló halo), locked (szürke 🔒), boss (vörös pulzáló
+  fészek-marker), scavenge (amber 📦); 4) **HUD-overlay**: „← MENÜ" gomb, élő érme a festett
+  érme fölé igazítva, átlátszó kattintózónák a festett SHOP/⚙ fölött; 5) **live mission
+  briefing** (a festett briefing-sáv fölé, belépéskor a jelenlegi misszióval): thumbnail,
+  státusz, DAY/mission, cím, típus, Cél, VESZÉLY (koponyák), ZSÁKMÁNY (érme+XP), nagy START.
+- **Ikon-fejlesztés**: a mission-overlay-ek prémium halo+emblem markerek (nem gagyi blokkok);
+  boss fenyegetőbb (vörös pulzáló), current látványosabb (arany pulzáló), completed szebb
+  (zöld ✓), locked olvasható de nem rontja a képet, scavenge prémium amber.
+- **Csak Day 1** (a board-artwork Day 1-specifikus); a hotspotok a Day 1 misszióira mutatnak;
+  a save/day/campaign-logika VÁLTOZATLAN, visszafelé kompatibilis.
+- **TESZTELVE** (böngészőben): a board-kép ténylegesen betölt (1672×941) és kitölti a stage-et;
+  6 hotspot a helyükön; mission-választás frissíti a briefinget; locked/boss/scavenge állapot;
+  campaign→START→loadout→game (lvl2); Scavenge→loadout→game (isFree); SHOP-hitzone→armory;
+  ⚙-hitzone→settings; save export/import roundtrip egyezik. **0 konzolhiba.**
+- **Viewport-gate ÁTMENT**: desktop 16:9 (kép kitölt); ultrawide 1600×600 (16:9 megőrizve,
+  kép kitölt); mobil landscape 812×375 (100% magasság, kép kitölt, hotspotok a helyükön,
+  kompakt briefing). A kép SOHA nem kicsi középen; `#stage` közös 16:9 doboz.
+- sw.js cache: **zk-v13**; a board-kép a precache-ben (offline). `node --check` mind a JS-re OK.
+
+## FÁZIS 2.8 — Illusztrált Day 1 board (referencia alapján — CSS-verzió, felülírva 2.9-ben) (2026-07-08)
 - **Referencia-képek** a repóban: [`assets/references/day1_board_target.png`](../assets/references/day1_board_target.png)
   a **FŐ vizuális cél** (Day 1 board), [`assets/references/visual_style_sheet.png`](../assets/references/visual_style_sheet.png)
   a **másodlagos style sheet**. (Ékezetmentes néven; nem shippelt asset, az sw nem cache-eli.)

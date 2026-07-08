@@ -117,41 +117,17 @@ ZD.ui = (() => {
         </div>
       </div>`);
 
-    /* Pályaválasztó — illusztrált DAY board (referencia: assets/references/day1_board_target.png) */
+    /* Pályaválasztó — a VALÓDI board-artwork a háttér (assets/references/day1_board_target.png),
+       rá pozicionált interaktív hotspot/HUD/briefing overlay-ekkel. */
     screens.stages = el(`
       <div class="screen board-screen" id="s-stages">
-        <div class="board-hud">
-          <button class="btn backbtn bh-back" data-go="title">←</button>
-          <div class="bh-logo"><span class="l1">ZOMBI</span><span class="l2">KRÓNIKA</span></div>
-          <div class="bh-day">
-            <button class="bh-arrow" id="day-prev" aria-label="előző nap">◀</button>
-            <div class="bh-daybox"><span class="bh-daynum" id="bh-daynum">DAY 1</span><span class="bh-dayname" id="bh-dayname">KARANTÉN UTCA</span></div>
-            <button class="bh-arrow" id="day-next" aria-label="következő nap">▶</button>
-          </div>
-          <div class="bh-right">
-            <span class="bh-coins">🪙 <b data-coins></b></span>
-            <button class="btn bh-shop" data-go="armory">🔫 <span>SHOP</span></button>
-            <button class="btn bh-gear" data-go="settings">⚙</button>
-          </div>
-        </div>
-        <div class="board-main">
-          <div class="board-nav">
-            <button class="bn-item active"><span class="ic">📖</span><span class="tx">CAMPAIGN</span></button>
-            <button class="bn-item" id="bn-scavenge"><span class="ic">📦</span><span class="tx">SCAVENGE</span></button>
-            <button class="bn-item" data-go="settings"><span class="ic">⚙</span><span class="tx">BEÁLLÍTÁS</span></button>
-          </div>
-          <div class="board-stage" id="board-stage">
-            <div class="board-scene">
-              <div class="bs-sky"></div>
-              <div class="bs-skyline"></div>
-              <div class="bs-ground"></div>
-              <div class="bs-roads"></div>
-              <div class="bs-nest"></div>
-              <div class="bs-fog"></div>
-              <div class="bs-scan"></div>
-            </div>
-            <div class="board-hotspots" id="board-hotspots"></div>
-          </div>
+        <img class="board-bg" src="assets/references/day1_board_target.png" alt="Day 1 — Karantén Utca" draggable="false" />
+        <div class="board-overlay">
+          <button class="board-back" data-go="title">← MENÜ</button>
+          <span class="board-coins">🪙 <b data-coins></b></span>
+          <button class="hitzone hz-shop" data-go="armory" aria-label="Fegyverbolt"></button>
+          <button class="hitzone hz-gear" data-go="settings" aria-label="Beállítások"></button>
+          <div class="board-hotspots" id="board-hotspots"></div>
         </div>
         <div class="stage-preview hidden" id="stage-preview">
           <div class="sp-card" id="sp-card">
@@ -339,14 +315,6 @@ ZD.ui = (() => {
     $('#btn-resume').addEventListener('click', () => ZD.game.resume());
     $('#btn-quit').addEventListener('click', () => { hidePause(); ZD.game.quit(); });
 
-    /* Scavenge / Free Mode — bal nav gomb → briefing */
-    $('#bn-scavenge').addEventListener('click', () => {
-      ZD.audio.play('click');
-      showBriefing('free');
-    });
-    /* nap-lapozó nyilak (HUD) */
-    $('#day-prev').addEventListener('click', () => navDay(-1));
-    $('#day-next').addEventListener('click', () => navDay(1));
     /* briefing panel bezárása */
     $('#sp-close').addEventListener('click', () => {
       ZD.audio.play('click');
@@ -496,17 +464,16 @@ ZD.ui = (() => {
     return 'open';
   }
 
-  /* --- illusztrált Day board: 5 hotspot % pozícióval a diorámán + Scavenge --- */
-  const LAND_GLYPH = { checkpoint: '🚧', store: '🏪', alley: '🧱', tower: '🗼', nest: '🕷', scavenge: '📦' };
-  /* helyszín-elrendezés (a referencia-kompozíció alapján); slotonként fix % pozíció */
+  /* --- interaktív hotspotok a VALÓDI board-kép helyszínei fölött (Day 1) ---
+     A % pozíciók a day1_board_target.png kompozíciójához igazítva (a helyszínek fölé). */
   const HOTSPOTS = [
-    { slot: 1, x: 16, y: 56, land: 'checkpoint' },
-    { slot: 2, x: 40, y: 30, land: 'store' },
-    { slot: 3, x: 33, y: 72, land: 'alley' },
-    { slot: 4, x: 59, y: 52, land: 'tower' },
-    { slot: 5, x: 84, y: 32, land: 'nest' },
+    { slot: 1, x: 24, y: 36 },   // Karantén Ellenőrzőpont (bal-fent, zöld kapu)
+    { slot: 2, x: 51, y: 40 },   // Elhagyott Kisbolt (24/7 bolt)
+    { slot: 3, x: 25, y: 67 },   // Romos Sikátor (bal-lent)
+    { slot: 4, x: 57, y: 68 },   // Túlélők Kitartó Pont (őrtorony/tábor)
+    { slot: 5, x: 85, y: 35 },   // Fertőzött Fészek — Gócpont / boss (jobb-fent)
   ];
-  const SCAV_POS = { x: 74, y: 78 };
+  const SCAV_POS = { x: 86, y: 66 };   // Zsákmány Zóna (loot, jobb-lent)
 
   function selectHotspot(el) {
     $('#board-hotspots').querySelectorAll('.hotspot.sel').forEach((n) => n.classList.remove('sel'));
@@ -518,51 +485,34 @@ ZD.ui = (() => {
     const el = document.createElement('button');
     el.style.left = cfg.x + '%';
     el.style.top = cfg.y + '%';
-    let cls, badge, title, sub, locked = false;
+    let cls, emblem;
     if (isFree) {
-      cls = 'land-scavenge is-scavenge m-free';
-      badge = '$'; title = 'ZSÁKMÁNY ZÓNA'; sub = 'LOOT RUN';
+      cls = 'is-scavenge'; emblem = '📦';
     } else {
-      const lvl = cfg.level;
-      const ms = missionStateOf(lvl);
-      locked = ms === 'locked';
-      const mode = C.modeFor(lvl);
-      const boss = mode === 'boss';
-      cls = `land-${cfg.land} m-${mode} is-${ms}${boss ? ' is-boss' : ''}`;
-      badge = boss ? '☠' : ms === 'done' ? '✔' : cfg.slot;
-      title = C.missionTitle(lvl);
-      sub = boss ? 'BOSS KÜLDETÉS' : ms === 'done' ? 'COMPLETED' : ms === 'locked' ? 'ZÁRVA' : ms === 'current' ? '● AKTÍV' : 'ELÉRHETŐ';
+      const ms = missionStateOf(cfg.level);
+      const boss = C.modeFor(cfg.level) === 'boss';
+      cls = `is-${ms}${boss ? ' is-boss' : ''}`;
+      emblem = boss ? '☠' : ms === 'done' ? '✓' : ms === 'locked' ? '🔒' : String(cfg.slot);
     }
-    const glyph = isFree ? '📦' : (LAND_GLYPH[cfg.land] || '');
     el.className = 'hotspot ' + cls;
     el.dataset.level = String(cfg.level);
-    el.innerHTML =
-      '<span class="hs-pad"></span>' +
-      `<span class="hs-land">${glyph}</span>` +
-      `<span class="hs-mark"><span class="hs-badge">${badge}</span>${locked ? '<span class="hs-lock">🔒</span>' : ''}</span>` +
-      `<span class="hs-label"><b>${title}</b><i>${sub}</i></span>`;
+    el.setAttribute('aria-label', isFree ? 'Zsákmány zóna' : C.missionTitle(cfg.level));
+    el.innerHTML = '<span class="hs-halo"></span><span class="hs-emblem">' + emblem + '</span>';
     el.addEventListener('click', () => { ZD.audio.play('click'); selectHotspot(el); showBriefing(cfg.level); });
     return el;
   }
 
-  function renderBoard(day) {
-    $('#bh-daynum').textContent = 'DAY ' + day;
-    $('#bh-dayname').textContent = C.dayName(day).toUpperCase();
-    const theme = C.themeFor(C.levelOf(day, 1));
-    $('#board-stage').className = `board-stage tz${theme}`;
+  /* A jelenlegi board-artwork Day 1 — a hotspotok a Day 1 misszióira mutatnak. */
+  function renderBoard() {
+    curDay = 1;
     const host = $('#board-hotspots');
     host.innerHTML = '';
-    HOTSPOTS.forEach((h) => host.appendChild(makeHotspot({ level: C.levelOf(day, h.slot), x: h.x, y: h.y, land: h.land, slot: h.slot })));
-    host.appendChild(makeHotspot({ level: 'free', x: SCAV_POS.x, y: SCAV_POS.y, land: 'scavenge' }));
-  }
-
-  function navDay(dir) {
-    const nd = Math.max(1, Math.min(C.CAMPAIGN.ACTIVE_DAYS, curDay + dir));
-    if (nd === curDay) return;
-    curDay = nd;
-    ZD.audio.play('click');
-    $('#stage-preview').classList.add('hidden');
-    renderBoard(curDay);
+    HOTSPOTS.forEach((h) => host.appendChild(makeHotspot({ level: C.levelOf(1, h.slot), x: h.x, y: h.y, slot: h.slot })));
+    host.appendChild(makeHotspot({ level: 'free', x: SCAV_POS.x, y: SCAV_POS.y }));
+    /* belépéskor a jelenlegi (vagy utolsó elérhető) Day-1 misszió briefingjét mutatjuk */
+    const curLevel = Math.max(1, Math.min(S().stages.unlocked, C.levelOf(1, C.CAMPAIGN.MISSIONS_PER_DAY)));
+    const curEl = host.querySelector(`.hotspot[data-level="${curLevel}"]`);
+    if (curEl) { selectHotspot(curEl); showBriefing(curLevel); }
   }
 
   /* briefing-adatok egy misszióhoz (vagy 'free') */
@@ -663,8 +613,7 @@ ZD.ui = (() => {
   const api = {
     refresh_stages() {
       refreshCoins(screens.stages);
-      curDay = currentDay();
-      renderBoard(curDay);
+      renderBoard();
     },
 
     refresh_armory() {

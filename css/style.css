@@ -322,218 +322,117 @@ html, body {
 .ammo-buy .price em { font-style: normal; color: var(--green-hi); font-size: 9.5px; }
 .ammo-buy .btn { width: 100%; font-size: 12px; padding: 7px 6px; }
 
-/* ============ Illusztrált DAY board (ref: assets/references/day1_board_target.png) ============ */
-.board-screen { padding: 0; overflow: hidden; align-items: stretch; }
+/* ============ Day board — a VALÓDI board-kép a háttér (day1_board_target.png) ============ */
+.board-screen { padding: 0; overflow: hidden; align-items: stretch; background: #05070a; }
+.board-bg {
+  position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
+  object-fit: cover; object-position: center; user-select: none; -webkit-user-drag: none;
+}
+.board-overlay { position: absolute; inset: 0; z-index: 2; }
 
-/* --- felső HUD --- */
-.board-hud {
-  flex: none; display: flex; align-items: center; gap: 10px; z-index: 6;
-  padding: 8px calc(10px + var(--sar)) 8px calc(10px + var(--sal));
-  background: linear-gradient(180deg, rgba(8,12,8,.97), rgba(8,12,8,.7));
-  border-bottom: 1px solid #223022;
+/* funkció-overlay-ek a festett HUD-elemekhez */
+.board-back {
+  position: absolute; top: 8px; left: 8px; z-index: 7; cursor: pointer; font-family: inherit; font-weight: bold;
+  font-size: 13px; letter-spacing: 1px; color: var(--text); padding: 7px 11px; border-radius: 9px;
+  background: rgba(8,12,10,.78); border: 1.5px solid var(--line2); box-shadow: 0 2px 6px rgba(0,0,0,.6);
 }
-.bh-back { font-size: 15px; padding: 7px 12px; flex: none; }
-.bh-logo { display: flex; flex-direction: column; line-height: .95; flex: none; }
-.bh-logo .l1 { font-size: 9px; letter-spacing: 3px; color: var(--muted); }
-.bh-logo .l2 {
-  font-size: 15px; font-weight: bold; letter-spacing: 1px; color: var(--green);
-  background: linear-gradient(180deg,#d6ff9e,#7ddb4f 60%,#3f8f27);
-  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+@media (hover: hover) { .board-back:hover { filter: brightness(1.25); } }
+.board-back:active { transform: translateY(1px); }
+/* élő érme a festett érme-kijelző fölé igazítva (felső sáv) */
+.board-coins {
+  position: absolute; top: 3.4%; left: 59.5%; z-index: 6; font-size: 15px; font-weight: bold; color: #ffd76a;
+  background: rgba(14,10,4,.92); border: 1.5px solid #6a531f; padding: 4px 12px 4px 10px; border-radius: 16px; white-space: nowrap;
 }
-.bh-day { display: flex; align-items: center; gap: 6px; margin: 0 auto; min-width: 0; }
-.bh-arrow {
-  flex: none; width: 28px; height: 34px; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: bold; font-size: 13px;
-  color: var(--green-hi); background: linear-gradient(180deg,#1b2a15,#12200e); border: 1.5px solid var(--green-dim);
-}
-.bh-arrow:active { transform: translateY(1px); }
-.bh-daybox {
-  position: relative; min-width: 150px; max-width: 46vw; text-align: center; padding: 4px 12px 4px 22px; border-radius: 9px;
-  background: linear-gradient(180deg, #3a1416, #240b0d); border: 1.5px solid #9b3a3a;
-  box-shadow: 0 0 16px rgba(180,40,40,.28), inset 0 1px 0 rgba(255,255,255,.06);
-}
-.bh-daybox::before { content: '☣'; position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 13px; color: #ffcf3a; }
-.bh-daynum { display: block; font-size: 13px; font-weight: bold; letter-spacing: 3px; color: #fff; }
-.bh-dayname { display: block; font-size: 10.5px; font-weight: bold; letter-spacing: 1px; color: var(--amber); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bh-right { display: flex; align-items: center; gap: 8px; flex: none; }
-.bh-coins { font-size: 13px; color: var(--amber); font-weight: bold; background: rgba(20,14,4,.6); border: 1.5px solid #4a3b20; padding: 5px 11px; border-radius: 16px; white-space: nowrap; }
-.bh-shop { font-size: 12px; padding: 7px 12px; color: #201400; background: linear-gradient(180deg,#f0c24a,#b8860f); border-color: #ffe08a; }
-.bh-shop span { letter-spacing: 1px; }
-.bh-gear { font-size: 15px; padding: 6px 11px; }
+/* átlátszó kattintózónák a festett SHOP / fogaskerék fölött */
+.hitzone { position: absolute; z-index: 6; background: transparent; border: none; cursor: pointer; border-radius: 10px; }
+.hz-shop { top: 1.5%; left: 84%; width: 9%; height: 10%; }
+.hz-gear { top: 1.5%; left: 94%; width: 5.5%; height: 10%; }
+@media (hover: hover) { .hitzone:hover { background: rgba(255,255,255,.08); } }
 
-/* --- fő terület: bal nav + board --- */
-.board-main { flex: 1 1 0%; min-height: 0; display: flex; align-items: stretch; }
-.board-nav {
-  flex: none; display: flex; flex-direction: column; gap: 8px; padding: 10px 8px calc(10px + var(--sab)); z-index: 5;
-  background: linear-gradient(90deg, rgba(8,12,8,.92), rgba(8,12,8,.35));
-}
-.bn-item {
-  display: flex; flex-direction: column; align-items: center; gap: 3px; width: 66px; padding: 9px 4px;
-  border-radius: 10px; cursor: pointer; font-family: inherit; color: var(--muted);
-  background: linear-gradient(180deg, var(--panel2), var(--panel)); border: 1.5px solid var(--line);
-}
-.bn-item .ic { font-size: 18px; }
-.bn-item .tx { font-size: 8px; letter-spacing: .5px; font-weight: bold; }
-.bn-item.active { color: #201400; background: linear-gradient(180deg,#f0c24a,#b8860f); border-color: #ffe08a; }
-@media (hover: hover) { .bn-item:not(.active):hover { filter: brightness(1.2); } }
-.bn-item:active { transform: scale(.96); }
-
-/* --- board stage (dioráma) --- */
-.board-stage { position: relative; flex: 1 1 0%; min-width: 0; overflow: hidden; }
-.board-scene { position: absolute; inset: 0; overflow: hidden; }
-.board-scene > div { position: absolute; inset: 0; pointer-events: none; }
-.bs-sky {
-  background:
-    radial-gradient(80% 60% at 80% 4%, rgba(160,40,64,.5), transparent 60%),
-    radial-gradient(70% 52% at 18% 2%, rgba(96,40,128,.34), transparent 62%),
-    linear-gradient(180deg, #180a14 0%, #0d0a12 32%, #0a0d0c 62%, #070a09 100%);
-}
-.bs-skyline {
-  top: 6%; height: 36%; inset: 6% 0 auto 0; opacity: .92;
-  background: linear-gradient(90deg,
-    #0c0f0e 0 5%, transparent 5% 8%, #0a0d0c 8% 15%, transparent 15% 17%, #0d110f 17% 26%,
-    transparent 26% 30%, #090c0b 30% 41%, transparent 41% 44%, #0b0f0d 44% 56%, transparent 56% 60%,
-    #0a0d0c 60% 71%, transparent 71% 74%, #0d110f 74% 87%, transparent 87% 91%, #090c0b 91% 100%);
-  -webkit-mask-image: linear-gradient(180deg, #000 52%, transparent);
-          mask-image: linear-gradient(180deg, #000 52%, transparent);
-}
-.bs-ground {
-  top: 40%; inset: 40% 0 0 0;
-  background:
-    radial-gradient(120% 95% at 50% 130%, rgba(40,52,42,.55), transparent 58%),
-    radial-gradient(30% 40% at 12% 78%, rgba(255,150,60,.10), transparent 60%),
-    radial-gradient(26% 34% at 44% 90%, rgba(255,120,40,.08), transparent 60%),
-    linear-gradient(180deg, transparent, rgba(0,0,0,.28) 44%, rgba(0,0,0,.62));
-}
-.bs-roads {
-  top: 46%; inset: 46% 0 0 0; opacity: .1;
-  background-image: repeating-linear-gradient(90deg, rgba(200,210,188,.5) 0 1px, transparent 1px 72px);
-  -webkit-mask-image: radial-gradient(85% 80% at 50% 55%, #000 30%, transparent 85%);
-          mask-image: radial-gradient(85% 80% at 50% 55%, #000 30%, transparent 85%);
-}
-.bs-nest {
-  inset: -4% -8% auto auto; width: 56%; height: 78%;
-  background:
-    radial-gradient(circle at 70% 38%, rgba(255,50,72,.5), rgba(150,20,80,.24) 40%, transparent 66%),
-    radial-gradient(circle at 78% 30%, rgba(190,40,200,.22), transparent 55%);
-  animation: nestglow 3.4s ease-in-out infinite;
-}
-@keyframes nestglow { 0%,100% { opacity: .7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.04); } }
-.bs-fog {
-  background:
-    radial-gradient(44% 34% at 28% 74%, rgba(120,140,120,.07), transparent 70%),
-    radial-gradient(20% 16% at 20% 62%, rgba(255,150,60,.12), transparent 70%),
-    radial-gradient(16% 14% at 60% 78%, rgba(255,120,40,.10), transparent 70%);
-  animation: bfog 26s ease-in-out infinite alternate;
-}
-@keyframes bfog { from { transform: translate(0,0); } to { transform: translate(2%,-1.5%); } }
-.bs-scan { opacity: .22; background: repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 3px); mix-blend-mode: multiply; }
-
-/* --- hotspots --- */
-.board-hotspots { position: absolute; inset: 0; z-index: 2; }
+/* --- interaktív hotspotok a helyszínek fölött --- */
+.board-hotspots { position: absolute; inset: 0; z-index: 3; }
 .hotspot {
-  position: absolute; transform: translate(-50%, -50%); width: 0; height: 0;
-  border: none; background: none; padding: 0; cursor: pointer; font-family: inherit;
-  transition: transform .1s;
+  position: absolute; transform: translate(-50%, -50%); width: 116px; height: 92px;
+  border: none; background: none; padding: 0; cursor: pointer; font-family: inherit; transition: transform .1s;
 }
-.hs-pad {
-  position: absolute; left: 50%; top: 30px; transform: translate(-50%,-50%);
-  width: 88px; height: 30px; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(120,220,120,.28), transparent);
+.hs-halo {
+  position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); width: 104px; height: 42px; border-radius: 50%;
+  border: 2px solid rgba(150,190,235,.4);
+  background: radial-gradient(closest-side, rgba(120,175,230,.24), transparent 74%);
+  box-shadow: 0 0 14px rgba(90,150,220,.18);
 }
-.hs-land {
-  position: absolute; left: 50%; top: 6px; transform: translate(-50%,-50%);
-  width: 64px; height: 48px; border-radius: 9px; display: grid; place-items: center; font-size: 24px;
-  background: linear-gradient(180deg, #26302626, #10161026), linear-gradient(180deg, #242d24, #141a15);
-  border: 1.5px solid #3a4a36; box-shadow: 0 7px 14px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
-  filter: drop-shadow(0 1px 1px #000);
+.hs-emblem {
+  position: absolute; left: 50%; top: 4px; transform: translateX(-50%); width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 15px; font-weight: bold; color: #fff;
+  background: radial-gradient(circle at 50% 35%, #1a2320, #0b0f0d); border: 2px solid rgba(200,220,210,.5);
+  box-shadow: 0 3px 7px rgba(0,0,0,.6);
 }
-.hs-mark {
-  position: absolute; left: 50%; top: -22px; transform: translate(-50%,-50%);
-  width: 40px; height: 40px; display: grid; place-items: center;
-  clip-path: polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
-  background: linear-gradient(180deg, #2c4023, #1b2a15); box-shadow: 0 3px 6px rgba(0,0,0,.55);
-}
-.hs-mark::before { content: ''; position: absolute; inset: 3px; clip-path: inherit; border: 2px solid rgba(255,255,255,.16); }
-.hs-badge { font-size: 17px; font-weight: bold; color: #fff; text-shadow: 0 1px 2px #000; }
-.hs-lock { position: absolute; right: -7px; top: -7px; font-size: 12px; filter: drop-shadow(0 1px 1px #000); }
-.hs-label {
-  position: absolute; left: 50%; top: 34px; transform: translateX(-50%); white-space: nowrap;
-  display: flex; flex-direction: column; align-items: center; padding: 3px 10px; border-radius: 8px;
-  background: rgba(6,10,6,.85); border: 1px solid #2c3b2c;
-}
-.hs-label b { font-size: 10.5px; font-weight: bold; letter-spacing: .5px; color: #fff; }
-.hs-label i { font-size: 8px; font-style: normal; letter-spacing: 1px; color: var(--muted); }
 
-/* típus/állapot színek */
-.hotspot.m-defense .hs-mark { background: linear-gradient(180deg,#1f4a63,#123040); }
-.hotspot.m-elite .hs-mark { background: linear-gradient(180deg,#7a5a1e,#3a2c0c); }
-.hotspot.m-survive .hs-mark { background: linear-gradient(180deg,#4a3577,#281a44); }
-.hotspot.is-open .hs-mark { background: linear-gradient(180deg,#3a5cc0,#1f2f6a); }
-.hotspot.is-done .hs-mark { background: linear-gradient(180deg,#3f7a24,#245214); }
-.hotspot.is-done .hs-badge { color: #eafff0; }
-.hotspot.is-done .hs-pad { background: radial-gradient(closest-side, rgba(120,220,120,.34), transparent); }
-.hotspot.is-done .hs-land { border-color: #3d6a2a; }
-.hotspot.is-done .hs-label i { color: var(--green); }
-.hotspot.is-current .hs-mark {
-  background: linear-gradient(180deg,#a5e87e,#3f7a22); animation: hspulse 1.4s ease-in-out infinite;
+/* állapotok */
+.hotspot.is-done .hs-halo { border-color: rgba(125,219,79,.6); background: radial-gradient(closest-side, rgba(120,220,120,.3), transparent 74%); box-shadow: 0 0 16px rgba(125,219,79,.28); }
+.hotspot.is-done .hs-emblem { color: var(--green); border-color: var(--green); background: radial-gradient(circle at 50% 35%, #14240e, #0a130a); }
+.hotspot.is-open .hs-halo { border-color: rgba(120,190,255,.55); }
+.hotspot.is-open .hs-emblem { color: #cfe6ff; border-color: #7db0e8; }
+.hotspot.is-current .hs-halo {
+  border-color: #ffd24d; background: radial-gradient(closest-side, rgba(255,205,80,.4), transparent 72%);
+  animation: haloPulse 1.35s ease-in-out infinite;
 }
-.hotspot.is-current .hs-badge { color: #0d2008; }
-.hotspot.is-current .hs-land { border-color: var(--green-hi); box-shadow: 0 7px 14px rgba(0,0,0,.55), 0 0 18px rgba(125,219,79,.4); }
-.hotspot.is-current .hs-pad { background: radial-gradient(closest-side, rgba(125,219,79,.44), transparent); animation: padpulse 1.4s ease-in-out infinite; }
-.hotspot.is-current .hs-label { border-color: var(--green-hi); }
-.hotspot.is-current .hs-label i { color: var(--green-hi); }
-@keyframes hspulse { 0%,100% { box-shadow: 0 3px 6px rgba(0,0,0,.55), 0 0 0 0 rgba(125,219,79,.55); } 50% { box-shadow: 0 3px 6px rgba(0,0,0,.55), 0 0 16px 4px rgba(125,219,79,.5); } }
-@keyframes padpulse { 0%,100% { opacity: .7; } 50% { opacity: 1; } }
-.hotspot.is-locked { filter: grayscale(.7) brightness(.62); }
-.hotspot.is-locked .hs-badge { color: #cfd8cc; }
-
-/* boss hotspot = fertőzött fészek */
-.hotspot.is-boss { z-index: 3; }
-.hotspot.is-boss .hs-land {
-  width: 104px; height: 84px; border-radius: 48% 48% 42% 42%; top: 10px;
-  background: radial-gradient(circle at 50% 42%, #7a1424 0%, #33060f 72%);
-  border: 2px solid #b83040; box-shadow: 0 0 32px rgba(255,44,64,.5), inset 0 0 22px rgba(255,44,64,.4);
-  animation: nestglow 2.4s ease-in-out infinite;
+.hotspot.is-current .hs-emblem {
+  color: #241500; background: linear-gradient(180deg,#ffe08a,#e0a020); border-color: #fff;
+  box-shadow: 0 3px 7px rgba(0,0,0,.6), 0 0 14px rgba(255,205,80,.6);
 }
-.hotspot.is-boss .hs-mark {
-  width: 46px; height: 46px; top: -26px; clip-path: none; border-radius: 50%;
-  background: radial-gradient(circle at 50% 40%, #7a1420, #33060c);
+@keyframes haloPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(255,205,80,.5), 0 0 14px rgba(255,205,80,.3); transform: translateX(-50%) scale(1); }
+  50% { box-shadow: 0 0 24px 7px rgba(255,205,80,.42), 0 0 14px rgba(255,205,80,.3); transform: translateX(-50%) scale(1.05); }
 }
-.hotspot.is-boss .hs-mark::before { border-radius: 50%; clip-path: none; }
-.hotspot.is-boss:not(.is-locked) .hs-mark { animation: hspulseR 1.7s ease-in-out infinite; }
-@keyframes hspulseR { 0%,100% { box-shadow: 0 3px 6px rgba(0,0,0,.6), 0 0 0 0 rgba(229,60,60,.6); } 50% { box-shadow: 0 3px 6px rgba(0,0,0,.6), 0 0 22px 6px rgba(229,60,60,.55); } }
-.hotspot.is-boss .hs-badge { color: #ff6a4a; font-size: 22px; }
-.hotspot.is-boss .hs-label { border-color: #8f3a3a; }
-.hotspot.is-boss .hs-label b { color: #ff9a7a; }
-.hotspot.is-boss .hs-label i { color: #c96a5a; }
+.hotspot.is-locked .hs-halo { border-color: rgba(120,124,132,.45); background: radial-gradient(closest-side, rgba(16,18,22,.55), transparent 76%); box-shadow: none; }
+.hotspot.is-locked .hs-emblem { color: #d6dae0; background: radial-gradient(circle at 50% 35%, #14171d, #090b0f); border-color: rgba(150,155,165,.55); font-size: 13px; }
 
-/* scavenge hotspot = loot */
-.hotspot.is-scavenge .hs-land { background: linear-gradient(180deg,#4a3813,#241a08); border-color: #9c7a28; box-shadow: 0 7px 14px rgba(0,0,0,.5), 0 0 16px rgba(255,193,77,.22); }
-.hotspot.is-scavenge .hs-mark { background: linear-gradient(180deg,#f0c24a,#a06f10); }
-.hotspot.is-scavenge .hs-badge { color: #2a1a00; }
-.hotspot.is-scavenge .hs-pad { background: radial-gradient(closest-side, rgba(255,193,77,.32), transparent); }
-.hotspot.is-scavenge .hs-label b { color: var(--amber); }
-.hotspot.is-scavenge .hs-label i { color: #c9a95f; }
+/* boss = fenyegető fészek-marker */
+.hotspot.is-boss { width: 140px; height: 110px; z-index: 4; }
+.hotspot.is-boss .hs-halo {
+  width: 128px; height: 54px; border-color: rgba(255,70,60,.65);
+  background: radial-gradient(closest-side, rgba(255,50,60,.4), transparent 70%);
+  animation: haloPulseR 1.6s ease-in-out infinite;
+}
+.hotspot.is-boss .hs-emblem {
+  width: 38px; height: 38px; font-size: 18px; color: #ff6a4a; border-color: #ff6a4a;
+  background: radial-gradient(circle at 50% 38%, #3a0a10, #180406);
+  box-shadow: 0 3px 7px rgba(0,0,0,.6), 0 0 16px rgba(255,60,50,.55);
+}
+@keyframes haloPulseR {
+  0%,100% { box-shadow: 0 0 0 0 rgba(255,60,60,.55), 0 0 16px rgba(255,50,50,.3); transform: translateX(-50%) scale(1); }
+  50% { box-shadow: 0 0 28px 9px rgba(255,60,60,.45), 0 0 16px rgba(255,50,50,.3); transform: translateX(-50%) scale(1.06); }
+}
+.hotspot.is-locked.is-boss .hs-halo { animation: none; }
 
-.hotspot.sel .hs-label { box-shadow: 0 0 0 1px #fff, 0 0 12px rgba(255,255,255,.3); }
-@media (hover: hover) { .hotspot:hover .hs-mark { filter: brightness(1.15); } }
+/* scavenge = amber loot-marker */
+.hotspot.is-scavenge .hs-halo { border-color: rgba(255,193,77,.6); background: radial-gradient(closest-side, rgba(255,193,77,.32), transparent 74%); box-shadow: 0 0 16px rgba(255,193,77,.25); }
+.hotspot.is-scavenge .hs-emblem { color: #241500; background: linear-gradient(180deg,#f0c24a,#a06f10); border-color: #ffe08a; }
+
+.hotspot.sel .hs-emblem { box-shadow: 0 0 0 2px #fff, 0 0 14px rgba(255,255,255,.4); }
+.hotspot.sel .hs-halo { border-width: 3px; }
+@media (hover: hover) { .hotspot:hover .hs-emblem { filter: brightness(1.15); } .hotspot:hover .hs-halo { filter: brightness(1.2); } }
 .hotspot:active { transform: translate(-50%,-50%) scale(.94); }
 
 /* kompakt (mobil landscape / ultrawide-short) */
 @media (max-height: 560px) {
-  .board-hud { padding-top: 6px; padding-bottom: 6px; gap: 8px; }
-  .bh-logo { display: none; }
-  .bh-daybox { min-width: 130px; }
-  .board-nav { padding: 6px 6px; gap: 6px; }
-  .bn-item { width: 52px; padding: 6px 3px; }
-  .bn-item .ic { font-size: 15px; }
-  .bn-item .tx { font-size: 7px; }
-  .hs-land { width: 52px; height: 40px; font-size: 20px; }
-  .hs-mark { width: 34px; height: 34px; top: -18px; }
-  .hs-badge { font-size: 15px; }
-  .hs-label { top: 28px; padding: 2px 8px; }
-  .hs-label b { font-size: 9.5px; }
-  .hotspot.is-boss .hs-land { width: 84px; height: 66px; }
+  .board-back { padding: 6px 10px; font-size: 11px; }
+  .board-coins { font-size: 13px; top: 9px; padding: 4px 10px; }
+  .hotspot { width: 96px; height: 78px; }
+  .hs-halo { width: 84px; height: 34px; bottom: 6px; }
+  .hs-emblem { width: 27px; height: 27px; font-size: 13px; }
+  .hotspot.is-boss { width: 116px; height: 92px; }
+  .hotspot.is-boss .hs-halo { width: 104px; height: 44px; }
+  .hotspot.is-boss .hs-emblem { width: 32px; height: 32px; font-size: 16px; }
+  /* kompakt briefing, hogy kevesebbet takarjon a boardból */
+  .sp-card { min-height: 92px; padding: 9px 12px calc(8px + var(--sab)); }
+  .sp-thumb { width: 56px; height: 56px; font-size: 26px; }
+  .sp-brief { gap: 10px; }
+  .sp-info h3 { font-size: 14px; }
+  .sp-obj { font-size: 9.5px; margin-top: 2px; }
+  .sp-meta { margin-top: 3px; }
+  .sp-start { min-width: 92px; font-size: 15px; padding: 12px 16px; }
 }
 
 /* --- mission briefing bottom-sheet (thumb | info | START) --- */
@@ -543,11 +442,12 @@ html, body {
 }
 @keyframes sheet-up { from { transform: translateY(105%); opacity: .5; } to { transform: none; opacity: 1; } }
 .sp-card {
-  position: relative; width: 100%; max-width: 720px; margin: 0 auto;
-  background: linear-gradient(180deg, rgba(22,30,22,.98), rgba(12,18,12,.98));
+  position: relative; width: 100%; max-width: 860px; margin: 0 auto; min-height: 128px;
+  display: flex; flex-direction: column; justify-content: center;
+  background: linear-gradient(180deg, rgba(16,22,16,.99), rgba(9,13,9,1));
   border: 2px solid var(--line2); border-bottom: none;
-  border-radius: 16px 16px 0 0; padding: 12px 14px calc(12px + var(--sab));
-  box-shadow: 0 -10px 36px rgba(0,0,0,.7);
+  border-radius: 16px 16px 0 0; padding: 16px 16px calc(14px + var(--sab));
+  box-shadow: 0 -12px 40px rgba(0,0,0,.85);
 }
 .sp-card.n-boss { border-color: #8f3a3a; box-shadow: 0 -10px 36px rgba(90,12,12,.55); }
 .sp-card.n-free { border-color: #8a6a24; }
