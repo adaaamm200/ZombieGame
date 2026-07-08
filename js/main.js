@@ -59,11 +59,18 @@ window.ZD = window.ZD || {};
 
   /* indítás */
   ZD.save.load();
+  ZD.save.requestPersistent(); // kérjük a böngészőt: ne törölje magától a mentést
   ZD.ui.build();
   ZD.input.setup();
   ZD.ui.show('title');
   fit();
   requestAnimationFrame(loop);
+
+  /* háttérben: ha a localStorage kiürült, de az IndexedDB-tükörben megvan a
+     haladás, állítsuk vissza — majd frissítsük az épp látható képernyőt */
+  ZD.save.recover().then((restored) => {
+    if (restored && ZD.ui.refreshActive) ZD.ui.refreshActive();
+  });
 
   /* PWA service worker (csak http(s) alatt működik) */
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {

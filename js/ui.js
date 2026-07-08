@@ -205,9 +205,14 @@ ZD.ui = (() => {
         </div>
         <div class="settings-panel">
           <div class="settingsrow"><span>Hangok</span><button class="btn" id="btn-sound"></button></div>
-          <div class="settingsrow"><span>Mentés exportálása</span><button class="btn" id="btn-export">MÁSOLÁS IDE ↓</button></div>
-          <textarea class="save-io" id="save-io" placeholder="Export: ide kerül a mentéskód. Import: illeszd be a kódot, majd IMPORTÁLÁS."></textarea>
-          <div class="settingsrow"><span>Mentés importálása</span><button class="btn" id="btn-import">IMPORTÁLÁS</button></div>
+          <div class="backup-hint" id="backup-hint"></div>
+          <div class="settingsrow"><span>💾 Mentés fájlba</span><button class="btn primary" id="btn-savefile">LETÖLTÉS ↓</button></div>
+          <div class="settingsrow"><span>📂 Betöltés fájlból</span><button class="btn" id="btn-loadfile">FÁJL VÁLASZTÁSA</button></div>
+          <input type="file" id="file-input" accept=".txt,.json,text/plain,application/json" style="display:none" />
+          <div class="settings-sep">— vagy kód másolással —</div>
+          <div class="settingsrow"><span>Mentés-kód exportálása</span><button class="btn" id="btn-export">MÁSOLÁS IDE ↓</button></div>
+          <textarea class="save-io" id="save-io" placeholder="Export: ide kerül a mentéskód (jelöld ki és másold). Import: illeszd be a kódot, majd IMPORTÁLÁS."></textarea>
+          <div class="settingsrow"><span>Mentés-kód importálása</span><button class="btn" id="btn-import">IMPORTÁLÁS</button></div>
           <div class="settingsrow"><span>Minden törlése</span><button class="btn danger" id="btn-reset">TÖRLÉS</button></div>
         </div>
       </div>`);
@@ -301,6 +306,24 @@ ZD.ui = (() => {
       const ok = ZD.save.importStr($('#save-io').value);
       $('#save-io').value = ok ? '✔ Sikeres import!' : '✖ Érvénytelen mentéskód.';
       ZD.audio.play(ok ? 'buy' : 'click');
+      if (ok) api.refresh_settings();
+    });
+    /* fájl-alapú biztonsági mentés — túléli a PWA törlését is */
+    $('#btn-savefile').addEventListener('click', () => {
+      const ok = ZD.save.downloadBackup();
+      ZD.audio.play(ok ? 'buy' : 'click');
+      api.refresh_settings();
+    });
+    $('#btn-loadfile').addEventListener('click', () => { $('#file-input').click(); });
+    $('#file-input').addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      ZD.save.importFile(file).then((ok) => {
+        ZD.audio.play(ok ? 'buy' : 'click');
+        $('#save-io').value = ok ? '✔ Mentés betöltve fájlból!' : '✖ Érvénytelen mentésfájl.';
+        api.refresh_settings();
+        e.target.value = '';
+      });
     });
     $('#btn-reset').addEventListener('click', () => {
       if (confirm('Biztosan törlöd az összes haladást?')) {
@@ -832,9 +855,29 @@ ZD.ui = (() => {
 
     refresh_settings() {
       $('#btn-sound').textContent = S().sound ? '🔊 BE' : '🔇 KI';
+      const hint = $('#backup-hint');
+      if (hint) {
+        if (S().everBackedUp) {
+          hint.className = 'backup-hint ok';
+          hint.innerHTML = '✔ Van fájl-mentésed. A haladás böngészőben tárolódik + IndexedDB-tükör; a <b>fájl</b> a legbiztosabb — tartsd frissen.';
+        } else {
+          hint.className = 'backup-hint warn';
+          hint.innerHTML = '⚠ Nincs még biztonsági mentésed! A haladásod a böngészőben van — ha törlöd a PWA-t vagy a böngészőadatot, elveszhet. <b>Mentsd fájlba</b> és tedd biztos helyre (Fájlok app).';
+        }
+      }
     },
 
     refresh_title() {},
+
+    /* háttér-helyreállítás után az épp látható képernyő frissítése */
+    refreshActive() {
+      Object.keys(screens).forEach((name) => {
+        if (!screens[name].classList.contains('hidden')) {
+          const re = 'refresh_' + name;
+          if (api[re]) api[re]();
+        }
+      });
+    },
   };
 
   /* ---------- modálok ---------- */

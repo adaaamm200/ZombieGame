@@ -11,6 +11,31 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## Robusztus mentésrendszer — adatvesztés-védelem (2026-07-08) — mi került bele
+- **Miért**: iOS-en a PWA kezdőképernyőről törlése kiüríti a `localStorage`-t → egy
+  játékos elvesztette a haladását (5. pálya). Nincs backend (projektszabály), így
+  kliensoldali, több-rétegű védelmet építettünk (`js/save.js`, `js/main.js`, `js/ui.js`).
+- **IndexedDB-tükör**: minden `persist()` a localStorage MELLETT az IndexedDB-be is ír
+  (`zombikronika/save/main`, tűzd-és-felejtsd). Boot-kor `recover()` fut: ha a localStorage
+  üres/alapállapot, de az IDB-ben van érdemi mentés, **automatikusan visszaállítja** +
+  visszaírja a localStorage-ba. (A fejlesztés közbeni localStorage-only törlést túléli.)
+  A `_ts` időbélyeg dönt, ha mindkét réteg él. `reset()` mindkét réteget alapállapotba írja.
+- **`navigator.storage.persist()`** boot-kor (`requestPersistent`): kéri a böngészőt, hogy
+  ne törölje magától a tárhelyet (ITP/kilakoltatás elleni best-effort védelem).
+- **Fájl-alapú biztonsági mentés** (Beállítások): **💾 LETÖLTÉS** → `zombikronika-mentes-
+  ÉÉÉÉ-HH-NN.txt` (a mentés-kód), a Fájlok appba menthető — ez az EGYETLEN, ami a PWA
+  törlését is túléli. **📂 FÁJL VÁLASZTÁSA** → import fájlból. A régi kód-másolós
+  export/import megmarad.
+- **Figyelmeztetés**: a Beállításokban ⚠ piros hint, ha még nincs fájl-mentés
+  (`everBackedUp`); fájlmentés után ✔ zöldre vált. `refreshActive()` a boot-recover után
+  frissíti az épp látható képernyőt.
+- **TESZTELVE** (böngészőben): haladás→persist→IDB, localStorage törlés + **valós reload**
+  → boot `recover()` teljes visszaállítás (coins/unlocked/cleared/owned/ammo/upgrade) ✔ ·
+  localStorage visszaírva ✔ · fájl-mentés → everBackedUp + zöld hint ✔ · fájl-gombok +
+  file-input jelen ✔ · `requestPersistent` hibamentes ✔ · 0 konzolhiba ✔ · viewport
+  16:9=100%×100% (Beállítások panel, nincs regresszió). Teszt-adat kitakarítva.
+- sw.js cache: **zk-v10** (JS változott). `node --check` mind a JS-re OK.
+
 ## FÁZIS 2.5 — Interaktív mission hub overhaul (2026-07-08) — mi került bele
 - **A Campaign Map roadmap-diagramból interaktív hadműveleti térképpé alakítva**
   (`js/ui.js` + `css/style.css`). Cím: „HADMŰVELETI TÉRKÉP".
