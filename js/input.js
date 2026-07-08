@@ -38,8 +38,8 @@ ZD.input = (() => {
   let joyTouch = null;
   let joyOrigin = { x: 0, y: 0 };   // az érintés kezdőpontja (viewport-koordináta)
   let touchAxis = 0;
-  const RADIUS = 40;                 // joystick kitérési sugár (px)
-  const BASE_HALF = 48;              // a #joybase (96px) fele — a bázis középre igazításához
+  const RADIUS = 46;                 // joystick kitérési sugár (px)
+  const BASE_HALF = 58;              // a #joybase (116px) fele — a bázis középre igazításához
 
   function setup() {
     const zone = document.getElementById('joyzone');

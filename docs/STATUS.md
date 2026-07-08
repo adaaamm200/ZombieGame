@@ -11,6 +11,45 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## UI OVERHAUL — a régi zöld UI leváltása prémium, boardhoz illő design systemre (2026-07-08)
+- **Ok**: a prémium board-háttérre eddig a régi „gagyi zöld retro" UI-réteg került → a
+  játék vizuálisan szétesett (prémium bg + olcsó overlay). Referencia:
+  `assets/references/visual_style_sheet.png` + `main menu.png` (a beégetett cél-UI).
+- **Design system csere (`css/style.css`)**: új `:root` tokenek — sötét **fémes/füstös
+  panelek**, típus-akcentusok: **arany = fő akció**, vörös = boss/veszély, zöld = ready/
+  active, kék = info, lila/smaragd = loot. A zöld-dominancia megszűnt (zöld már csak
+  ready/success). Fém `--ui-bevel` (felső fény + alsó árnyék + belső keret), `--ui-shadow`.
+- **Közös gombrendszer**: `.btn` default = semleges fém (NEM zöld); `.btn.primary` = arany
+  akciógomb; `.danger` = vörös; `.ok` = zöld (ready); `.ghost` = fém. `.tab.active` = arany.
+  `.screen h2` = arany. A `.screen` háttér-tint zöldről semleges sötétre váltva.
+- **Főmenü (referencia szerint)**: sötét glossy fém-bárok **thin neon accent-borderrel**
+  (Continue=zöld, Campaign=vörös, Scavenge=lila, Armory=arany, Lab=kék, Settings=szürke),
+  accent ikon-badge glow-val, nagyobb bold címkék (80px magas gombok). **Screenshot-igazolt**
+  — a mockup vizuális nyelvét követi.
+- **Board**: **központi prémium DAY plakett** — fémes „DAY 1" tábla + arany zóna-név
+  („DAY 1 — QUARANTINE STREET"). Nagyobb HUD (back/coin/SHOP/gear). **Bal nav vízszintes
+  pillekké** (ikon + label, arany aktív) — mobilon kompakt oszlop, hogy NE takarja a boardot.
+- **Mission hotspotok teljes újratervezés**: **hexagon badge-ek** (accent-keret + sötét mag),
+  jóval nagyobbak (emblem 68×74, boss 92, mobil emblem 56 — 56px+ tap-target), **olvasható
+  névcímkével** minden markeren; current=arany pulzáló, done=zöld pipa, locked=sötét lakat,
+  boss=nagy vörös koponya (fenyegető), scavenge=lila/arany láda. Screenshot-igazolt.
+- **Mission briefing / loadout / result / pause modálok**: fémes panel (arany accent-vonal),
+  arany **START/INDULÁS** gomb, nagyobb tipográfia. A régi zöld doboz eltűnt. Screenshot-igazolt.
+- **In-game HUD + touch gombok**: nagyobb HP-sáv (196×22, vörös rim-glow), prémium fegyver-
+  chip, nagyobb pause. **Touch gombok**: fire **104px** (vörös), mellékgombok **80px**
+  (lőszer=arany, swap=kék, gránát=vörös), gloss + accent-glow + press-pulzálás + badge-
+  számlálók, nagyobb távolság. Nagyobb kék joystick (116px). Screenshot-igazolt.
+- **TESZTELVE** (böngészőben, valós motor + screenshot): főmenü/board/loadout/in-game
+  **vizuálisan igazolt** (a UI + board egy rendszer, nem „régi UI prémium háttéren").
+  Flow: hotspot→briefing→START→loadout→game ✔; Scavenge→briefing→run ✔; armory fémes
+  kártyák + arany aktív tab ✔; settings ✔. **0 konzolhiba.** save export/import roundtrip
+  ép (csak `_ts` időbélyeg tér el — az adat egyezik).
+- **Viewport-gate ÁTMENT**: desktop 16:9 (kitölt, screenshot); mobil landscape 812×375 =
+  100% magasság, hexagon markerek 56px+, a bal nav NEM takarja a hotspotokat/címkéket
+  (nav jobb szél 64px < hotspot 91/119px); ultrawide 16:9 megőrizve. Nincs „kicsi középen".
+- Csak UI/CSS/DOM változott — **gameplay/economy/boss/save/campaign-logika ÉRINTETLEN**.
+- sw.js cache: **zk-v18**. `node --check` mind a JS-re OK.
+
 ## M1B — Prémium UI + gameplay feel + KRITIKUS input fix (2026-07-08)
 - **KRITIKUS touch-input fix (`js/input.js`)**: a virtuális joystick a pointer
   `clientX/Y` (VIEWPORT-koordináta) alapján pozicionálta a `#joybase`-t, ami a

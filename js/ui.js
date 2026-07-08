@@ -530,8 +530,12 @@ ZD.ui = (() => {
     }
     el.className = 'hotspot ' + cls;
     el.dataset.level = String(cfg.level);
-    el.setAttribute('aria-label', isFree ? T('scav.title') : boardMissionName(cfg.level));
-    el.innerHTML = '<span class="hs-halo"></span><span class="hs-emblem">' + emblem + '</span>';
+    const label = isFree ? T('scav.title') : boardMissionName(cfg.level);
+    el.setAttribute('aria-label', label);
+    el.innerHTML =
+      '<span class="hs-halo"></span>' +
+      '<span class="hs-emblem"><span class="hs-glyph">' + emblem + '</span></span>' +
+      '<span class="hs-label">' + label + '</span>';
     el.addEventListener('click', () => { ZD.audio.play('click'); selectHotspot(el); showBriefing(cfg.level); });
     return el;
   }
