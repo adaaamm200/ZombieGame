@@ -1,11 +1,80 @@
-# PROJEKT SZABÁLYOK (Claude Code) — ÚJRAFELHASZNÁLHATÓ SABLON
+# ZombieGame / Zombi Krónika — Claude Project Rules
+
+> This is the main project rulebook, loaded at the start of every Claude Code session.
+> Read this first, then the relevant `docs/` files for the current task.
+> Related: [`AGENTS.md`](AGENTS.md) · [`TASKS.md`](TASKS.md) · [`CHANGELOG_AI.md`](CHANGELOG_AI.md)
+> · [`docs/vision/`](docs/vision/) · [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md)
+> · [`docs/STATUS.md`](docs/STATUS.md) · [`docs/RENDERING_RULES.md`](docs/RENDERING_RULES.md)
+
+## Project Identity
+- Zombie Diary-inspired arcade zombie shooter, but with **fully original assets**.
+- No copyrighted assets, names, UI, characters, audio or other protected elements.
+- No direct clone UI or sprite copying — spiritual successor / homage only.
+- Premium **dark, gritty, mobile** game direction.
+
+## Technical Stack
+- HTML5 Canvas
+- Vanilla JavaScript
+- CSS
+- PWA
+- **Zero dependency**
+- **No build step** (classic scripts, no bundler / framework / package manager)
+
+## Work Safety
+- Work only inside the repo (`C:\Claude Munka\ZombieGame`).
+- No full rewrite without explicit approval.
+- No dependency install.
+- No force push.
+- Small, reviewable steps.
+- Check `git status` before work.
+- Summarize changed files after work.
+
+## Non-Negotiable Visual Rules
+- Canvas / viewport must **never** become a tiny centered box (see
+  [`docs/RENDERING_RULES.md`](docs/RENDERING_RULES.md)).
+- Campaign board must **not** look like a generic roadmap / 1–40 node chain.
+- Reference images **override** improvised cheap UI.
+- Do not replace premium artwork with cheap CSS approximations.
+- Icons must be **centered, padded, consistent and production-ready** (safe padded
+  icon box, not a fragile sheet crop).
+- No old green UI dominance — green only for ready / success / health.
+
+## Asset Rules
+Every generated asset must include:
+- filename **without extension**;
+- target folder;
+- recommended format;
+- asset type;
+- usage;
+- implementation notes;
+- QA notes.
+
+See [`docs/asset_pipeline/ASSET_NAMING.md`](docs/asset_pipeline/ASSET_NAMING.md) and
+[`docs/asset_pipeline/ASSET_IMPORT_RULES.md`](docs/asset_pipeline/ASSET_IMPORT_RULES.md).
+
+## Handoff Rules
+Every phase ends with:
+- summary;
+- files changed;
+- tests run;
+- what was **not** changed;
+- open questions;
+- next recommended step.
+
+Also append an entry to [`CHANGELOG_AI.md`](CHANGELOG_AI.md).
+
+---
+
+<!-- =========================================================================
+     A KORÁBBI RÉSZLETES SZABÁLYZAT — MEGŐRIZVE (auto-push, auto-mode safety,
+     engedélyek, kódminőség, összefoglaló-forma). NE TÖRÖLD.
+     ========================================================================= -->
+
+# PROJEKT SZABÁLYOK (Claude Code) — RÉSZLETES (megőrizve)
 
 Ez a fájl Claude-nak szól. A `CLAUDE.md` a projekt gyökerébe kerül, és minden
 session elején betöltődik. A viselkedési szabályokat írja le — a tényleges
 engedélyeket a `.claude/settings.json` adja.
-
-> Ez egy webes projekt sablon (pl. React/Vite/Next vagy hasonló). A stack a
-> projekt tényleges `package.json`-jából derül ki; ehhez igazodj.
 
 ---
 
