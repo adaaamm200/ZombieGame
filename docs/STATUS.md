@@ -11,6 +11,32 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## SAFE PADDED ICON BOXES — egységes 256×256 canvas, külön fájlok (2026-07-08)
+- **Döntés**: elég a precíz auto-crop csiszolásából. Áttértünk **biztonságos, paddolt,
+  egységes ikon-dobozokra**: minden menü/board ikon **külön PNG**, EGYSÉGES **256×256
+  átlátszó (RGBA) canvasra** középre komponálva, ~238px belső tartalommal (≥9px canvas-
+  padding), object-fit: contain — semmi nem vágódik le, semmi nem csúszik félre.
+- **Hogyan (`tools/crop.js`)**: fix rács-középpont + **NAGYVONALÚ forrás-doboz** az ikon
+  köré (a bő margó elnyeli a középpont-becslés kis hibáit → soha nincs levágás), majd
+  **bilineáris átméretezés** a 238px célra + **256×256 átlátszó vászonra középre komponálás**.
+  A menü-dobozok bővebbek (sötét gombon a margó nem látszik); a board-hexek szűkebbek (a
+  városi háttéren minimális sötét margó). RGBA kimenet (átlátszó padding).
+- **Megjelenítés (CSS)**: minden asset-ikon `width/height: 100%; object-fit: contain` fix
+  konténerben — nincs background-position sheet-hack, nincs skálázás-hack, nincs torzítás.
+- **Eredmény (asset-fájlok vizuálisan ellenőrizve)**: m-continue/m-lab/m-back/s-boss/s-loot
+  mind **középen, teljes ikon, egységes 256×256, egységes padding, semmi levágva**. Az
+  `object-fit: contain` matematikailag garantálja, hogy a teljes ikon látszik, középen.
+- **In-game kör-vezérlők (ic-*)**: VÁLTOZATLANOK (fix kalibrált dobozok, jók voltak).
+- **TESZTELVE**: mind a 30 UI-asset-ikon betölt (0 törött); 24 db 256×256 paddolt, a coin
+  RGB (változatlan). Menü-ikon 54×54 tisztán renderel; board hotspot 56px tap-target; nav
+  nem takar; flow board→loadout→game ✔; save roundtrip ép; in-game vezérlők ✔. **0 konzolhiba.**
+  node --check mind a JS-re OK. (A preview screenshot-tool ebben a sessionben a folyamatos
+  canvas-render miatt beragadt — a verifikáció asset-fájl Read + DOM-metrika + object-fit
+  garancia alapján; a JS/konzol tiszta.)
+- **Viewport-gate**: mobil landscape 812×375 = 100% magasság, hotspot 56px; desktop 16:9;
+  ultrawide 16:9. Csak asset-tartalom + tool + CSS-megjelenítés változott — gameplay ÉRINTETLEN.
+- sw.js cache: **zk-v22** (asset-PNG-k RGBA 256×256 tartalomra frissültek).
+
 ## ICON CROP / ALIGNMENT FIX — production-ready, középre igazított kivágások (2026-07-08)
 - **Probléma**: a menü/board asset-ikonok kivágásai el voltak csúszva / eltérő fekete
   peremmel (fix méretű manuális dobozok pontatlan koordinátákkal) → „odadobott kép" hatás.
