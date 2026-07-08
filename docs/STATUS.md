@@ -11,6 +11,39 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## ICON CONSISTENCY PASS — egységes prémium asset-ikonnyelv minden UI-felületen (2026-07-08)
+- **Cél**: a már javított in-game asset-ikonstílus (ingame_icons.png) következetes
+  átvitele a főmenüre, boardra, briefingre, loadoutra, armory/lab-ra — hogy a teljes
+  UI ikonrendszere egységes legyen (ne maradjon régi SVG/placeholder stílus).
+- **Bővített PNG-vágó** (`tools/crop.js`): az `ingame_icons.png`-ből kiszeletelve
+  **8 menü-octagon** (`m-continue/campaign/scavenge/armory/lab/settings/shop/back`) és
+  **6 board-state hexagon** (`s-done/current/locked/boss/loot/danger`) → `assets/ui/`.
+- **Egységes asset-ikon helper** (`js/ui.js` `AIMG(name)`): `<img>`-et ad az asset-hez,
+  SVG fallback ha nincs. Átvezetve:
+  - **Főmenü**: a gomb-ikonok (`.mb-ic`) az asset-octagonok (play/campaign/scavenge/
+    armory/lab), a title coin + gear szintén asset. (Screenshot-igazolt.)
+  - **Board nav**: CAMPAIGN/SCAVENGE/SETTINGS asset-octagon; back/gear a HUD-ban asset
+    (ház nélkül, az octagon MAGA a gomb); SHOP cart-asset; coin asset.
+  - **Board hotspotok**: a state-emblémák **asset-hexagonok** (done=pipa, locked=lakat,
+    boss=**fenyegető vörös koponya-hex**, scavenge=**lila loot-hex** — nem generikus
+    dobozka); a számozott (current/open) marad CSS-hexagon számmal. (Screenshot-igazolt.)
+  - **Briefing**: thumb = asset-hex (boss/loot/current), **veszély-mérő = asset-koponya**
+    (on/off opacitással), jutalom = asset-coin.
+  - **Loadout/result**: coin = asset; eredmény-ikon = asset-hex (win=done/lose=boss/free=loot).
+  - **Armory/Lab/Shop**: az összes ár-coin + back-gomb asset (SVG coin-ok kiváltva).
+- **CSS** (`css/style.css`): `.aic*` házolás — az asset saját kerete a látvány, a régi
+  CSS-badge/ház eltávolítva (nincs dupla-keret); `.hs-asset` hexagon-embléma; veszély-
+  mérő opacitás-alapú; coin inline méretezés.
+- **TESZTELVE** (böngésző + screenshot, valós motor): főmenü (asset-octagon ikonok),
+  board (nav-octagon + hexagon markerek, fenyegető boss, loot scavenge), briefing/loadout
+  (asset thumb/coin/veszély), armory/lab (asset coin+back) — **vizuálisan igazolt,
+  egységes**. Assetek 404 nélkül. Flow: board→loadout→game ✔. save roundtrip ép.
+  **0 konzolhiba.** Regresszió: in-game HUD asset-ikonok változatlanul jók.
+- **Viewport-gate ÁTMENT**: desktop 16:9 (1280×720 teljes menü); mobil landscape 812×375 =
+  100% magasság, hexagon 56px tap-target (boss 76px), a nav NEM takarja a hotspotokat;
+  ultrawide 16:9 megőrizve. Csak asset/UI/CSS/DOM változott — gameplay/save ÉRINTETLEN.
+- sw.js cache: **zk-v20** (14 új ikon precache-elve). `node --check` mind a JS-re OK.
+
 ## ASSET INTEGRATION — logó + menü-háttér + prémium in-game ikonok (2026-07-08)
 - **Új assetek beépítve** (`assets/references/`): `app_logos.png` (brand-koncepció lap),
   `main menu background.png` (16:9 poszt-apokaliptikus utca), `ingame_icons.png`

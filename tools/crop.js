@@ -104,6 +104,22 @@ const JOBS = [
   { src: 'ingame_icons.png', out: 'ic-pause.png',   x: 703, y: 598, w: 104, h: 104 },
   { src: 'ingame_icons.png', out: 'ic-medkit.png',  x: 823, y: 598, w: 104, h: 104 },
   { src: 'ingame_icons.png', out: 'ic-coin.png',    x: 934, y: 598, w: 104, h: 104 },
+  // --- MAIN MENU IKONOK (1. sor, octagon) ---
+  { src: 'ingame_icons.png', out: 'm-continue.png', x: 78,   y: 143, w: 150, h: 150 },
+  { src: 'ingame_icons.png', out: 'm-campaign.png', x: 283,  y: 143, w: 150, h: 150 },
+  { src: 'ingame_icons.png', out: 'm-scavenge.png', x: 488,  y: 143, w: 150, h: 150 },
+  { src: 'ingame_icons.png', out: 'm-armory.png',   x: 690,  y: 143, w: 150, h: 150 },
+  { src: 'ingame_icons.png', out: 'm-lab.png',      x: 895,  y: 143, w: 150, h: 150 },
+  { src: 'ingame_icons.png', out: 'm-shop.png',     x: 1118, y: 143, w: 150, h: 150 },
+  { src: 'ingame_icons.png', out: 'm-settings.png', x: 1290, y: 143, w: 150, h: 150 },
+  { src: 'ingame_icons.png', out: 'm-back.png',     x: 1466, y: 143, w: 150, h: 150 },
+  // --- BOARD MARKER / MISSION STATE (2. sor, hexagon) ---
+  { src: 'ingame_icons.png', out: 's-done.png',     x: 92,   y: 388, w: 124, h: 108 },
+  { src: 'ingame_icons.png', out: 's-current.png',  x: 262,  y: 388, w: 124, h: 108 },
+  { src: 'ingame_icons.png', out: 's-locked.png',   x: 458,  y: 388, w: 124, h: 108 },
+  { src: 'ingame_icons.png', out: 's-boss.png',     x: 628,  y: 388, w: 124, h: 108 },
+  { src: 'ingame_icons.png', out: 's-loot.png',     x: 802,  y: 388, w: 124, h: 108 },
+  { src: 'ingame_icons.png', out: 's-danger.png',   x: 972,  y: 388, w: 124, h: 108 },
 ];
 
 const cache = {};

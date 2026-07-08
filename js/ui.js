@@ -36,6 +36,19 @@ ZD.ui = (() => {
   const T = (k, v) => ZD.i18n.t(k, v);
   const IC = (n, c) => ZD.icon(n, c);
 
+  /* prémium asset-ikonok (ingame_icons.png-ből szeletelve) — egységes UI-ikonnyelv.
+     AIMG(name) → <img> ha van asset, különben az SVG fallback (IC). */
+  const A_IC = {
+    play: 'm-continue', campaign: 'm-campaign', scavenge: 'm-scavenge', armory: 'm-armory',
+    lab: 'm-lab', settings: 'm-settings', gear: 'm-settings', back: 'm-back', shop: 'm-shop',
+    coin: 'ic-coin', done: 's-done', current: 's-current', locked: 's-locked',
+    boss: 's-boss', loot: 's-loot', danger: 's-danger', grenade: 'ic-grenade', medkit: 'ic-medkit',
+  };
+  const AIMG = (name, cls) => {
+    const f = A_IC[name];
+    return f ? `<img class="aic${cls ? ' ' + cls : ''}" src="assets/ui/${f}.png" alt="" draggable="false" />` : IC(name, cls);
+  };
+
   /* ---------- képernyő-kezelés ---------- */
   function show(name) {
     if (ZD.i18n) ZD.i18n.setLang(S().lang || 'en');
@@ -171,7 +184,7 @@ ZD.ui = (() => {
         <div class="topbar">
           <button class="btn backbtn" data-go="title" id="arm-back"></button>
           <h2 id="arm-title"></h2>
-          <span class="coins"><svg class="coin-ic" viewBox="0 0 24 24" width="1em" height="1em"><circle cx="12" cy="12" r="9" fill="#ffcf4d"/><path d="M9.4 9.2a3.4 3.4 0 100 5.6M8.2 12h3.4" fill="none" stroke="rgba(60,40,0,.75)" stroke-width="1.7" stroke-linecap="round"/></svg> <span data-coins></span></span>
+          <span class="coins"><img class="aic coin-ic" src="assets/ui/ic-coin.png" alt="" /> <span data-coins></span></span>
         </div>
         <div class="tabs">
           <button class="tab active" data-tab="weapons" id="arm-tab-w"></button>
@@ -186,7 +199,7 @@ ZD.ui = (() => {
         <div class="topbar">
           <button class="btn backbtn" data-go="title" id="lab-back"></button>
           <h2 id="lab-title"></h2>
-          <span class="coins"><svg class="coin-ic" viewBox="0 0 24 24" width="1em" height="1em"><circle cx="12" cy="12" r="9" fill="#ffcf4d"/><path d="M9.4 9.2a3.4 3.4 0 100 5.6M8.2 12h3.4" fill="none" stroke="rgba(60,40,0,.75)" stroke-width="1.7" stroke-linecap="round"/></svg> <span data-coins></span></span>
+          <span class="coins"><img class="aic coin-ic" src="assets/ui/ic-coin.png" alt="" /> <span data-coins></span></span>
         </div>
         <div class="cardgrid" id="upglist"></div>
       </div>`);
@@ -262,7 +275,7 @@ ZD.ui = (() => {
         <div class="modalbox" id="result-box">
           <div class="result-icon" id="result-icon"></div>
           <h2 class="big" id="result-title"></h2>
-          <div class="loot-line"><svg class="coin-ic" viewBox="0 0 24 24" width="1em" height="1em"><circle cx="12" cy="12" r="9" fill="#ffcf4d"/><path d="M9.4 9.2a3.4 3.4 0 100 5.6M8.2 12h3.4" fill="none" stroke="rgba(60,40,0,.75)" stroke-width="1.7" stroke-linecap="round"/></svg> <b id="earn-count">0</b></div>
+          <div class="loot-line"><img class="aic coin-ic" src="assets/ui/ic-coin.png" alt="" /> <b id="earn-count">0</b></div>
           <p class="sub" id="result-sub"></p>
           <button class="btn primary" id="btn-next"></button>
           <button class="btn" id="btn-retry"></button>
@@ -441,7 +454,7 @@ ZD.ui = (() => {
     $('#lo-gren').textContent = String(stats.grenades + loGren);
     const canBuy = loGren < C.GRENADE.buyMax && S().coins >= C.GRENADE.buyPrice;
     const bg = $('#lo-buygren');
-    bg.innerHTML = loGren >= C.GRENADE.buyMax ? T('lo.max') : `+1 · ${IC('coin', 'coin-ic')} ${C.GRENADE.buyPrice}`;
+    bg.innerHTML = loGren >= C.GRENADE.buyMax ? T('lo.max') : `+1 · ${AIMG('coin', 'coin-ic')} ${C.GRENADE.buyPrice}`;
     bg.disabled = !canBuy;
     $('#lo-hp').textContent = String(Math.round(stats.maxHp));
     $('#lo-start').textContent = T('lo.start');
@@ -475,7 +488,7 @@ ZD.ui = (() => {
   }
 
   function modeLabel(mode) { return T('mode.' + mode); }
-  function modeThumb(mode) { return mode === 'boss' ? IC('skull') : (mode === 'free' || mode === 'scavenge') ? IC('crate') : IC('campaign'); }
+  function modeThumb(mode) { return mode === 'boss' ? AIMG('boss', 'aic-thumb') : (mode === 'free' || mode === 'scavenge') ? AIMG('loot', 'aic-thumb') : AIMG('current', 'aic-thumb'); }
   function boardDayName(day) { return day === 1 ? T('day1.name') : C.dayName(day); }
   function boardMissionName(level) {
     const day = C.dayOf(level), m = C.missionInDay(level);
@@ -516,6 +529,15 @@ ZD.ui = (() => {
     if (el) el.classList.add('sel');
   }
 
+  /* asset-hexagon embléma (prémium s-*.png) — teljes markert ad, CSS-keret nélkül */
+  function assetEmblem(name) {
+    return `<span class="hs-emblem hs-asset"><img class="hs-img" src="assets/ui/s-${name}.png" alt="" draggable="false" /></span>`;
+  }
+  /* számozott (CSS-hexagon) embléma az elérhető/jelenlegi misszióhoz */
+  function numEmblem(n) {
+    return `<span class="hs-emblem"><span class="hs-glyph">${n}</span></span>`;
+  }
+
   function makeHotspot(cfg) {
     const isFree = cfg.level === 'free';
     const el = document.createElement('button');
@@ -523,20 +545,22 @@ ZD.ui = (() => {
     el.style.top = cfg.y + '%';
     let cls, emblem;
     if (isFree) {
-      cls = 'is-scavenge'; emblem = IC('crate');
+      cls = 'is-scavenge'; emblem = assetEmblem('loot');
     } else {
       const ms = missionStateOf(cfg.level);
       const boss = C.modeFor(cfg.level) === 'boss';
       cls = `is-${ms}${boss ? ' is-boss' : ''}`;
-      emblem = boss ? IC('skull') : ms === 'done' ? IC('check') : ms === 'locked' ? IC('lock') : String(cfg.slot);
+      emblem = boss ? assetEmblem('boss')
+        : ms === 'done' ? assetEmblem('done')
+        : ms === 'locked' ? assetEmblem('locked')
+        : numEmblem(cfg.slot);
     }
     el.className = 'hotspot ' + cls;
     el.dataset.level = String(cfg.level);
     const label = isFree ? T('scav.title') : boardMissionName(cfg.level);
     el.setAttribute('aria-label', label);
     el.innerHTML =
-      '<span class="hs-halo"></span>' +
-      '<span class="hs-emblem"><span class="hs-glyph">' + emblem + '</span></span>' +
+      '<span class="hs-halo"></span>' + emblem +
       '<span class="hs-label">' + label + '</span>';
     el.addEventListener('click', () => { ZD.audio.play('click'); selectHotspot(el); showBriefing(cfg.level); });
     return el;
@@ -545,16 +569,16 @@ ZD.ui = (() => {
   /* a board HUD/nav ikonjai + i18n feliratai (nyelvváltásra is frissül) */
   function fillBoardChrome() {
     const scr = screens.stages;
-    scr.querySelector('.bhud-back').innerHTML = IC('back');
-    scr.querySelector('.bhud-gear').innerHTML = IC('gear');
+    scr.querySelector('.bhud-back').innerHTML = AIMG('back', 'aic-btn');
+    scr.querySelector('.bhud-gear').innerHTML = AIMG('settings', 'aic-btn');
     $('#bd-num').textContent = T('day.label') + ' 1';
     $('#bd-name').textContent = boardDayName(1).toUpperCase();
-    $('#bhud-coin').innerHTML = IC('coin', 'coin-ic') + `<b>${fmt(S().coins)}</b>`;
-    $('#bhud-shop-ic').innerHTML = IC('armory');
+    $('#bhud-coin').innerHTML = AIMG('coin', 'coin-ic') + `<b>${fmt(S().coins)}</b>`;
+    $('#bhud-shop-ic').innerHTML = AIMG('shop', 'aic-inline');
     $('#bhud-shop-t').textContent = T('board.shop');
-    $('#nav-camp-ic').innerHTML = IC('campaign'); $('#nav-camp-t').textContent = T('nav.campaign');
-    $('#nav-scav-ic').innerHTML = IC('scavenge'); $('#nav-scav-t').textContent = T('nav.scavenge');
-    $('#nav-set-ic').innerHTML = IC('gear'); $('#nav-set-t').textContent = T('nav.settings');
+    $('#nav-camp-ic').innerHTML = AIMG('campaign'); $('#nav-camp-t').textContent = T('nav.campaign');
+    $('#nav-scav-ic').innerHTML = AIMG('scavenge'); $('#nav-scav-t').textContent = T('nav.scavenge');
+    $('#nav-set-ic').innerHTML = AIMG('settings'); $('#nav-set-t').textContent = T('nav.settings');
     $('#sp-close').innerHTML = IC('close');
   }
 
@@ -634,11 +658,11 @@ ZD.ui = (() => {
 
     const skulls = d.isFree ? 3 : d.diff;
     $('#sp-danger').innerHTML = `<span class="lbl">${T('brief.danger')}</span>` +
-      Array.from({ length: 5 }, (_, i) => `<span class="sk${i < skulls ? ' on' : ''}">${IC('skull')}</span>`).join('') +
+      Array.from({ length: 5 }, (_, i) => `<span class="sk${i < skulls ? ' on' : ''}">${AIMG('danger')}</span>`).join('') +
       `<b>${d.isFree ? T('diff.inf') : T('diff.' + d.diff)}</b>`;
     $('#sp-reward').innerHTML = d.isFree
-      ? `<span class="lbl">${T('brief.reward')}</span> <b class="cn">${IC('coin', 'coin-ic')}farm</b>`
-      : `<span class="lbl">${T('brief.reward')}</span> <b class="cn">${IC('coin', 'coin-ic')}~${fmt(d.reward)}</b> <b class="xp">XP ~${Math.round(d.reward * 0.15)}</b>`;
+      ? `<span class="lbl">${T('brief.reward')}</span> <b class="cn">${AIMG('coin', 'coin-ic')}farm</b>`
+      : `<span class="lbl">${T('brief.reward')}</span> <b class="cn">${AIMG('coin', 'coin-ic')}~${fmt(d.reward)}</b> <b class="xp">XP ~${Math.round(d.reward * 0.15)}</b>`;
     $('#sp-rec').innerHTML = d.isFree
       ? `<span class="lbl">${T('brief.suggested')}</span> <b>${T('brief.recFast')}</b>`
       : `<span class="lbl">${T('brief.suggested')}</span> <b>${recommendedWeapon(level)}</b>`;
@@ -676,13 +700,13 @@ ZD.ui = (() => {
 
     refresh_armory() {
       refreshCoins(screens.armory);
-      screens.armory.querySelector('#arm-back').innerHTML = IC('back');
+      screens.armory.querySelector('#arm-back').innerHTML = AIMG('back', 'aic-btn');
       $('#arm-title').textContent = T('arm.title');
       $('#arm-tab-w').textContent = T('arm.weapons');
       $('#arm-tab-a').textContent = T('arm.ammo');
       const list = $('#weaponlist');
       list.innerHTML = '';
-      const COIN = IC('coin', 'coin-ic');
+      const COIN = AIMG('coin', 'coin-ic');
 
       if (armTab === 'weapons') {
         C.WEAPONS.forEach((w) => {
@@ -806,11 +830,11 @@ ZD.ui = (() => {
 
     refresh_lab() {
       refreshCoins(screens.lab);
-      screens.lab.querySelector('#lab-back').innerHTML = IC('back');
+      screens.lab.querySelector('#lab-back').innerHTML = AIMG('back', 'aic-btn');
       $('#lab-title').textContent = T('lab.title');
       const list = $('#upglist');
       list.innerHTML = '';
-      const COIN = IC('coin', 'coin-ic');
+      const COIN = AIMG('coin', 'coin-ic');
       C.UPGRADES.forEach((u) => {
         const lvl = S().upg[u.id] || 0;
         const maxed = lvl >= u.max;
@@ -861,7 +885,7 @@ ZD.ui = (() => {
     refresh_settings() {
       const s = S();
       const setTxt = (id, k) => { const e = $(id); if (e) e.textContent = T(k); };
-      $('#set-back').innerHTML = IC('back');
+      $('#set-back').innerHTML = AIMG('back', 'aic-btn');
       setTxt('#set-title', 'set.title');
       setTxt('#set-lang-l', 'set.language');
       setTxt('#set-sound-l', 'set.sound');
@@ -899,12 +923,12 @@ ZD.ui = (() => {
       btns.push({ go: 'settings', icon: 'settings', label: T('menu.settings'), sub: T('menu.settingsSub'), cls: 'm-settings' });
       $('#title-menu').innerHTML = btns.map((b) =>
         `<button class="menu-btn${b.primary ? ' primary' : ''} ${b.cls || ''}"${b.go ? ` data-go="${b.go}"` : ''}${b.action ? ` data-action="${b.action}"` : ''}>` +
-          `<span class="mb-ic">${IC(b.icon)}</span>` +
+          `<span class="mb-ic">${AIMG(b.icon)}</span>` +
           `<span class="mb-tx"><b>${b.label}</b><small>${b.sub}</small></span>` +
           `<span class="mb-arrow">${IC('chevron')}</span>` +
         '</button>').join('');
-      $('#title-coin').innerHTML = `${IC('coin', 'coin-ic')}<b>${fmt(s.coins)}</b>`;
-      $('#title-gear').innerHTML = IC('gear');
+      $('#title-coin').innerHTML = `${AIMG('coin', 'coin-ic')}<b>${fmt(s.coins)}</b>`;
+      $('#title-gear').innerHTML = AIMG('settings', 'aic-btn');
       $('#title-note').textContent = T('menu.note');
       $('#title-save').innerHTML =
         `<span class="ts-ic">${IC('save')}</span>` +
@@ -949,7 +973,7 @@ ZD.ui = (() => {
     const w = won === true;
     $('#result-box').classList.toggle('win', w || isFree);
     $('#result-box').classList.toggle('lose', won === false);
-    $('#result-icon').innerHTML = isFree ? IC('crate') : w ? IC('check') : IC('skull');
+    $('#result-icon').innerHTML = isFree ? AIMG('loot', 'aic-thumb') : w ? AIMG('done', 'aic-thumb') : AIMG('boss', 'aic-thumb');
     $('#result-title').textContent = isFree ? T('res.farmEnd') : w ? T('res.victory') : T('res.defeat');
     const statLine = stats
       ? `<span class="statline">${fmt(stats.kills)} ${T('res.statKills')} · ${fmt(stats.shots)} ${T('res.statShots')} · ${fmt(stats.dmg)} ${T('res.statDmg')}</span><br/>`
@@ -957,10 +981,10 @@ ZD.ui = (() => {
     if (isFree) {
       $('#result-sub').innerHTML =
         `<span class="statline">${Math.round(opts.time || 0)} ${T('res.statSurv')} · ${fmt(opts.wave || 1)}. ${T('res.statWave')}</span><br/>`
-        + statLine + `${T('res.timeBonus')}: ${IC('coin', 'coin-ic')} ${fmt(bonus)}`;
+        + statLine + `${T('res.timeBonus')}: ${AIMG('coin', 'coin-ic')} ${fmt(bonus)}`;
     } else {
       $('#result-sub').innerHTML = w
-        ? `${statLine}${T('res.clearBonus')}: ${IC('coin', 'coin-ic')} ${fmt(bonus)}`
+        ? `${statLine}${T('res.clearBonus')}: ${AIMG('coin', 'coin-ic')} ${fmt(bonus)}`
         : `${statLine}${T('res.lootKept')}<br/>${T('res.upgradeHint')}`;
     }
     $('#btn-next').textContent = isFree ? T('res.farmAgain') : w ? T('res.next') : T('res.tryAgain');
