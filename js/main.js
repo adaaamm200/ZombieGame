@@ -33,6 +33,7 @@ window.ZD = window.ZD || {};
     if (tag === 'INPUT' || tag === 'TEXTAREA') return; // ne zavarjuk a szövegbevitelt
     if (DBG_KEYS[e.key] && ZD.game.debugSpawn) ZD.game.debugSpawn(DBG_KEYS[e.key]);
     else if ((e.key === 'h' || e.key === 'H') && ZD.game.debugToggleHitbox) ZD.game.debugToggleHitbox();
+    else if ((e.key === 'g' || e.key === 'G') && ZD.game.debugToggleAlign) ZD.game.debugToggleAlign();
   });
 
   /* gesztusok tiltása (iOS dupla koppintás zoom, pinch) */

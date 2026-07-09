@@ -18,6 +18,29 @@ Entry format:
 
 ---
 
+### 2026-07-09 — Level 01 alignment verify + align-debug overlay (no offset bug found)
+- Goal: user reported the stage/background "shifted again" before doing maps 02–05; fix Level
+  01 alignment first.
+- Investigation: fit()/stage-centering/camera transform are UNCHANGED since the map work.
+  Measured every viewport — stage is pixel-perfect: desktop 1280×720 = 100% 16:9 at 0,0; mobile
+  landscape 812×375 = 667×375 centered (73px pillarbox/side, unavoidable for 16:9 on 2.16:1);
+  ultrawide 1600×600 = 1067×600 centered, 100% height. Ground baseline at 86% everywhere;
+  canvas (objectFit:fill, inset:0) fills the stage exactly. No real offset bug: background,
+  ground and player share one coordinate system; player feet sit on the ground baseline.
+- Files: js/game.js (drawAlignDebug + dbg.align + debugToggleAlign, exported), js/main.js
+  ('G' key toggle), js/const.js + sw.js (v40/zk-v40).
+- New align-debug overlay (OFF by default; 'G' key or ZD.game.dbg.align=true): stage frame +
+  center cross + magenta ground baseline + yellow player-feet marker + camera/render-buffer/
+  stage/viewport sizes — so the user can verify on their own device where (if) it shifts.
+- Likely user-side cause: stale cached old build, or the known preview screenshot capture
+  artifact — not a layout bug. The cache bump (v40) + built-in SW auto-reload addresses it.
+- Tests run: node --check all JS (OK). Real browser Level 01 with overlay: feet on ground line,
+  structures on ground, HUD/controls screen-fixed (safe-area inset), horizontal-only parallax;
+  0 console errors; atmosphere still works.
+- What was NOT changed: map art, silhouette pipeline, atmosphere, assets; no rejected asset
+  reintroduced; nothing outside PROJECT_ROOT touched.
+- Next: user to confirm Level 01 is stable on their device (G-key overlay); then Level 02 only.
+
 ### 2026-07-09 — Atmosphere refine: procedural depth-banded fog + thin rain (no wash-out)
 - Goal: The fog/rain overlay looked cheap — a full-screen filter that washed out the scene,
   lowered contrast and hurt readability of player/zombies/props/ground. Refine ONLY the

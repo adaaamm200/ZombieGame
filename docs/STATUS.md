@@ -11,6 +11,31 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## LEVEL 01 IGAZÍTÁS-ELLENŐRZÉS + ALIGN-DEBUG overlay (2026-07-09)
+- **Kérés**: a stage/háttér „megint elcsúszott" — javítás a maps 02–05 előtt. **Vizsgálat**:
+  a fit()/stage-centrálás/kamera-transzform ÉRINTETLEN a map-munkák óta; méréssel a stage
+  MINDEN viewporton pixel-pontosan illeszkedik:
+  - desktop 1280×720 → stage 0,0 1280×720 = 100% 16:9;
+  - mobil landscape 812×375 → stage 667×375, KÖZÉPRE igazítva (73px pillarbox/oldal —
+    16:9 egy 2.16:1 nézetben elkerülhetetlen), talp 100%;
+  - ultrawide 1600×600 → stage 1067×600, középen, 100% magasság (267px pillarbox/oldal).
+  A talajvonal mindenhol **86%**-on; a canvas (objectFit:fill, inset:0) TÖKÉLETESEN kitölti a
+  stage-et. **Nem találtam valós eltolás-bugot** — a háttér/talaj/karakter EGY koordináta-
+  rendszerben van, a játékos talpa a talajvonalon.
+- **Új: IGAZÍTÁS-DEBUG overlay** (`js/game.js` `drawAlignDebug`, `dbg.align`, **alapból KI**;
+  **'G' gomb** vagy `ZD.game.dbg.align=true`): stage-keret + közép-kereszt + **talajvonal
+  (magenta)** + **játékos-talp marker (sárga)** + kamera/render-buffer/stage/viewport méretek.
+  Így a felhasználó a SAJÁT eszközén ellenőrizheti, hol csúszik (ha csúszik).
+- **Valószínű ok a felhasználónál**: beragadt régi cache (régi build), vagy a preview
+  screenshot-tool ismert k(kis régióba tömörítő) capture-artefaktja — NEM valós layout-hiba.
+  A cache-bump (v40/zk-v40) + a beépített auto-reload ezt orvosolja.
+- **TESZTELVE** (valós böngésző, Level 01, overlay-jel): a talp a talajvonalon, a struktúrák
+  a talajon, a HUD/gombok képernyő-fixek (safe-area insettel), parallax csak vízszintes.
+  **0 konzolhiba.** node --check OK. Az atmoszféra változatlanul működik.
+- Csak `js/game.js` (align-debug) + `js/main.js` ('G' gomb) + build/cache bump. Map-art,
+  silhouette-pipeline, atmoszféra, assetek ÉRINTETLENEK; elutasított asset NEM tért vissza.
+- sw.js cache: **zk-v40**; `ZD.BUILD='v40'`.
+
 ## ATMOSZFÉRA-FINOMHANGOLÁS — procedurális, mélység-sávos köd + vékony eső (2026-07-09)
 - **Panasz**: a köd/eső overlay olcsó, teljes-képernyős szűrőként washol, elmossa a képet,
   rontja az olvashatóságot (karakter/zombi/prop/talaj). **CSAK az atmoszféra változott** —

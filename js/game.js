@@ -1428,10 +1428,49 @@ ZD.game = (() => {
       }
       ctx.restore();
     }
+
+    /* DEBUG igazítás-overlay (alapból KI — 'G' gomb vagy ZD.game.dbg.align=true) */
+    if (dbg.align) drawAlignDebug(ctx, p);
   }
 
-  /* ---------- DEBUG: gyors ellenség-spawn + hitbox overlay (teszteléshez) ---------- */
-  const dbg = { hitbox: false };
+  /* ---------- DEBUG: gyors ellenség-spawn + hitbox + IGAZÍTÁS-overlay ---------- */
+  const dbg = { hitbox: false, align: false };
+  /* IGAZÍTÁS-DEBUG (alapból KI, 'G' gomb): stage-keret + talajvonal (a bg/talaj vizuális
+     alapvonala) + játékos-talp marker + kamera/render/viewport méretek. Így egy pillantással
+     látszik, hogy a háttér/talaj/karakter EGY közös koordináta-rendszerben, igazítva van-e.
+     Képernyő-térben rajzol (a világ-transzform már visszaállítva). */
+  function drawAlignDebug(ctx, p) {
+    const Z = C.ZOOM, vy0 = C.GROUND_Y - 232 / Z;
+    const gy = Z * (C.GROUND_Y - vy0);                 // talajvonal képernyő-y (logikai 0..270)
+    const px = Z * ((p ? p.x : st.cam) - st.cam);      // játékos képernyő-x
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(0,229,255,.9)';            // stage-keret (cián)
+    ctx.strokeRect(0.5, 0.5, C.VIEW_W - 1, C.VIEW_H - 1);
+    ctx.strokeStyle = 'rgba(0,229,255,.22)';           // közép-keresztvonal
+    ctx.beginPath(); ctx.moveTo(C.VIEW_W / 2, 0); ctx.lineTo(C.VIEW_W / 2, C.VIEW_H); ctx.moveTo(0, C.VIEW_H / 2); ctx.lineTo(C.VIEW_W, C.VIEW_H / 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,0,180,.95)';           // TALAJVONAL (magenta) — ide kell esnie a talaj tetejének
+    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(C.VIEW_W, gy); ctx.stroke();
+    if (p) {                                           // játékos-talp marker (sárga)
+      ctx.strokeStyle = 'rgba(255,215,0,.35)';
+      ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, C.VIEW_H); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,215,0,.95)';
+      ctx.beginPath(); ctx.arc(px, gy, 3, 0, Math.PI * 2); ctx.fill();
+    }
+    const cv = document.getElementById('cv'), stg = document.getElementById('stage');
+    const sr = stg ? stg.getBoundingClientRect() : { width: 0, height: 0 };
+    ctx.font = 'bold 7px "Courier New", monospace'; ctx.textAlign = 'left';
+    const lines = [
+      'ALIGN DEBUG (G)', 'cam ' + Math.round(st.cam) + '  lvl ' + st.level,
+      'buf ' + (cv ? cv.width + 'x' + cv.height : '?'),
+      'stage ' + Math.round(sr.width) + 'x' + Math.round(sr.height),
+      'view ' + window.innerWidth + 'x' + window.innerHeight,
+      'ground ' + gy.toFixed(0) + '/' + C.VIEW_H + ' (' + (gy / C.VIEW_H * 100).toFixed(0) + '%)',
+    ];
+    let ty = 40;
+    for (const s of lines) { ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillText(s, 5.6, ty + 0.6); ctx.fillStyle = '#7CFC00'; ctx.fillText(s, 5, ty); ty += 9; }
+    ctx.restore();
+  }
   function debugSpawn(type) {
     if (!st.running) { console.warn('[debug] indíts előbb egy pályát (spawn csak játékban)'); return; }
     if (!C.ZOMBIES[type]) { console.warn('[debug] ismeretlen típus:', type); return; }
@@ -1443,6 +1482,7 @@ ZD.game = (() => {
     return z;
   }
   function debugToggleHitbox() { dbg.hitbox = !dbg.hitbox; console.log('[debug] hitbox overlay:', dbg.hitbox); return dbg.hitbox; }
+  function debugToggleAlign() { dbg.align = !dbg.align; console.log('[debug] align overlay:', dbg.align); return dbg.align; }
 
-  return { st, start, update, render, pause, resume, quit, calcStats, curWeapon, debugSpawn, debugToggleHitbox, dbg };
+  return { st, start, update, render, pause, resume, quit, calcStats, curWeapon, debugSpawn, debugToggleHitbox, debugToggleAlign, dbg };
 })();
