@@ -12,3 +12,8 @@ Thumbs.db
 
 # Letöltött mentés-biztonságimentések (Beállítások → fájlba mentés)
 zombikronika-mentes-*.txt
+
+
+# Nagy map FORRÁS anyagok (lokális referencia, NEM deploy) — csak a feldolgozott
+# assets/maps/ runtime rétegek kerülnek a repóba.
+assets/references/maps/

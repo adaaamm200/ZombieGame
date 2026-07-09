@@ -18,6 +18,31 @@ Entry format:
 
 ---
 
+### 2026-07-09 — Map asset audit + Level 01 HD parallax background (first vertical slice)
+- Goal: Audit the newly added map materials and report what's needed for a full playable level;
+  then (per user decisions) start the Level 01 "Quarantine Street" vertical slice — HD parallax
+  background replacing the procedural one, using the existing movement/shooting/zombies.
+- Analysis/organization: extracted+unified the 5 level asset packs into
+  assets/references/maps/levels/ (233 files, ~97MB source; gitignored — LOCAL reference only,
+  not deployed). Wrote docs/MAP_ASSETS_AUDIT.md (inventory, engine state, gap analysis, plan).
+  Key finding: the engine ALREADY has a parallax system (tileLayer cam+parallax: far/mid/near/
+  ground); only the layer source was procedural.
+- Implementation (first slice): tools/prepare-map-layers.js (zero-dep) processes the HD source
+  strips into small runtime layers (assets/maps/level_01/ far/mid/near/ground): far+ground
+  opaque + downscaled; mid/near = top-edge DARK-flood-fill sky removal (keeps dark building
+  detail — NOT naive black threshold, per the pack README). sprites.js: HD map loader (MAPS by
+  theme) + drawBackground HD branch (uses the existing tileLayer for parallax) + drawBgOverlay
+  refactor (scene grade shared). main.js loads maps at startup. HD applies to theme 0 (street =
+  Day 1); procedural stays as fallback for other themes.
+- Tests run: node --check all JS (OK). Real-Chrome localhost, forced level 1: HD ruined
+  buildings (QUICK MART) + post-apoc road render in-game behind the HD zombies/soldier — a large
+  visual upgrade over the procedural pixel bg; 0 console errors. Source 97MB → runtime ~1.2MB.
+- What was NOT changed: gameplay/movement/shooting/zombies (reused as-is); themes 1–2 (lab/ruins)
+  still procedural until levels 02–05 are processed. Props/effects/foreground not yet wired.
+- Next: wire HD props (bus/cars/barriers) into decorFor with feet anchor+shadow; effect overlays
+  (fog/fire/police-light/toxic/rain) from 07_effects; foreground (5th depth) layer; then process
+  levels 02–05 and map campaign days → environments (Day 5 → infection nest arena).
+
 ### 2026-07-09 — Visual integration pass: HD player, shadows, grading, dark scene
 - Goal: The new HD enemy sprites looked "pasted on" next to the pixel-art player / flat
   background, with debug rectangles showing. Make the in-game scene cohere as an HD painted

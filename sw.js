@@ -1,5 +1,5 @@
 /* Zombi Krónika — offline service worker (cache-first) */
-const VERSION = 'zk-v35';
+const VERSION = 'zk-v36';
 const ASSETS = [
   './',
   './index.html',
@@ -61,6 +61,10 @@ const ASSETS = [
   './assets/enemies/enemy_boss_sheet.png',
   './assets/player/player_atlas.json',
   './assets/player/player_sheet.png',
+  './assets/maps/level_01/far.png',
+  './assets/maps/level_01/mid.png',
+  './assets/maps/level_01/near.png',
+  './assets/maps/level_01/ground.png',
 ];
 
 self.addEventListener('install', (e) => {

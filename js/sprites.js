@@ -1524,9 +1524,36 @@ ZD.sprites = (() => {
     }
   }
 
+  /* ---- HD MAP-RÉTEGEK (assets/maps/) — a procedurális háttér HELYETT, ha betöltött.
+     Egyelőre a level_01 „quarantine street" (theme 0 = utca). Fallback: procedurális. ---- */
+  const MAPS = {}; // theme -> { far, mid, near, ground, ready }
+  function loadMap(theme, base, layers) {
+    const m = { ready: false, n: 0, need: layers.length };
+    MAPS[theme] = m;
+    layers.forEach((name) => {
+      const im = new Image();
+      im.onload = () => { m[name] = im; if (++m.n >= m.need) m.ready = true; };
+      im.onerror = () => { if (++m.n >= m.need) m.ready = m.far && m.ground; };
+      im.src = base + name + '.png';
+    });
+  }
+  function loadMaps() {
+    loadMap(0, 'assets/maps/level_01/', ['far', 'mid', 'near', 'ground']);
+  }
+
   function drawBackground(ctx, cam, level, t) {
-    const th = THEMES[C.themeFor(level)];
+    const theme = C.themeFor(level);
+    const th = THEMES[theme];
     th.sky(ctx, t || 0);
+    const hd = MAPS[theme];
+    if (hd && hd.ready) {
+      /* HD parallax rétegek (a motor tileLayer-je logikai méreten rajzol) */
+      if (hd.far) tileLayer(ctx, hd.far, cam, 0.2, GY);
+      if (hd.mid) tileLayer(ctx, hd.mid, cam, 0.5, GY);
+      if (hd.near) tileLayer(ctx, hd.near, cam, 0.8, GY);
+      if (hd.ground) tileLayer(ctx, hd.ground, cam, 1, C.VIEW_H);
+      return drawBgOverlay(ctx);   // scene-grade + köd + vignetta (entitások ELŐTT)
+    }
     tileLayer(ctx, th.far, cam, 0.2, GY);
     tileLayer(ctx, th.mid, cam, 0.5, GY);
     // horizont-köd
@@ -1546,9 +1573,12 @@ ZD.sprites = (() => {
       ctx.drawImage(d.spr.c, r2(sx - d.spr.w / 2 / ART), GY - d.spr.h / ART + 1, d.spr.w / ART, d.spr.h / ART);
     });
     th.anim(ctx, cam, t || 0, items);
+    drawBgOverlay(ctx);
+  }
 
-    /* JELENET-INTEGRÁCIÓ (a HÁTTÉRRE, az entitások ELŐTT): cinematikus sötétítés + köd +
-       talaj-kontakt + vignetta → a HD karakterek kiemelkednek és beleolvadnak a jelenetbe. */
+  /* JELENET-INTEGRÁCIÓ (a HÁTTÉRRE, az entitások ELŐTT): cinematikus sötétítés + köd +
+     talaj-kontakt + vignetta → a HD karakterek kiemelkednek és beleolvadnak a jelenetbe. */
+  function drawBgOverlay(ctx) {
     const VW = C.VIEW_W, VH = C.VIEW_H;
     const dim = ctx.createLinearGradient(0, 0, 0, VH);
     dim.addColorStop(0, 'rgba(6,10,18,.44)');
@@ -1676,6 +1706,6 @@ ZD.sprites = (() => {
     drawBoom, drawCoin, drawMed, drawGrenade, drawShell,
     drawGenerator, drawAmmoBox,
     weaponIcon, upgIcon, px, pxCircle,
-    THEMES, ZDIM,
+    THEMES, ZDIM, loadMaps,
   };
 })();
