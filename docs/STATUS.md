@@ -11,6 +11,35 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## PREMIUM UI KIT v1 INTEGRÁCIÓ — 3D ikonok + logó 1:1 beépítve (2026-07-09)
+- **Forrás**: `assets/references/ui_kit_v1/` (owner által generált, KÜLÖN komponált
+  production ikonok/logó — nem sheet, nincs slicing). Runtime nevekre beépítve.
+- **Feldolgozás (`tools/prepare-ui-kit-v1.js`, zero-dep)**: a forrás 1254² RGB, FLAT
+  VILÁGOS háttérrel. **Él-flood-fill háttér-eltávolítás**: csak a kép SZÉLÉRŐL induló
+  világos háttér lesz átlátszó → a belső highlightok / betűk / glow / fémkeret MEGMARAD
+  (a logó fehér „ZOMBIE" felirata ép, nincs lyuk/halo); lágy szél-feather a fehér perem
+  ellen. Majd trim + 256×256 átlátszó vászon, tartalom ~70% (semmi nem ér a szélhez).
+  A logó arány-tartó, transparent, 760×387. **A 3D hatás/keret/glow/textúra 1:1 megmarad
+  (nincs redraw, nincs flat UI, nincs slicing).**
+- **Beépített outputok** (`assets/ui/`): menü `m-continue/campaign/scavenge/armory/lab/
+  shop/settings/back.png` (mind 256²), marker `s-done/current/locked/boss/loot/danger.png`,
+  `ic-coin.png`, és `logo.png` (új vízszintes átlátszó lockup). Az `m-shop` most először
+  valódi kosár-asset; az `s-locked` most octagon-alakú (owner assete).
+- **CSS**: a dupla glow eltávolítva a menü- és marker-ikonokról (az asset saját glow-ja
+  marad, csak finom mélység-árnyék); a logó `.brand-logo` **mix-blend-mode: lighten
+  eltávolítva** (átlátszó PNG-hez), vízszintes lockuphoz méretezve (width min(460px,84vw)).
+  A `.aic` max-width/height sapka + back-gomb 26px méret (regresszió: OK, back 64×48).
+- **TESZTELVE**: az OUTPUT asset-fájlok közvetlenül ellenőrizve (logó/m-continue/s-boss/
+  ic-coin) — **1:1 3D, átlátszó, középen, nincs halo/clip**. DOM-metrika: mind a 15 ikon
+  256² betöltve, menü 54×54 / marker 68px / boss 92px / logó 460×151 renderel (nincs
+  blowup); `object-fit: contain` (nem tud vágni/torzítani). **0 konzolhiba.**
+  (A preview screenshot-tool ebben a sessionben tartósan beragadt — környezeti hiba, nem
+  kódhiba; a verifikáció asset-fájl Read + DOM-metrika + object-fit garancia alapján.)
+- **Későbbre hagyva** (owner kérése szerint): az `elements/` (banner_day_name, plaque_day,
+  meter_danger_skulls, plaque_xp, supply_crate) — külön board/briefing polish-körre.
+- Csak asset + CSS + tool változott — gameplay/save/HUD-layout ÉRINTETLEN.
+- sw.js cache: **zk-v24**. `node --check` mind a JS-re OK.
+
 ## RENDERED ICON CLIPPING + BACK-BUTTON FIX (2026-07-08)
 - **Ok**: a korábbi QA "crop PASS"-t adott (az asset-PNG-k középen voltak), de a
   TÉNYLEGES renderelt UI-ban több ikon a badge széléhez ért / túl nagy volt, és a

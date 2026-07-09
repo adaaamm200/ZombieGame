@@ -291,8 +291,9 @@ html, body {
 @media (hover: hover) { .title-gear:hover { filter: brightness(1.25); } }
 .title-inner { display: flex; flex-direction: column; align-items: center; width: 100%; min-height: 100%; padding: 48px 16px calc(10px + var(--sab)); }
 .brand-logo {
-  width: min(340px, 66vw); max-height: 26vh; object-fit: contain; margin: 1vh 0 0.4vh;
-  mix-blend-mode: lighten; filter: drop-shadow(0 6px 18px rgba(0,0,0,.6)) drop-shadow(0 0 30px rgba(255,44,44,.28));
+  /* átlátszó, vízszintes lockup (assets/ui/logo.png) — NINCS mix-blend, a PNG maga a látvány */
+  width: min(460px, 84vw); max-height: 21vh; object-fit: contain; margin: 1.2vh 0 0.6vh;
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,.6)) drop-shadow(0 0 24px rgba(255,44,44,.22));
   animation: logo-in .6s cubic-bezier(.2, 1.4, .4, 1) both; pointer-events: none; user-select: none;
 }
 @keyframes logo-in { from { opacity: 0; transform: translateY(-20px) scale(1.06); } to { opacity: 1; transform: none; } }
@@ -311,7 +312,8 @@ html, body {
 /* hotspot asset-hexagon embléma (done/locked/boss/scavenge) */
 .hs-emblem.hs-asset { clip-path: none; background: none; }
 .hs-emblem.hs-asset::before, .hs-emblem.hs-asset::after { display: none; }
-.hs-asset .hs-img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 6px rgba(0,0,0,.7)) drop-shadow(0 0 9px var(--mkglow)); }
+/* marker-asset MAGA a 3D hexagon (saját keret+glow); csak finom mélység-árnyék, NINCS dupla glow */
+.hs-asset .hs-img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 6px rgba(0,0,0,.65)); }
 /* briefing thumb + eredmény-ikon: asset-hex, saját házolás → a doboz-keret ki */
 .sp-thumb { background: none !important; border: none !important; box-shadow: none !important; }
 .sp-thumb .aic-thumb { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,.65)); }
@@ -344,7 +346,8 @@ html, body {
 .menu-btn .mb-ic {
   flex: none; width: 54px; height: 54px; display: grid; place-items: center; position: relative;
 }
-.menu-btn .mb-ic .aic { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.55)) drop-shadow(0 0 8px color-mix(in srgb, var(--accent, #7ddb4f) 30%, transparent)); }
+/* az asset MAGA a 3D gomb (saját keret+glow); CSS csak méretez + finom mélység-árnyék (NINCS dupla glow/keret) */
+.menu-btn .mb-ic .aic { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
 /* SVG fallback (ha nincs asset) — sötét korong accent glyph-fel */
 .menu-btn .mb-ic svg { position: relative; width: 27px; height: 27px; color: var(--accent, var(--ui-green)); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent, #7ddb4f) 60%, transparent)); }
 .menu-btn .mb-tx { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }

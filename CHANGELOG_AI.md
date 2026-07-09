@@ -18,6 +18,36 @@ Entry format:
 
 ---
 
+### 2026-07-09 — Integrate premium UI kit icons and logo
+- Goal: Integrate the owner-provided premium UI kit (ui_kit_v1) 1:1 — menu icons,
+  board markers, coin and logo — preserving the 3D metal/glow look, no CSS redraw.
+- Files changed: tools/prepare-ui-kit-v1.js (new), css/style.css, sw.js (zk-v24),
+  assets/ui/m-*.png (8), assets/ui/s-*.png (6), assets/ui/ic-coin.png,
+  assets/ui/logo.png, docs/STATUS.md, CHANGELOG_AI.md, ui_kit_v1/README.md.
+- What changed:
+  - New deterministic prep tool: edge flood-fill removes the flat light background
+    (keeps inner highlights/text/glow, no white halo), trims, pads to 256×256 at ~70%
+    (logo kept aspect, transparent, 760×387). 3D look preserved 1:1 — no slicing, no redraw.
+  - Replaced menu (m-*), marker (s-*), coin (ic-coin) and logo assets with the processed
+    ui_kit sources. m-shop now a real cart; s-locked is an octagon (owner asset).
+  - CSS: removed the doubled accent glow on menu/marker icons (asset carries its own glow,
+    CSS only adds a subtle depth shadow); removed `mix-blend-mode: lighten` on the logo
+    (now a transparent horizontal lockup) and resized it; kept `.aic` max caps + 26px back icon.
+- Tests run: node --check all JS (OK); direct asset-file verification (logo, m-continue,
+  s-boss, ic-coin = perfect 1:1 transparent, centered, no halo/clip); DOM metrics (all 15
+  icons 256×256 loaded, correct render sizes, no blowup, back 64×48); 0 console errors.
+  NOTE: the preview screenshot tool was stuck this session (environmental, not code) —
+  verification relied on asset-file Read + DOM metrics + the object-fit:contain guarantee.
+- Visual QA: PASS (asset-file + DOM level). In-context screenshots deferred to next session
+  if a fresh preview cooperates.
+- What was not changed: gameplay, stats, economy, save, HUD layout, board background,
+  in-game control icons (ic-fire/ammo/swap/grenade/pause); the ui_kit `elements/`
+  (banners/plaques/meter/crate) were left for a later board/briefing polish pass.
+- Open questions: s-locked is octagon-shaped among hexagon markers — keep or request a
+  hexagon locked variant?
+- Next recommended step: fresh-session screenshot QA of the integrated icons, then the
+  board/briefing `elements/` polish pass (DAY banner/plaque, danger meter, XP, supply crate).
+
 ### 2026-07-08 — Fix rendered icon clipping and back button sizing
 - Goal: Make icons fully visible in the ACTUAL rendered UI (not just the source PNG),
   and fix the oversized Armory/Lab/Settings back button.

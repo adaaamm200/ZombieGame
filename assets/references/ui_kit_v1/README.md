@@ -1,5 +1,13 @@
 # UI Kit v1 — owner-provided premium UI icon/element sources
 
+> **STATUS (2026-07-09): INTEGRATED** — `menu/`, `markers/`, `coin`, and `logo/logo_full`
+> were processed by `tools/prepare-ui-kit-v1.js` (edge flood-fill light-bg removal + trim +
+> 256 pad @~70%, logo kept aspect) and written over `assets/ui/m-*.png`, `s-*.png`,
+> `ic-coin.png`, `logo.png`. The `elements/` (banner_day_name, plaque_day,
+> meter_danger_skulls, plaque_xp, supply_crate) and `logo/logo_wide` are STILL PENDING —
+> reserved for a board/briefing polish pass.
+
+
 Owner-provided, individually composed premium UI assets (dark metal + accent glyph).
 Each is a SEPARATE, centered, well-margined asset → **no sheet slicing / crop needed**.
 This kit supersedes and consolidates the earlier `menu_icons_v1/` folder (its 6
