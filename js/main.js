@@ -72,8 +72,20 @@ window.ZD = window.ZD || {};
     if (restored && ZD.ui.refreshActive) ZD.ui.refreshActive();
   });
 
-  /* PWA service worker (csak http(s) alatt működik) */
+  /* PWA service worker (csak http(s) alatt működik) — megbízható frissítéssel:
+     - updateViaCache:'none' → az sw.js SOHA nem a HTTP-cache-ből jön → a verzió-bump
+       azonnal észlelhető;
+     - reg.update() minden betöltéskor keres új verziót;
+     - ha MÁR volt aktív SW és egy ÚJ átveszi az irányítást (controllerchange), egyszer
+       automatikusan újratöltünk → a friss assetek azonnal megjelennek (nem kell 100 reload). */
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (hadController && !reloaded) { reloaded = true; location.reload(); }
+    });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .then((reg) => { try { reg.update(); } catch (e) { /* noop */ } })
+      .catch(() => {});
   }
 })();

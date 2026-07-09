@@ -18,6 +18,26 @@ Entry format:
 
 ---
 
+### 2026-07-09 — Make service worker updates reliable (fix stale icons)
+- Goal: Fix "the game doesn't update even after 100 reloads" — the cache-first SW kept
+  serving old assets despite version bumps.
+- Files changed: sw.js (install cache:reload + per-asset tolerance, zk-v26), js/main.js
+  (updateViaCache:none + auto-reload on SW takeover), docs/STATUS.md, CHANGELOG_AI.md.
+- What changed:
+  - sw.js install now fetches each precache asset with `cache: 'reload'` (bypasses the
+    browser HTTP cache → genuinely fresh assets on version bump); one missing file no
+    longer aborts the whole install.
+  - main.js registers with `updateViaCache:'none'` + `reg.update()` and reloads once when
+    a NEW SW takes control (guarded so no reload on first visit / no loop).
+- Tests run: node --check all JS (OK); fresh registration creates zk-v26 with 40 entries,
+  cached bytes match on-disk files (logo 447676, m-continue 77663), controller active,
+  0 console errors.
+- User action for the currently-stuck state: load the site, wait ~3s for the new SW to
+  install+activate, then reload once. Updates auto-apply from then on.
+- What was not changed: gameplay, assets, UI composition — only the SW/update mechanism.
+- Next recommended step: user confirms icons now update live; then the board/briefing
+  elements polish pass.
+
 ### 2026-07-09 — Polish board nav cards and shop CTA composition
 - Goal: Recompose the board left nav (Campaign/Scavenge/Settings) and top-right SHOP so
   the 3D UI-kit assets are the visual (big icon + dark label plaque / horizontal CTA),

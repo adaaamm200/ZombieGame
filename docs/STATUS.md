@@ -11,6 +11,30 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## SW CACHE FRISSÍTÉS-JAVÍTÁS — „nem frissül a játék" (2026-07-09)
+- **Panasz**: a user 100× újratöltött, de az ikonok ugyanúgy néztek ki. Ok: a cache-first
+  service worker a régi cache-elt asseteket szolgálta ki, és a verzió-bump ellenére sem
+  frissült megbízhatóan.
+- **2 valós gyökér-ok + javítás**:
+  1) Az `install` `addAll`-ja a böngésző HTTP-cache-éből is fetch-elhetett → az új SW-cache
+     a RÉGI, azonos nevű képeket kaphatta (GitHub Pages ~10 perc max-age). **Fix (`sw.js`)**:
+     `fetch(new Request(u, { cache: 'reload' }))` per asset → a HÁLÓZATRÓL, HTTP-cache
+     megkerülésével tölt → tényleg friss assetek. Per-asset hibatűrés (egy hiányzó fájl
+     nem bukatja el az install-t). **Igazolva**: a v26 cache bájtjai pontosan egyeznek a
+     lemez-fájlokkal (logo 447676, m-continue 77663).
+  2) Nem volt auto-reload új SW aktiválásakor → a betöltött oldal a régi assetekkel maradt.
+     **Fix (`main.js`)**: regisztráció `updateViaCache: 'none'`-nal (az sw.js SOHA nem a
+     HTTP-cache-ből jön → a bump azonnal észlelhető) + `reg.update()` + `controllerchange`
+     figyelő: ha MÁR volt aktív SW és egy ÚJ átveszi az irányítást, EGYSZER automatikusan
+     újratölt (nincs reload-loop: `hadController` + `reloaded` guard; első látogatáskor nem
+     tölt újra).
+- **Felhasználói teendő a jelenlegi beragadt állapothoz**: töltsd be az oldalt, várj ~3 mp-et
+  (az új SW települ+aktiválódik), majd tölts újra EGYSZER → friss assetek. Innentől a
+  frissítések automatikusan érvényesülnek (a beépített auto-reload miatt).
+- **TESZTELVE**: friss regisztráció → `zk-v26` cache 40 bejegyzéssel, controller aktív, a
+  cache-elt assetek bájtra egyeznek a friss fájlokkal. 0 konzolhiba. node --check OK.
+- sw.js cache: **zk-v26**.
+
 ## BOARD NAV + SHOP CTA PRÉMIUM KOMPOZÍCIÓ (2026-07-09)
 - **Ok**: a board bal nav (Campaign/Scavenge/Settings) és a jobb-felső SHOP gomb még
   „régi gomb + kis ikon + sárga paca" hatású volt — a 3D asset jó, a komponálás rossz.

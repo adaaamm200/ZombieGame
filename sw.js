@@ -1,5 +1,5 @@
 /* Zombi Krónika — offline service worker (cache-first) */
-const VERSION = 'zk-v25';
+const VERSION = 'zk-v26';
 const ASSETS = [
   './',
   './index.html',
@@ -44,7 +44,19 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches.open(VERSION).then((c) =>
+      /* cache: 'reload' → a böngésző HTTP-cache-ét MEGKERÜLVE, a HÁLÓZATRÓL tölti a
+         precache-t, így verzió-bumpnál tényleg FRISS assetek kerülnek be (nem a régi,
+         azonos nevű, HTTP-cache-elt kép). Per-asset hibatűrés: egy hiányzó fájl nem
+         bukatja el az egész install-t. */
+      Promise.all(ASSETS.map((u) =>
+        fetch(new Request(u, { cache: 'reload' }))
+          .then((r) => (r && (r.ok || r.type === 'opaque')) ? c.put(u, r) : null)
+          .catch(() => null),
+      )),
+    ).then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener('activate', (e) => {
