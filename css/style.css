@@ -421,14 +421,20 @@ html, body {
   .btn:hover:not(:disabled) { filter: brightness(1.16); }
 }
 .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: var(--ui-bevel); }
-/* primary = ARANY akciógomb */
+/* primary = ARANY 3D-metallic akciógomb (embossed) */
 .btn.primary {
-  background: linear-gradient(180deg, var(--ui-gold-hi) 0%, var(--ui-gold) 44%, var(--ui-gold-dk) 100%);
-  color: #2a1900; border-color: #ffe9a8;
-  box-shadow: 0 5px 16px rgba(0,0,0,.55), 0 0 20px rgba(255,190,60,.35), var(--ui-bevel);
-  text-shadow: 0 1px 0 rgba(255,255,255,.3);
+  background: linear-gradient(180deg, #fff0b8 0%, var(--ui-gold-hi) 24%, var(--ui-gold) 60%, var(--ui-gold-dk) 100%);
+  color: #2a1900; border: 2px solid #fff0b8;
+  box-shadow: 0 5px 0 #6a4708, 0 8px 16px rgba(0,0,0,.5), 0 0 20px rgba(255,190,60,.4), inset 0 2px 0 rgba(255,255,255,.55), inset 0 -3px 6px rgba(120,70,0,.5);
+  text-shadow: 0 1px 0 rgba(255,255,255,.35);
 }
-.btn.danger { background: linear-gradient(180deg, #ff6a5a, #c22e22 60%, #8a1a12); color: #fff; border-color: #ff9a86; box-shadow: 0 5px 16px rgba(0,0,0,.55), 0 0 16px rgba(255,60,50,.3), var(--ui-bevel); }
+.btn.primary:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 #6a4708, 0 4px 8px rgba(0,0,0,.5), 0 0 14px rgba(255,190,60,.4), inset 0 2px 0 rgba(255,255,255,.5), inset 0 -3px 6px rgba(120,70,0,.5); }
+.btn.danger {
+  background: linear-gradient(180deg, #ffc0ac 0%, #ff7a5c 24%, #c22e22 62%, #8a1a12 100%); color: #fff; border: 2px solid #ffc8b8;
+  box-shadow: 0 5px 0 #5a1008, 0 8px 16px rgba(0,0,0,.5), 0 0 18px rgba(255,60,50,.35), inset 0 2px 0 rgba(255,255,255,.38), inset 0 -3px 6px rgba(90,16,8,.6);
+  text-shadow: 0 1px 2px rgba(80,0,0,.5);
+}
+.btn.danger:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 #5a1008, 0 4px 8px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.32), inset 0 -3px 6px rgba(90,16,8,.6); }
 .btn.ok { background: linear-gradient(180deg, #86f090, #3fbe57 60%, #2a8a3c); color: #08200c; border-color: #b6f5b6; box-shadow: 0 5px 16px rgba(0,0,0,.55), 0 0 16px rgba(85,224,106,.32), var(--ui-bevel); }
 .btn.ghost { background: rgba(20,23,28,.6); border-color: rgba(150,166,178,.2); color: var(--ui-mute); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
 .btn:disabled { opacity: .4; cursor: default; filter: grayscale(.3); }
@@ -568,26 +574,30 @@ html, body {
 /* --- bal nav = prémium VERTIKÁLIS 3D kártyák (nagy asset-ikon + külön dark label plaque).
    A 3D asset MAGA a látvány; a CSS csak méretez + a label-plaque-ot adja alá. Nincs
    „sárga paca", nincs dupla keret/glow, nincs clip. --- */
-.bnav { position: absolute; left: calc(8px + var(--sal)); top: 58px; z-index: 5; display: flex; flex-direction: column; gap: 12px; }
+.bnav { position: absolute; left: calc(10px + var(--sal)); top: 56px; z-index: 5; display: flex; flex-direction: column; gap: 14px; }
 .bnav-item {
-  position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 96px; padding: 0;
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 110px; padding: 0;
   border: none; background: none; box-shadow: none; cursor: pointer; font-family: inherit; color: var(--ui-ink);
   transition: transform .1s, filter .12s;
 }
-.bnav-item .i { width: 80px; height: 80px; display: grid; place-items: center; }
-.bnav-item .i .aic { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 6px rgba(0,0,0,.55)); }
-/* dark metal label plaque a kártya alján */
+.bnav-item .i { width: 92px; height: 92px; display: grid; place-items: center; }
+.bnav-item .i .aic { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 7px rgba(0,0,0,.6)); }
+/* dark metal CAPTION PLATE a kártya alján — fémes gradiens + bevel, olvasható központi felirat */
 .bnav-item .t {
-  display: block; width: 100%; text-align: center; font-size: 10px; letter-spacing: 1px; font-weight: bold; color: #e6eef2;
-  padding: 5px 4px; border-radius: 9px;
-  background: linear-gradient(180deg, rgba(28,32,38,.96), rgba(10,12,16,.98));
-  border: 1px solid rgba(150,166,178,.28);
-  box-shadow: 0 2px 6px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);
+  display: block; width: 100%; text-align: center; font-size: 11px; letter-spacing: 1.2px; font-weight: bold; color: #eef4f8;
+  padding: 6px 6px; border-radius: 11px;
+  background: linear-gradient(180deg, #2b3037 0%, #191d23 52%, #0b0d11 100%);
+  border: 1px solid rgba(165,182,196,.32);
+  box-shadow: 0 3px 9px rgba(0,0,0,.6), inset 0 1.5px 0 rgba(255,255,255,.14), inset 0 -2px 4px rgba(0,0,0,.5);
   text-shadow: 0 1px 2px #000;
 }
-/* aktív = arany label + finom arany emelés/glow az ikonon (NEM teljes arany fill) */
-.bnav-item.active .i .aic { filter: drop-shadow(0 3px 6px rgba(0,0,0,.55)) drop-shadow(0 0 12px rgba(255,190,60,.5)); }
-.bnav-item.active .t { color: #ffe29a; border-color: var(--ui-gold); box-shadow: 0 2px 6px rgba(0,0,0,.55), 0 0 12px rgba(255,190,60,.3), inset 0 1px 0 rgba(255,220,120,.22); }
+/* aktív = arany caption + finom arany emelés/glow az ikonon (NEM teljes arany fill) */
+.bnav-item.active .i .aic { filter: drop-shadow(0 4px 7px rgba(0,0,0,.6)) drop-shadow(0 0 14px rgba(255,190,60,.55)); }
+.bnav-item.active .t {
+  color: #ffe6a0; border-color: var(--ui-gold);
+  background: linear-gradient(180deg, #3a3220 0%, #241c0c 55%, #120d04 100%);
+  box-shadow: 0 3px 9px rgba(0,0,0,.6), 0 0 14px rgba(255,190,60,.32), inset 0 1.5px 0 rgba(255,220,120,.24), inset 0 -2px 4px rgba(0,0,0,.5);
+}
 @media (hover: hover) { .bnav-item:not(.active):hover { transform: translateY(-2px); filter: brightness(1.08); } }
 .bnav-item:active { transform: scale(.95); }
 
@@ -672,10 +682,10 @@ html, body {
   .bhud-shop span { font-size: 13px; }
   /* mobilon kompaktabb vertikális kártyák — NE takarják a hotspotokat, és a 3 kártya
      minél inkább a briefing fölé férjen (a stage alacsony) */
-  .bnav { top: 44px; gap: 5px; }
-  .bnav-item { width: 60px; gap: 2px; }
-  .bnav-item .i { width: 44px; height: 44px; }
-  .bnav-item .t { font-size: 7px; letter-spacing: .3px; padding: 1.5px 2px; border-radius: 6px; }
+  .bnav { top: 44px; gap: 6px; }
+  .bnav-item { width: 66px; gap: 3px; }
+  .bnav-item .i { width: 50px; height: 50px; }
+  .bnav-item .t { font-size: 7.5px; letter-spacing: .4px; padding: 2px 2px; border-radius: 7px; }
   /* hexagon markerek — mobilon is nagy tap-target (min ~56px), olvasható címke */
   .hotspot { width: 118px; height: 96px; }
   .hs-halo { width: 92px; height: 34px; bottom: 16px; }
@@ -762,14 +772,25 @@ html, body {
 .sp-reward b { color: var(--ui-gold); font-weight: bold; }
 .sp-reward b.xp { color: var(--ui-blue); }
 .sp-rec b { color: #cfe0c8; font-weight: bold; }
+/* mission action gomb = prémium 3D-metallic (embossed gloss, mélység-él, külső glow) */
 .sp-start {
-  flex: none; width: auto; min-width: 132px; font-size: 19px; letter-spacing: 1.5px; padding: 18px 26px; align-self: center;
-  background: linear-gradient(180deg, var(--ui-gold-hi) 0%, var(--ui-gold) 46%, var(--ui-gold-dk) 100%); color: #2a1900; border: 1.5px solid #ffe9a8;
-  box-shadow: 0 5px 0 #6a4708, 0 0 22px rgba(255,190,60,.45), var(--ui-bevel);
+  position: relative; overflow: hidden;
+  flex: none; width: auto; min-width: 140px; font-size: 19px; letter-spacing: 1.5px; padding: 18px 28px; align-self: center;
+  background: linear-gradient(180deg, #fff0b8 0%, var(--ui-gold-hi) 22%, var(--ui-gold) 58%, var(--ui-gold-dk) 100%);
+  color: #2a1900; border: 2px solid #fff0b8;
+  box-shadow: 0 6px 0 #6a4708, 0 10px 18px rgba(0,0,0,.5), 0 0 22px rgba(255,190,60,.5), inset 0 2px 0 rgba(255,255,255,.6), inset 0 -3px 6px rgba(120,70,0,.5);
+  text-shadow: 0 1px 0 rgba(255,255,255,.4);
 }
-.sp-start:active { transform: translateY(3px); box-shadow: 0 1px 0 #6a4708, 0 0 16px rgba(255,190,60,.45); }
-.sp-card.n-boss .sp-start { background: linear-gradient(180deg, #ff8a6a, #d43a2a 50%, #9e1e14); color: #fff; border-color: #ffb0a0; box-shadow: 0 4px 0 #5a1008, 0 0 20px rgba(255,70,50,.45), var(--ui-bevel); }
-.sp-card.n-free .sp-start { background: linear-gradient(180deg, #ffe27a, #f2b736 48%, #c9880f); color: #2a1900; border-color: #fff0b0; box-shadow: 0 4px 0 #6a4a08, 0 0 20px rgba(255,190,60,.45), var(--ui-bevel); }
+.sp-start::before { content: ''; position: absolute; top: 2px; left: 8px; right: 8px; height: 42%; border-radius: 10px 10px 40% 40%; background: linear-gradient(180deg, rgba(255,255,255,.5), transparent); pointer-events: none; }
+.sp-start:active { transform: translateY(4px); box-shadow: 0 2px 0 #6a4708, 0 4px 10px rgba(0,0,0,.5), 0 0 16px rgba(255,190,60,.45), inset 0 2px 0 rgba(255,255,255,.55), inset 0 -3px 6px rgba(120,70,0,.5); }
+/* BOSS = vörös action */
+.sp-card.n-boss .sp-start {
+  background: linear-gradient(180deg, #ffc0ac 0%, #ff7a5c 24%, #d43a2a 60%, #9e1e14 100%); color: #fff; border-color: #ffc8b8;
+  box-shadow: 0 6px 0 #5a1008, 0 10px 18px rgba(0,0,0,.5), 0 0 22px rgba(255,70,50,.5), inset 0 2px 0 rgba(255,255,255,.42), inset 0 -3px 6px rgba(90,16,8,.6);
+  text-shadow: 0 1px 2px rgba(80,0,0,.5);
+}
+.sp-card.n-boss .sp-start:active { transform: translateY(4px); box-shadow: 0 2px 0 #5a1008, 0 4px 10px rgba(0,0,0,.5), 0 0 16px rgba(255,70,50,.45), inset 0 2px 0 rgba(255,255,255,.35), inset 0 -3px 6px rgba(90,16,8,.6); }
+.sp-card.n-free .sp-start { background: linear-gradient(180deg, #fff0b8 0%, #ffe27a 24%, #f2b736 58%, #c9880f 100%); color: #2a1900; border-color: #fff0b8; box-shadow: 0 6px 0 #6a4a08, 0 10px 18px rgba(0,0,0,.5), 0 0 22px rgba(255,190,60,.5), inset 0 2px 0 rgba(255,255,255,.55), inset 0 -3px 6px rgba(120,70,0,.5); }
 .sp-locked { text-align: center; color: #ff9a7a; font-size: 11px; padding: 9px 4px 2px; }
 
 /* --- kártyák (bolt, labor) --- */

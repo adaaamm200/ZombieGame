@@ -18,6 +18,29 @@ Entry format:
 
 ---
 
+### 2026-07-09 — Enlarge board nav buttons and make action buttons 3D-metallic
+- Goal (zombie-code-implementer, focused CSS-only pass): make the board left nav buttons
+  bigger/clearer/more premium, and make the mission action buttons match the premium 3D
+  metallic icon language.
+- Files changed: css/style.css, sw.js (zk-v27), docs/STATUS.md, CHANGELOG_AI.md.
+- What changed:
+  - Left nav cards: card 96→110px, icon 80→92px (desktop; mobile icon 44→50px). Label now
+    on a dedicated metallic caption plate (gradient + bevel highlight + inner shadow + border),
+    11px, centered/readable. Active = gold caption + subtle gold icon glow (no full fill).
+  - Mission action buttons (.sp-start + n-boss/n-free, .btn.primary, .btn.danger): 3D metallic
+    treatment — embossed top gloss (::before), 4-stop gradient, 3D bottom edge (0 6px 0),
+    depth shadow + outer glow + inset top highlight + inner bottom shadow; press = translateY.
+    Gold for normal actions (START/INDULÁS/REPLAY/START RUN), red for boss (FIGHT BOSS).
+- Tests run: node --check all JS (OK); DOM metrics + computed styles: nav card 110×123/icon 92,
+  caption metallic+bevel; START button 4+ layer 3D shadow + gradient + ::before; panel states
+  current→START/boss→FIGHT BOSS(red)/scavenge→START RUN/completed→REPLAY; nav clears hotspots
+  on desktop/mobile/ultrawide; 16:9 preserved; 0 console errors. Solved purely in CSS.
+  NOTE: preview screenshot tool stuck this session (environmental) — CSS-only change verified
+  via DOM computed-style + size metrics (authoritative for styling).
+- What was not changed: gameplay, map, mission flow, assets, save, other UI.
+- Next recommended step: fresh-session screenshot confirmation of the premium buttons; then
+  the board/briefing elements polish pass (DAY banner/plaque, danger meter, XP, supply crate).
+
 ### 2026-07-09 — Make service worker updates reliable (fix stale icons)
 - Goal: Fix "the game doesn't update even after 100 reloads" — the cache-first SW kept
   serving old assets despite version bumps.

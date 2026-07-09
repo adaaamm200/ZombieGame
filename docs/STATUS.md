@@ -11,6 +11,28 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## BOARD BAL NAV NAGYOBB + MISSION ACTION GOMBOK 3D-METALLIC (2026-07-09)
+- **Fókuszált UI-polish (csak CSS)**: a board bal nav gombok + a mission action gombok.
+- **Bal nav kártyák nagyobb + prémiumabb** (`css/style.css`): kártya 96→**110px**,
+  ikon 80→**92px** (desktop); a felirat KÜLÖN **fémes caption-plate**-en ül (metál
+  gradiens + felső bevel-fény + alsó belső árnyék + keret), 10→**11px**, olvasható,
+  központi. Aktív = arany caption + finom arany ikon-glow (nem teljes fill). Mobil:
+  ikon 44→**50px**, kártya 60→66px (a hotspotokat nem takarja: nav jobb szél 76 < 119).
+- **Mission action gombok 3D-metallic** (`.sp-start` + n-boss/n-free, `.btn.primary`,
+  `.btn.danger`): embossed felső gloss (`::before`), gazdagabb 4-stop gradiens, **3D
+  alsó él** (`0 6px 0`), mélység-árnyék + külső glow + belső felső fény + alsó belső
+  árnyék; press = translateY + lecsökkentett él. **Arany** a normál akcióknál
+  (START/INDULÁS/REPLAY/START RUN), **vörös** a bossnál (FIGHT BOSS).
+- **TESZTELVE (DOM-metrika + computed style)**: nav-kártya 110×123/ikon 92/plate 26px,
+  caption fémes gradiens+bevel; START-gomb 4+ rétegű 3D box-shadow + gradiens + ::before.
+  Panel-állapotok: current→START (arany), **boss→FIGHT BOSS (vörös, feloldva)**,
+  scavenge→START RUN, completed→REPLAY — mind a prémium 3D kezeléssel. Nav a hotspotokat
+  NEM takarja desktop/mobil/ultrawide-on; 16:9 megőrizve minden viewporton. **0 konzolhiba.**
+  (A preview screenshot-tool ebben a sessionben tartósan beragadt — környezeti hiba;
+  a stílus tisztán CSS, a verifikáció DOM computed-style + méret-metrika alapján.)
+- Csak CSS változott — gameplay/map/mission-flow/asset/save ÉRINTETLEN. node --check OK.
+- sw.js cache: **zk-v27**.
+
 ## SW CACHE FRISSÍTÉS-JAVÍTÁS — „nem frissül a játék" (2026-07-09)
 - **Panasz**: a user 100× újratöltött, de az ikonok ugyanúgy néztek ki. Ok: a cache-first
   service worker a régi cache-elt asseteket szolgálta ki, és a verzió-bump ellenére sem
