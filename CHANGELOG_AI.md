@@ -18,6 +18,48 @@ Entry format:
 
 ---
 
+### 2026-07-09 — Integrate new enemy sprite sheets into gameplay (7 types)
+- Goal: Replace the procedurally-drawn in-game zombies with the new multi-pose sprite sheets,
+  visible and playable, with per-type animation states, grounded feet, tuned hitboxes, and a
+  debug spawn system. Priority pivot away from menu/UI polish.
+- Files: tools/prepare-enemy-sprites.js (new slicer), assets/enemies/* (7 cleaned sheets +
+  enemy_atlas.json), js/enemy_sprites.js (new image sprite layer), index.html (script),
+  js/main.js (loader + debug keys 1-7/H), js/sprites.js (drawZombie routes to sprites,
+  procedural fallback), js/game.js (anim state machine, bloater burst, debug spawn+hitbox
+  overlay), js/const.js (bloater type + spawn table + hitbox sizes tuned to sprites), sw.js
+  (precache + zk-v33). Sources kept in assets/references/zombies/.
+- What changed:
+  - Slicer (zero-dep): edge flood-fill LIGHT-bg removal (keeps dark silhouettes — NOT black
+    threshold), half-res, explicit grid slice (3x2 / 2x3 / boss 3x3) + per-cell content trim →
+    clean transparent sheets + atlas (frame rects + feet anchor). All 6/6 (boss 9/9) frames
+    detected; verified via debug overlays.
+  - Runtime enemy sprite layer: loads sheets+atlas; per-type config (target height, state→frame
+    lists, frame timing, shadow); feet-anchored draw (bottom-center at GROUND_Y), facing flip,
+    hit-flash tint, enrage tint, HP bar, elite ground ring, shadow. Falls back to procedural if
+    assets fail (no crash).
+  - Enemy roles mapped to sprites: walker=Basic Walker, runner=Runner, crawler=Crawler,
+    spitter=Toxic Spitter, brute=Tank/Brute, boss=Infected Nest, + NEW bloater=Volatile Bloater
+    (proximity warning → area burst; also bursts when shot; code-driven orange VFX + AoE).
+  - Animation state machine in the enemy update: idle/move/attack/hit/warning/defeated + boss
+    states (attack/summon/rage); flags set from gameplay (moving, attackingAnim, warnT,
+    bossState) and stepped each frame.
+  - Hitbox tuning: def.w/def.h resized to match the larger sprites (gameplay balance hp/dmg/
+    speed UNCHANGED — only the collision box follows the art). Sizes calibrated for ZOOM=1.75.
+  - Debug: keys 1-7 spawn walker/runner/tank/spitter/bloater/crawler/boss near the player; H
+    toggles a hitbox overlay. ZD.game.debugSpawn/debugToggleHitbox exposed.
+- Tests run: node --check all JS (OK). Real-Chrome on localhost, free run: enemy sheets load
+  (ready=true, has() true for all 7); static + live renders confirmed walker/runner/spitter
+  (spitting)/bloater/brute/boss render with the new art, feet grounded at the ground line,
+  hitboxes aligned to bodies, spitter attack animation visible; 0 console errors.
+- What was NOT changed: campaign/economy/save/weapon balance; the spit projectile still uses
+  the existing procedural blob (the extracted 'projectile'/'eruption'/'icon' atlas frames are
+  available for later use). Menu/UI parked as requested.
+- Open questions: (1) exact per-type scale/hitbox fine-tuning is eyeball-calibrated — adjust
+  after playing on device. (2) Use extracted spitter 'projectile' + boss 'attack_projectile'/
+  'summon' VFX frames for richer effects? (3) crawler low-profile hitbox feel OK?
+- Next: play-test on device via debug keys, fine-tune scale/hitbox/anim timing; optionally wire
+  the extracted projectile/summon VFX frames.
+
 ### 2026-07-09 — Fix footer overlap + network-first SW (stop stale cache)
 - Goal: Two real bugs confirmed via REAL Chrome on the live site: (1) the fixed footer
   "For personal use only. | build vXX" had a near-transparent gradient bg → it visually

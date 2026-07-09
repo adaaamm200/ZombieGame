@@ -206,6 +206,9 @@ ZD.game = (() => {
       /* defense: a zombik egy része a generátorra megy */
       tgt: st.gen && type !== 'spitter' && chance(0.55) ? 'gen' : 'player',
       minion: !!opts.minion,
+      /* sprite-animáció + speciális állapotok */
+      anim: null, moving: false, attackingAnim: 0, warnT: 0, bursting: false,
+      bossState: null, bossStateT: 0,
     });
   }
 
@@ -426,6 +429,22 @@ ZD.game = (() => {
     if (st.decals.length > 40) st.decals.shift();
   }
 
+  /* BLOATER robbanás: halál + loot + területi sebzés a játékosra ÉS a közeli zombikra,
+     narancs-vörös VFX. (Kód-vezérelt burst — nincs dedikált burst-frame.) */
+  function bloaterBurst(z) {
+    if (z.bursting) return;
+    z.bursting = true;
+    const R = z.def.burstR || 74, dmg = z.def.burstDmg || 26;
+    const cy = C.GROUND_Y - z.def.h * 0.45;
+    if (!z.dead) killZombie(z);   // dead=true → az explode kihagyja a bloatert
+    explode(z.x, cy, dmg, R);     // AoE a többi zombira + boom + shake
+    for (let i = 0; i < 26; i++) {
+      const a = Math.random() * 6.28, sp = rand(40, R * 2.4);
+      st.parts.push({ x: z.x, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 30, life: rand(0.25, 0.6), color: chance(0.5) ? '#ff7a2a' : '#ffc24d', size: rand(2, 4), grav: 0 });
+    }
+    if (Math.abs(st.player.x - z.x) < R) hurtPlayer(dmg);
+  }
+
   /* ---------- sebzés a zombinak (dir: vérfröccsenés iránya) ---------- */
   function hurtZombie(z, dmg, crit, dir = 0) {
     z.hp -= dmg;
@@ -457,7 +476,10 @@ ZD.game = (() => {
     }
     if (chance(0.3)) addDecal(z.x + dir * 6, false);
     ZD.audio.play('hit');
-    if (z.hp <= 0 && !z.dead) killZombie(z);
+    if (z.hp <= 0 && !z.dead) {
+      if (z.type === 'bloater') bloaterBurst(z);  // lelőve is robban
+      else killZombie(z);
+    }
   }
 
   function killZombie(z) {
@@ -639,10 +661,14 @@ ZD.game = (() => {
 
     /* — zombik — */
     st.zombies.forEach((z) => {
-      if (z.dead) { z.deathT += dt; return; }
+      if (z.dead) { z.deathT += dt; if (ZD.enemySprites) ZD.enemySprites.stepAnim(z, dt); return; }
       z.phase += dt * (4 + z.speed * 0.06);
       if (z.flash > 0) z.flash -= dt;
       if (z.atkCd > 0) z.atkCd -= dt;
+      /* animációs jelzők (a sprite-animátornak) */
+      if (z.attackingAnim > 0) z.attackingAnim -= dt;
+      if (z.bossStateT > 0) { z.bossStateT -= dt; if (z.bossStateT <= 0) z.bossState = null; }
+      z.moving = false;
 
       // visszalökés
       if (z.kb !== 0) {
@@ -670,15 +696,31 @@ ZD.game = (() => {
             dmg: z.dmg,
           });
           ZD.audio.play('spit');
+          z.attackingAnim = 0.35;
         }
       } else if (dist > z.def.reach) {
         z.x += Math.sign(dx) * z.speed * dt;
+        z.moving = true;
       } else if (z.atkCd <= 0) {
         // közelharci támadás — játékosra vagy generátorra
         z.atkCd = z.def.atkCd;
+        z.attackingAnim = 0.3;
         if (z.tgt === 'gen' && st.gen) hurtGen(z.dmg);
         else hurtPlayer(z.dmg);
         if (z.type === 'boss' || z.type === 'brute') st.shake = Math.max(st.shake, 3);
+        if (z.type === 'boss') { z.bossState = 'attack'; z.bossStateT = 0.4; }
+      }
+
+      /* BLOATER: lassú; közel a célhoz → begyújt (warning), majd területi robbanás.
+         (Robbanás halálkor is — lásd a hurtZombie/killZombie ágat.) */
+      if (z.type === 'bloater' && !z.bursting) {
+        if (z.warnT > 0) {
+          z.warnT -= dt;
+          if (z.warnT <= 0) { bloaterBurst(z); }
+        } else if (dist < (z.def.reach + 22)) {
+          z.warnT = 0.75;
+          ZD.audio.play('groan');
+        }
       }
 
       // boss: fázisváltások + telegrafált földcsapás (fair, kitérhető)
@@ -711,6 +753,7 @@ ZD.game = (() => {
           const minions = st.zombies.filter((m) => m.minion && !m.dead).length;
           if (z.summonCd <= 0 && minions < 3) {
             z.summonCd = 6;
+            z.bossState = 'summon'; z.bossStateT = 0.5;
             spawnZombie(chance(0.5) ? 'walker' : 'runner', { minion: true });
             st.shake = Math.max(st.shake, 3);
           }
@@ -734,6 +777,7 @@ ZD.game = (() => {
         if (z.slamCd <= 0) {
           z.slamCd = z.ph1 ? 4.5 : 6;
           z.slamWarned = false;
+          z.bossState = 'attack'; z.bossStateT = 0.45;
           ZD.audio.play('slam');
           st.shake = Math.max(st.shake, 7);
           if (Math.abs(p.x - z.x) < slamR) hurtPlayer(z.dmg * 0.8);
@@ -745,6 +789,9 @@ ZD.game = (() => {
           }
         }
       }
+
+      /* sprite-animátor léptetése (a kiválasztott állapot + frame-idő szerint) */
+      if (ZD.enemySprites) ZD.enemySprites.stepAnim(z, dt);
     });
     // holttestek eltávolítása az animáció után
     st.zombies = st.zombies.filter((z) => !z.dead || z.deathT < 1.3);
@@ -1113,6 +1160,7 @@ ZD.game = (() => {
       SP.drawZombie(ctx, {
         type: z.type, variant: z.variant, x: z.x, y: C.GROUND_Y,
         facing: z.facing, phase: z.phase, dead: true, deathT: z.deathT, hpRatio: 0,
+        anim: z.anim, flash: 0, elite: z.elite,
       });
     });
 
@@ -1138,8 +1186,24 @@ ZD.game = (() => {
         flash: z.flash, dead: false, deathT: 0,
         elite: z.elite, enrage: z.enrage,
         hpRatio: z.hp / z.maxHp,
+        anim: z.anim, moving: z.moving, attackingAnim: z.attackingAnim,
+        warnT: z.warnT, bossState: z.bossState,
       });
     });
+
+    /* DEBUG hitbox-overlay: a tényleges ütköződoboz (def.w × def.h a talptól) */
+    if (dbg.hitbox) {
+      st.zombies.forEach((z) => {
+        if (z.dead) return;
+        ctx.save();
+        ctx.strokeStyle = z.type === 'boss' ? '#ff3b3b' : z.type === 'bloater' ? '#ff8a2a' : '#38ff9a';
+        ctx.lineWidth = 0.6;
+        ctx.strokeRect(z.x - z.def.w / 2, C.GROUND_Y - z.def.h, z.def.w, z.def.h);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(z.x - 0.6, C.GROUND_Y - 0.6, 1.2, 1.2); // talp-anchor
+        ctx.restore();
+      });
+    }
 
     /* játékos (sérülésnél villog; halálnál eldől) */
     if (st.dying > 0) {
@@ -1357,5 +1421,19 @@ ZD.game = (() => {
     }
   }
 
-  return { st, start, update, render, pause, resume, quit, calcStats, curWeapon };
+  /* ---------- DEBUG: gyors ellenség-spawn + hitbox overlay (teszteléshez) ---------- */
+  const dbg = { hitbox: false };
+  function debugSpawn(type) {
+    if (!st.running) { console.warn('[debug] indíts előbb egy pályát (spawn csak játékban)'); return; }
+    if (!C.ZOMBIES[type]) { console.warn('[debug] ismeretlen típus:', type); return; }
+    spawnZombie(type);
+    const z = st.zombies[st.zombies.length - 1];
+    z.x = Math.min(C.WORLD_W - 30, st.cam + C.VIEW_W - 34);  // a kamera jobb szélére → gyorsan belép
+    z.facing = -1;
+    console.log('[debug] spawn', type, '@x', Math.round(z.x));
+    return z;
+  }
+  function debugToggleHitbox() { dbg.hitbox = !dbg.hitbox; console.log('[debug] hitbox overlay:', dbg.hitbox); return dbg.hitbox; }
+
+  return { st, start, update, render, pause, resume, quit, calcStats, curWeapon, debugSpawn, debugToggleHitbox, dbg };
 })();

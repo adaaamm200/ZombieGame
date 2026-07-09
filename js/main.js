@@ -24,6 +24,17 @@ window.ZD = window.ZD || {};
   window.addEventListener('load', fit);
   setTimeout(fit, 120); // iOS PWA: első layout után újraszámolás
 
+  /* DEBUG: ellenség-spawn 1–7 + hitbox overlay (H) — gyors vizuális teszthez.
+     1=walker 2=runner 3=tank(brute) 4=spitter 5=bloater 6=crawler 7=boss */
+  const DBG_KEYS = { '1': 'walker', '2': 'runner', '3': 'brute', '4': 'spitter', '5': 'bloater', '6': 'crawler', '7': 'boss' };
+  window.addEventListener('keydown', (e) => {
+    if (e.repeat) return;
+    const tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return; // ne zavarjuk a szövegbevitelt
+    if (DBG_KEYS[e.key] && ZD.game.debugSpawn) ZD.game.debugSpawn(DBG_KEYS[e.key]);
+    else if ((e.key === 'h' || e.key === 'H') && ZD.game.debugToggleHitbox) ZD.game.debugToggleHitbox();
+  });
+
   /* gesztusok tiltása (iOS dupla koppintás zoom, pinch) */
   document.addEventListener('gesturestart', (e) => e.preventDefault());
   document.addEventListener('dblclick', (e) => e.preventDefault());
@@ -60,6 +71,7 @@ window.ZD = window.ZD || {};
   /* indítás */
   ZD.save.load();
   ZD.save.requestPersistent(); // kérjük a böngészőt: ne törölje magától a mentést
+  if (ZD.enemySprites) ZD.enemySprites.load(); // kép-alapú ellenség-sprite-ok betöltése
   ZD.ui.build();
   ZD.input.setup();
   ZD.ui.show('title');

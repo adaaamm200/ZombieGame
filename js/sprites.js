@@ -641,8 +641,16 @@ ZD.sprites = (() => {
   });
 
   function drawZombie(ctx, z) {
-    /* z: {type, variant, x, y, facing, phase, attacking, atkT, flash, dead, deathT, hpRatio} */
-    const sheets = ZSHEETS[z.type][z.variant || 0];
+    /* z: {type, variant, x, y, facing, phase, attacking, atkT, flash, dead, deathT, hpRatio,
+          anim, moving, attackingAnim, warnT, bossState, elite, enrage} */
+    /* ÚJ: kép-alapú sprite, ha betöltött; különben a procedurális rajz (alább) */
+    if (ZD.enemySprites && ZD.enemySprites.has(z.type)) {
+      if (ZD.enemySprites.draw(ctx, z, z.y)) return;
+    }
+    /* procedurális fallback — új típusnak (bloater) nincs saját proc-sheetje → brute-ot használ */
+    const ptype = ZSHEETS[z.type] ? z.type : (z.type === 'bloater' ? 'brute' : 'walker');
+    const sheets = ZSHEETS[ptype][z.variant || 0];
+    z = (ptype === z.type) ? z : Object.assign({}, z, { type: ptype });
 
     if (z.dead) {
       // hátraeséses halál: forgás a láb körül, majd elhalványul

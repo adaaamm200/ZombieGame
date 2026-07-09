@@ -3,7 +3,7 @@ window.ZD = window.ZD || {};
 
 /* Betöltött build-verzió (a főmenü sarkában látszik). BUMPOLD az sw.js VERSION-nel együtt!
    Ha a telefonon régi számot látsz → a régi cache ragadt be (töröld a webhelyadatot). */
-ZD.BUILD = 'v32';
+ZD.BUILD = 'v33';
 
 ZD.C = {
   VIEW_W: 480,
@@ -119,15 +119,18 @@ ZD.C = {
   ],
 
   /* Zombik — speed: [min,max], coin: alap érme-érték (méretek ~1.3×, hitbox = látvány) */
+  /* w/h = ütköződoboz (a látvány-sprite-hoz hangolva, hogy a találat a testre essen).
+     A hp/dmg/speed BALANSZ VÁLTOZATLAN — csak a doboz-méret követi az új, nagyobb sprite-okat. */
   ZOMBIES: {
-    walker:  { hp: 42,   dmg: 9,  speed: [24, 34], coin: 6,   w: 21, h: 39, reach: 20, atkCd: 1.0 },
-    runner:  { hp: 24,   dmg: 7,  speed: [70, 92], coin: 7,   w: 18, h: 36, reach: 18, atkCd: 0.8 },
-    crawler: { hp: 34,   dmg: 8,  speed: [42, 58], coin: 8,   w: 26, h: 17, reach: 19, atkCd: 0.9 },
-    spitter: { hp: 48,   dmg: 11, speed: [20, 28], coin: 12,  w: 21, h: 40, reach: 20, atkCd: 2.2, range: 250 },
-    brute:   { hp: 260,  dmg: 24, speed: [16, 22], coin: 35,  w: 31, h: 49, reach: 28, atkCd: 1.4 },
+    walker:  { hp: 42,   dmg: 9,  speed: [24, 34], coin: 6,   w: 24, h: 44, reach: 20, atkCd: 1.0 },
+    runner:  { hp: 24,   dmg: 7,  speed: [70, 92], coin: 7,   w: 22, h: 42, reach: 18, atkCd: 0.8 },
+    crawler: { hp: 34,   dmg: 8,  speed: [42, 58], coin: 8,   w: 34, h: 24, reach: 19, atkCd: 0.9 },
+    spitter: { hp: 48,   dmg: 11, speed: [20, 28], coin: 12,  w: 24, h: 46, reach: 20, atkCd: 2.2, range: 250 },
+    bloater: { hp: 90,   dmg: 10, speed: [16, 26], coin: 16,  w: 40, h: 52, reach: 22, atkCd: 1.2, burstR: 78, burstDmg: 30 },
+    brute:   { hp: 260,  dmg: 24, speed: [16, 22], coin: 35,  w: 42, h: 60, reach: 28, atkCd: 1.4 },
     /* boss hp/dmg futásidőben a bossHp()/bossDmg() szerint (fair, tanulható); az itteni
        hp/dmg csak fallback-referencia. coin/méret/atkCd innen jön. */
-    boss:    { hp: 2050, dmg: 26, speed: [20, 26], coin: 300, w: 48, h: 67, reach: 42, atkCd: 2.0 },
+    boss:    { hp: 2050, dmg: 26, speed: [20, 26], coin: 300, w: 64, h: 84, reach: 44, atkCd: 2.0 },
   },
 
   /* Melyik szinttől jelenik meg az adott típus, súlyozva */
@@ -136,6 +139,7 @@ ZD.C = {
     if (level >= 2) t.push(['runner', 4 + Math.min(level, 8)]);
     if (level >= 4) t.push(['crawler', 3 + Math.min(level, 6)]);
     if (level >= 6) t.push(['spitter', 2 + Math.min(level, 5)]);
+    if (level >= 7) t.push(['bloater', 2 + Math.min(level, 4)]);
     if (level >= 8) t.push(['brute', 1 + Math.floor(level / 6)]);
     return t;
   },
