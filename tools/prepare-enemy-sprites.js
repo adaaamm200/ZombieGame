@@ -45,6 +45,9 @@ function removeLightBg(s, hardTh, softLo) {
     const nearBg = (x > 0 && bg[i - 1]) || (x < w - 1 && bg[i + 1]) || (y > 0 && bg[i - w]) || (y < h - 1 && bg[i + w]);
     if (nearBg) { const mn = Math.min(px[o], px[o + 1], px[o + 2]); if (mn > softLo) px[o + 3] = Math.max(0, Math.min(255, Math.round(255 * (hardTh - mn) / (hardTh - softLo)))); }
   }
+  /* DEFRINGE: a háttér+feather (alpha<255) RGB-jét SÖTÉTRE állítjuk, hogy a skálázás/
+     imageSmoothing NE szivárogtasson fehér halót az élekre (fehér foltok mozgás közben). */
+  for (let i = 0; i < N; i++) { const o = i * 4; if (px[o + 3] < 255) { px[o] = 0; px[o + 1] = 0; px[o + 2] = 0; } }
   return s;
 }
 

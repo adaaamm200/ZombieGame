@@ -26,6 +26,8 @@ function removeLightBg(s, hardTh, softLo) {
   for (let y = 0; y < h; y++) { pushIf(y * w); pushIf(y * w + w - 1); }
   while (stack.length) { const i = stack.pop(); const x = i % w, y = (i / w) | 0; if (x > 0) pushIf(i - 1); if (x < w - 1) pushIf(i + 1); if (y > 0) pushIf(i - w); if (y < h - 1) pushIf(i + w); }
   for (let i = 0; i < N; i++) { const o = i * 4; if (bg[i]) { px[o + 3] = 0; continue; } const x = i % w, y = (i / w) | 0; const nb = (x > 0 && bg[i - 1]) || (x < w - 1 && bg[i + 1]) || (y > 0 && bg[i - w]) || (y < h - 1 && bg[i + w]); if (nb) { const mn = Math.min(px[o], px[o + 1], px[o + 2]); if (mn > softLo) px[o + 3] = Math.max(0, Math.min(255, Math.round(255 * (hardTh - mn) / (hardTh - softLo)))); } }
+  /* DEFRINGE: háttér+feather RGB → fekete (nincs fehér halo a skálázott éleken) */
+  for (let i = 0; i < N; i++) { const o = i * 4; if (px[o + 3] < 255) { px[o] = 0; px[o + 1] = 0; px[o + 2] = 0; } }
   return s;
 }
 /* futamok: on-indexek maximális futamai, ha az elválasztó rés >= gap */

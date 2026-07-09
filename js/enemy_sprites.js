@@ -30,7 +30,7 @@ ZD.enemySprites = (() => {
   /* ---- HD JÁTÉKOS-SPRITE (assets/player/) ---- */
   const PBASE = 'assets/player/';
   const P_CFG = {
-    h: 48, ref: 'walk_0',    // cél-magasság + skála-referencia frame (álló testmagasság)
+    h: 54, ref: 'walk_0',    // cél-magasság + skála-referencia frame (álló testmagasság)
     states: {
       idle: ['aim_0'],
       move: ['walk_0', 'walk_1', 'walk_2', 'walk_3'],
@@ -234,11 +234,13 @@ ZD.enemySprites = (() => {
   function hasPlayer() { return pReady && !!pAtlas && !!pImg && pImg.naturalWidth > 0; }
   function drawPlayer(ctx, o) {
     if (!hasPlayer()) return false;
+    /* állapot-prioritás: MOZGÁS a lövés ELŐTT → mozgás+lövés közben a járás-póz marad
+       (a torkolattűz külön játszik), nincs villogó járás↔lövés váltás. */
     let key;
     if (o.deathT > 0) key = P_CFG.states.death[0];
     else if (o.reloadT > 0) key = P_CFG.states.reload[((1 - o.reloadT / 0.5) * P_CFG.states.reload.length) | 0] || P_CFG.states.reload[0];
-    else if (o.fireAnim > 0) key = P_CFG.states.fire[o.muzzleSeed % P_CFG.states.fire.length];
     else if (o.moving) key = P_CFG.states.move[((o.phase || 0) * 1.6 | 0) % P_CFG.states.move.length];
+    else if (o.fireAnim > 0) key = P_CFG.states.fire[(o.muzzleSeed || 0) % P_CFG.states.fire.length];
     else key = P_CFG.states.idle[0];
     const f = pAtlas.frames[key] || pAtlas.frames[P_CFG.ref]; if (!f) return false;
     const dw = f.w * pScale, dh = f.h * pScale;

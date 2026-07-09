@@ -1,5 +1,5 @@
 /* Zombi Krónika — offline service worker (cache-first) */
-const VERSION = 'zk-v34';
+const VERSION = 'zk-v35';
 const ASSETS = [
   './',
   './index.html',
