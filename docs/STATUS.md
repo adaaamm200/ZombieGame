@@ -11,6 +11,28 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## BOARD NAV + SHOP CTA PRÉMIUM KOMPOZÍCIÓ (2026-07-09)
+- **Ok**: a board bal nav (Campaign/Scavenge/Settings) és a jobb-felső SHOP gomb még
+  „régi gomb + kis ikon + sárga paca" hatású volt — a 3D asset jó, a komponálás rossz.
+- **Bal nav → prémium VERTIKÁLIS 3D kártyák** (`css/style.css`): a nagy 3D octagon-asset
+  a fő látvány (ikon 80px desktop / 44px mobil, `object-fit: contain`, semmi clip), alatta
+  KÜLÖN **dark-metal label plaque** (CAMPAIGN/SCAVENGE/SETTINGS, olvasható). A „sárga
+  paca" (teljes arany fill az aktívnál) eltávolítva → aktív = arany label + finom arany
+  ikon-glow (NEM teljes fill). Nincs dupla keret/glow (az asset saját kerete a látvány).
+- **SHOP → prémium horizontal CTA**: dark-metal + gold border plaque, **nagy 3D kosár-
+  asset (46px)** bal oldalt + gold „SHOP" felirat jobbra (nem arany paca kis ikonnal).
+  Az `m-shop` asset saját arany 3D glow-ja dominál. (JS: a shop-ikon `aic-inline`→sima
+  asset, hogy 46px-re méreteződjön.)
+- **TESZTELVE** (screenshot + DOM): desktop board — a bal nav prémium vertikális kártyák
+  (nagy 3D ikon + dark label plaque), SHOP nagy kosárral — **screenshot-igazolt**. DOM:
+  nav-kártya 96px/ikon 80px, shop-ikon 46px, a nav NEM takarja a hotspotokat (jobb szél
+  104 < hotspot 248). Mobil 812×375: nav-ikon 44px, hotspotokat nem takar (74 < 119) —
+  a briefing bottom-sheet a legalsó (SETTINGS) kártya alját fedheti (mobil UX-korlát,
+  a SETTINGS a topbar fogaskerékkel is elérhető). Ultrawide 16:9 megőrizve.
+  Regresszió: főmenü ikonok + armory back (64×48) OK. **0 konzolhiba.**
+- Csak board nav/shop CSS + 1 sor JS változott — gameplay/map-bg/hotspot-poz/save ÉRINTETLEN.
+- sw.js cache: **zk-v25**. `node --check` mind a JS-re OK.
+
 ## PREMIUM UI KIT v1 INTEGRÁCIÓ — 3D ikonok + logó 1:1 beépítve (2026-07-09)
 - **Forrás**: `assets/references/ui_kit_v1/` (owner által generált, KÜLÖN komponált
   production ikonok/logó — nem sheet, nincs slicing). Runtime nevekre beépítve.

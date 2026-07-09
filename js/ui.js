@@ -574,7 +574,7 @@ ZD.ui = (() => {
     $('#bd-num').textContent = T('day.label') + ' 1';
     $('#bd-name').textContent = boardDayName(1).toUpperCase();
     $('#bhud-coin').innerHTML = AIMG('coin', 'coin-ic') + `<b>${fmt(S().coins)}</b>`;
-    $('#bhud-shop-ic').innerHTML = AIMG('shop', 'aic-inline');
+    $('#bhud-shop-ic').innerHTML = AIMG('shop');
     $('#bhud-shop-t').textContent = T('board.shop');
     $('#nav-camp-ic').innerHTML = AIMG('campaign'); $('#nav-camp-t').textContent = T('nav.campaign');
     $('#nav-scav-ic').innerHTML = AIMG('scavenge'); $('#nav-scav-t').textContent = T('nav.scavenge');
