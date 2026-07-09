@@ -19,6 +19,7 @@
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
   --sar: env(safe-area-inset-right, 0px);
+  --sat: env(safe-area-inset-top, 0px);
 
   /* ============================================================
      ZOMBIECHRONICLES PRÉMIUM DESIGN SYSTEM (board/style-sheet illesztés)
@@ -44,7 +45,9 @@
 }
 
 html, body {
+  width: 100%;
   height: 100%;
+  height: 100dvh;
   background: #000;
   overflow: hidden;
   touch-action: none;
@@ -80,6 +83,13 @@ html, body {
 }
 
 .hidden { display: none !important; }
+
+/* Menü / board / bolt képernyők konténere: a #stage 16:9 dobozán KÍVÜL, TELJES
+   viewportot kitöltő fullscreen-mobile felület. A konténer maga átereszti az
+   eseményeket (pointer-events:none) — így gameplay közben (a screenek display:none)
+   a canvas/HUD/touch-gombok kapják a bemenetet; a látható .screen viszont fog. */
+#screens { position: fixed; inset: 0; z-index: 40; pointer-events: none; }
+.screen { pointer-events: auto; }
 
 /* ============ HUD ============ */
 #hud { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
@@ -289,7 +299,8 @@ html, body {
   color: var(--text); background: var(--ui-panel); border: 1.5px solid var(--ui-border); box-shadow: var(--ui-bevel);
 }
 @media (hover: hover) { .title-gear:hover { filter: brightness(1.25); } }
-.title-inner { display: flex; flex-direction: column; align-items: center; width: 100%; min-height: 100%; padding: 48px 16px calc(10px + var(--sab)); }
+/* alul plusz hely a FIX lábléc alá (a görgethető menü ne bújjon a footer mögé) */
+.title-inner { display: flex; flex-direction: column; align-items: center; width: 100%; min-height: 100%; padding: 48px 16px calc(36px + var(--sab)); }
 .brand-logo {
   /* átlátszó, vízszintes lockup (assets/ui/logo.png) — NINCS mix-blend, a PNG maga a látvány */
   width: min(460px, 84vw); max-height: 21vh; object-fit: contain; margin: 1.2vh 0 0.6vh;
@@ -378,28 +389,30 @@ html, body {
 .title-save .ts-tx b { font-size: 11px; letter-spacing: 1px; }
 .title-save .ts-tx small { font-size: 8.5px; color: var(--muted); font-weight: normal; }
 @media (hover: hover) { .title-save:hover { filter: brightness(1.15); } }
-.title-note { margin-top: auto; padding-top: 14px; font-size: 10px; color: var(--muted); text-shadow: 0 1px 0 #000; text-align: center; }
-/* verzió-jelző a főmenü sarkában — látszik, tényleg a friss build töltött-e be */
+/* FIX alsó lábléc — a görgethető menütől FÜGGETLENÜL a képernyő alján ül (safe-area
+   aware), NEM a menü-lista gyereke, NEM scrollozik. „Egyéni felhasználásra" + build. */
+.app-footer {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; pointer-events: none;
+  display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+  padding: 6px calc(10px + var(--sar)) calc(6px + var(--sab)) calc(10px + var(--sal));
+  background: linear-gradient(0deg, rgba(4,6,9,.72), transparent);
+}
+.app-footer .af-note { font-size: 10px; letter-spacing: .5px; color: var(--muted); text-shadow: 0 1px 0 #000; }
+/* verzió-jelző — látszik, tényleg a friss build töltött-e be (a láblécben) */
 .build-badge {
-  position: absolute; right: calc(8px + var(--sar)); bottom: calc(6px + var(--sab)); z-index: 4;
-  font-size: 9px; letter-spacing: 1px; font-weight: bold; color: var(--ui-mute); opacity: .6;
-  background: rgba(6,8,11,.5); padding: 2px 7px; border-radius: 8px; pointer-events: none; text-shadow: 0 1px 1px #000;
+  font-size: 9px; letter-spacing: 1px; font-weight: bold; color: var(--ui-mute); opacity: .7;
+  background: rgba(6,8,11,.5); padding: 2px 7px; border-radius: 8px; text-shadow: 0 1px 1px #000;
 }
 
 /* --- általános programozott UI ikon-igazítás --- */
 .ui-ic, .mb-ic svg, .bhud-coin svg, .coin-ic, .title-coin svg { display: inline-block; vertical-align: -0.14em; }
-/* board nav / hud ikonok: finom mélység (nem lapos) */
-.bnav-item .i svg { filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
-.bnav-item.active .i svg { filter: drop-shadow(0 1px 1px rgba(0,0,0,.45)); }
-.bhud-back svg, .bhud-gear svg, .bhud-shop svg, .title-gear svg { filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+/* board hud ikonok: finom mélység (nem lapos) */
+.bhud-gear svg, .title-gear svg { filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
 .coin-ic { filter: drop-shadow(0 1px 2px rgba(120,80,0,.4)); }
 #coininfo .coin-ic { font-size: 15px; }
 #coininfo { display: inline-flex; align-items: center; gap: 4px; }
 .bhud-coin { display: inline-flex; align-items: center; gap: 5px; }
 .bhud-coin .coin-ic { font-size: 16px; }
-.bhud-shop { display: inline-flex; align-items: center; gap: 6px; }
-.bhud-shop .shop-ic { display: inline-flex; font-size: 15px; }
-.bnav-item .i svg { display: inline-block; }
 .sp-danger .sk { display: inline-flex; }
 .sp-reward .cn { display: inline-flex; align-items: center; gap: 3px; }
 .sp-reward .cn .coin-ic { color: var(--ui-gold); }
@@ -503,7 +516,16 @@ html, body {
 .ammo-buy .btn { width: 100%; font-size: 12px; padding: 7px 6px; }
 
 /* ============ Day board — CLEAN artwork háttér + TELJESEN programozott UI overlay ============ */
-.board-screen { padding: 0; overflow: hidden; align-items: stretch; background: #05070a; }
+.board-screen { padding: 0; overflow: hidden; display: block; background: #05070a; }
+/* 16:9 board-frame: TELJES szélességet kitölt, függőlegesen középre igazít. A landscape
+   mobil viewport szélesebb, mint 16:9 → a keret magasabb a viewportnál, felül/alul crop
+   (overflow:hidden) → FULL-BLEED, és a hotspotok %-poziciója a festett helyszínekre esik. */
+/* függőleges középre igazítás margin:auto-val (NEM transform-mal — a .screen.anim
+   belépő-animáció a direkt gyerekek transform-ját felülírná). */
+.board-frame {
+  position: absolute; left: 0; right: 0; top: 0; bottom: 0; margin: auto;
+  width: 100%; height: auto; aspect-ratio: 16 / 9; z-index: 0;
+}
 .board-bg {
   position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0;
   object-fit: cover; object-position: center; user-select: none; -webkit-user-drag: none;
@@ -516,23 +538,26 @@ html, body {
     linear-gradient(90deg, rgba(4,6,9,.55) 0%, transparent 15%),
     linear-gradient(0deg, rgba(4,6,9,.55) 0%, transparent 18%);
 }
-.board-overlay { position: absolute; inset: 0; z-index: 2; }
 
 /* --- programozott felső HUD (prémium fémes/füstös) --- */
 .bhud {
   position: absolute; top: 0; left: 0; right: 0; z-index: 6;
   display: flex; align-items: flex-start; gap: 10px;
-  padding: 10px calc(12px + var(--sar)) 9px calc(10px + var(--sal));
+  padding: calc(10px + var(--sat)) calc(12px + var(--sar)) 9px calc(10px + var(--sal));
 }
-.bhud-back, .bhud-gear {
+/* gear = fém panel + m-settings octagon (kicsi); back = GENERÁLT btn_back plate (a PNG a gomb) */
+.bhud-gear {
   flex: none; width: 44px; height: 44px; border-radius: 13px; cursor: pointer; font-family: inherit; font-weight: bold;
   display: grid; place-items: center; color: var(--ui-ink); background: var(--ui-panel); border: 1.5px solid var(--ui-border);
   box-shadow: var(--ui-shadow), var(--ui-bevel); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
-  transition: transform .08s, filter .12s, box-shadow .15s;
+  transition: transform .08s, filter .12s, box-shadow .15s; font-size: 19px;
 }
-.bhud-back { font-size: 21px; }
-.bhud-gear { font-size: 19px; }
-.bhud-back:active, .bhud-gear:active { transform: translateY(1px) scale(.97); }
+.bhud-back {
+  flex: none; padding: 0; border: none; background: none; box-shadow: none; cursor: pointer;
+  transition: transform .08s, filter .12s;
+}
+.bhud-back .btn-img { display: block; width: 46px; height: 46px; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,.6)); }
+.bhud-back:active, .bhud-gear:active { transform: translateY(1px) scale(.95); }
 /* KÖZPONTI DAY plakett: fémes "DAY N" tábla + arany zóna-név (referencia szerint) */
 .bhud-day {
   display: flex; align-items: center; gap: 12px; margin: 0 auto; position: relative;
@@ -556,55 +581,34 @@ html, body {
   box-shadow: 0 3px 9px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,220,120,.3), 0 0 14px rgba(255,190,60,.24);
 }
 .bhud-coin b { color: #fff2c8; }
-/* SHOP = prémium horizontal CTA: nagy 3D kosár-asset + gold SHOP felirat, dark metal +
-   gold border (NEM teljes arany paca). Az asset saját arany 3D glow-ja dominál. */
+/* SHOP = GENERÁLT gomb-asset (btn_shop_cta.png): a PNG MAGA a gomb (dark metal + gold
+   border + kosár + felirat + 3D glow). A wrapper átlátszó, csak méretez. */
 .bhud-shop {
-  position: relative; overflow: hidden; font-family: inherit; font-weight: bold; cursor: pointer;
-  display: inline-flex; align-items: center; gap: 4px;
-  color: #ffe8b0; padding: 4px 16px 4px 5px; border-radius: 14px;
-  background: linear-gradient(180deg, rgba(30,34,40,.96), rgba(12,14,18,.98)); border: 1.5px solid var(--ui-gold);
-  box-shadow: 0 4px 12px rgba(0,0,0,.5), var(--ui-bevel), 0 0 14px rgba(255,190,60,.24);
-  transition: transform .08s, filter .12s;
+  position: relative; padding: 0; border: none; background: none; box-shadow: none; cursor: pointer;
+  display: inline-flex; align-items: center; transition: transform .08s, filter .12s;
 }
-.bhud-shop img { width: 46px; height: 46px; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
-.bhud-shop span { letter-spacing: 1.5px; font-size: 15px; color: #ffe8b0; text-shadow: 0 1px 2px #000; }
-.bhud-shop::after {
-  content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%; pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(255,220,140,.25), transparent); transform: skewX(-22deg);
-  animation: goldShine 4.5s ease-in-out infinite;
-}
-@keyframes goldShine { 0%, 55% { left: -60%; } 100% { left: 150%; } }
-.bhud-shop:active { transform: translateY(1px) scale(.98); }
-@media (hover: hover) { .bhud-back:hover, .bhud-shop:hover, .bhud-gear:hover { filter: brightness(1.18); } }
+.bhud-shop .btn-img { display: block; height: 50px; width: auto; object-fit: contain; filter: drop-shadow(0 3px 6px rgba(0,0,0,.55)); }
+.bhud-shop:active { transform: translateY(1px) scale(.97); }
+@media (hover: hover) { .bhud-back:hover, .bhud-shop:hover, .bhud-gear:hover { filter: brightness(1.1); } }
 
-/* --- bal nav = prémium VERTIKÁLIS 3D kártyák (nagy asset-ikon + külön dark label plaque).
-   A 3D asset MAGA a látvány; a CSS csak méretez + a label-plaque-ot adja alá. Nincs
-   „sárga paca", nincs dupla keret/glow, nincs clip. --- */
-.bnav { position: absolute; left: calc(10px + var(--sal)); top: 56px; z-index: 5; display: flex; flex-direction: column; gap: 14px; }
+/* --- BAL NAV = GENERÁLT VERTIKÁLIS GOMB-ASSETEK (btn_campaign/scavenge/settings_board.png).
+   A PNG MAGA a gomb (3D fém keret + ikon + beépített felirat-plakett). A KÉPERNYŐ bal
+   széléhez igazítva (safe-area), nagyobb, olvasható. Nincs külön ikon+label, nincs
+   CSS-keret / dupla glow / clip — csak méretezés + kis mélység-árnyék. --- */
+.bnav {
+  position: absolute; left: max(12px, var(--sal)); top: calc(54px + var(--sat)); z-index: 7;
+  display: flex; flex-direction: column; gap: 12px;
+}
 .bnav-item {
-  position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 110px; padding: 0;
-  border: none; background: none; box-shadow: none; cursor: pointer; font-family: inherit; color: var(--ui-ink);
+  position: relative; display: block; width: 118px; padding: 0;
+  border: none; background: none; box-shadow: none; cursor: pointer;
   transition: transform .1s, filter .12s;
 }
-.bnav-item .i { width: 92px; height: 92px; display: grid; place-items: center; }
-.bnav-item .i .aic { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 7px rgba(0,0,0,.6)); }
-/* dark metal CAPTION PLATE a kártya alján — fémes gradiens + bevel, olvasható központi felirat */
-.bnav-item .t {
-  display: block; width: 100%; text-align: center; font-size: 11px; letter-spacing: 1.2px; font-weight: bold; color: #eef4f8;
-  padding: 6px 6px; border-radius: 11px;
-  background: linear-gradient(180deg, #2b3037 0%, #191d23 52%, #0b0d11 100%);
-  border: 1px solid rgba(165,182,196,.32);
-  box-shadow: 0 3px 9px rgba(0,0,0,.6), inset 0 1.5px 0 rgba(255,255,255,.14), inset 0 -2px 4px rgba(0,0,0,.5);
-  text-shadow: 0 1px 2px #000;
-}
-/* aktív = arany caption + finom arany emelés/glow az ikonon (NEM teljes arany fill) */
-.bnav-item.active .i .aic { filter: drop-shadow(0 4px 7px rgba(0,0,0,.6)) drop-shadow(0 0 14px rgba(255,190,60,.55)); }
-.bnav-item.active .t {
-  color: #ffe6a0; border-color: var(--ui-gold);
-  background: linear-gradient(180deg, #3a3220 0%, #241c0c 55%, #120d04 100%);
-  box-shadow: 0 3px 9px rgba(0,0,0,.6), 0 0 14px rgba(255,190,60,.32), inset 0 1.5px 0 rgba(255,220,120,.24), inset 0 -2px 4px rgba(0,0,0,.5);
-}
-@media (hover: hover) { .bnav-item:not(.active):hover { transform: translateY(-2px); filter: brightness(1.08); } }
+.bnav-item .btn-img { display: block; width: 100%; height: auto; object-fit: contain; filter: drop-shadow(0 5px 11px rgba(0,0,0,.62)); }
+/* nem-aktív: kissé visszafogott; aktív (Campaign fül): finom arany kiemelés (NEM teljes fill) */
+.bnav-item:not(.active) .btn-img { filter: drop-shadow(0 5px 11px rgba(0,0,0,.62)) saturate(.92) brightness(.9); }
+.bnav-item.active .btn-img { filter: drop-shadow(0 5px 11px rgba(0,0,0,.62)) drop-shadow(0 0 16px rgba(255,190,60,.5)); }
+@media (hover: hover) { .bnav-item:not(.active):hover { transform: translateX(2px); filter: brightness(1.08); } }
 .bnav-item:active { transform: scale(.95); }
 
 /* --- prémium mission markerek (státusz-változókkal) --- */
@@ -683,15 +687,12 @@ html, body {
   .bd-num { font-size: 16px; padding: 4px 11px; }
   .bd-name { font-size: 13px; }
   .bhud-coin { font-size: 13px; padding: 6px 12px; }
-  .bhud-shop { padding: 3px 12px 3px 4px; }
-  .bhud-shop img { width: 38px; height: 38px; }
-  .bhud-shop span { font-size: 13px; }
-  /* mobilon kompaktabb vertikális kártyák — NE takarják a hotspotokat, és a 3 kártya
-     minél inkább a briefing fölé férjen (a stage alacsony) */
-  .bnav { top: 44px; gap: 6px; }
-  .bnav-item { width: 66px; gap: 3px; }
-  .bnav-item .i { width: 50px; height: 50px; }
-  .bnav-item .t { font-size: 7.5px; letter-spacing: .4px; padding: 2px 2px; border-radius: 7px; }
+  .bhud-shop .btn-img { height: 40px; }
+  .bhud-back .btn-img { width: 40px; height: 40px; }
+  /* mobilon kompaktabb GENERÁLT nav-kártyák — a bal szélen, NE takarják kritikusan a
+     hotspotokat/briefinget (a landscape-mobil stage alacsony) */
+  .bnav { top: calc(48px + var(--sat)); gap: 5px; }
+  .bnav-item { width: 60px; }
   /* hexagon markerek — mobilon is nagy tap-target (min ~56px), olvasható címke */
   .hotspot { width: 118px; height: 96px; }
   .hs-halo { width: 92px; height: 34px; bottom: 16px; }
@@ -710,7 +711,7 @@ html, body {
   .sp-info h3 { font-size: 14px; }
   .sp-obj { font-size: 9.5px; margin-top: 2px; }
   .sp-meta { margin-top: 3px; }
-  .sp-start { min-width: 92px; font-size: 15px; padding: 12px 16px; }
+  .sp-start .btn-img { height: 52px; }
 }
 
 /* --- mission briefing bottom-sheet (prémium üveg/fém panel) --- */
@@ -738,12 +739,15 @@ html, body {
 .sp-card.n-boss::before { background: linear-gradient(90deg, transparent, var(--ui-red), transparent); }
 .sp-card.n-free { border-color: rgba(200,160,60,.5); }
 .sp-card.n-free::before { background: linear-gradient(90deg, transparent, var(--ui-gold), transparent); }
+/* CLOSE = GENERÁLT btn_close plate (a PNG a gomb) */
 .sp-close {
-  position: absolute; top: 9px; right: 11px; width: 28px; height: 28px; border-radius: 9px;
-  background: var(--ui-panel-solid); border: 1.5px solid var(--ui-border); color: var(--muted);
-  font-family: inherit; font-size: 13px; cursor: pointer; z-index: 2; box-shadow: var(--ui-bevel);
+  position: absolute; top: 8px; right: 10px; width: 34px; height: 34px; padding: 0;
+  background: none; border: none; box-shadow: none; cursor: pointer; z-index: 2;
+  transition: transform .08s, filter .12s;
 }
-@media (hover: hover) { .sp-close:hover { filter: brightness(1.3); color: var(--text); } }
+.sp-close .btn-img { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.6)); }
+.sp-close:active { transform: scale(.9); }
+@media (hover: hover) { .sp-close:hover { filter: brightness(1.2); } }
 .sp-brief { display: flex; align-items: center; gap: 15px; padding-right: 30px; }
 .sp-thumb {
   flex: none; width: 78px; height: 78px; border-radius: 14px; display: grid; place-items: center; font-size: 36px;
@@ -778,25 +782,19 @@ html, body {
 .sp-reward b { color: var(--ui-gold); font-weight: bold; }
 .sp-reward b.xp { color: var(--ui-blue); }
 .sp-rec b { color: #cfe0c8; font-weight: bold; }
-/* mission action gomb = prémium 3D-metallic (embossed gloss, mélység-él, külső glow) */
+/* mission CTA = GENERÁLT gomb-asset (btn_start_run / btn_replay / btn_fight_boss).
+   A PNG MAGA a gomb — a wrapper átlátszó, csak méretez; NINCS CSS-web-button hatás,
+   nincs sárga gradiens, nincs dupla keret/gloss. */
 .sp-start {
-  position: relative; overflow: hidden;
-  flex: none; width: auto; min-width: 140px; font-size: 19px; letter-spacing: 1.5px; padding: 18px 28px; align-self: center;
-  background: linear-gradient(180deg, #fff0b8 0%, var(--ui-gold-hi) 22%, var(--ui-gold) 58%, var(--ui-gold-dk) 100%);
-  color: #2a1900; border: 2px solid #fff0b8;
-  box-shadow: 0 6px 0 #6a4708, 0 10px 18px rgba(0,0,0,.5), 0 0 22px rgba(255,190,60,.5), inset 0 2px 0 rgba(255,255,255,.6), inset 0 -3px 6px rgba(120,70,0,.5);
-  text-shadow: 0 1px 0 rgba(255,255,255,.4);
+  position: relative; flex: none; align-self: center; width: auto; min-width: 0;
+  padding: 0; border: none; background: none; box-shadow: none; cursor: pointer; overflow: visible;
+  transition: transform .08s, filter .12s;
 }
-.sp-start::before { content: ''; position: absolute; top: 2px; left: 8px; right: 8px; height: 42%; border-radius: 10px 10px 40% 40%; background: linear-gradient(180deg, rgba(255,255,255,.5), transparent); pointer-events: none; }
-.sp-start:active { transform: translateY(4px); box-shadow: 0 2px 0 #6a4708, 0 4px 10px rgba(0,0,0,.5), 0 0 16px rgba(255,190,60,.45), inset 0 2px 0 rgba(255,255,255,.55), inset 0 -3px 6px rgba(120,70,0,.5); }
-/* BOSS = vörös action */
-.sp-card.n-boss .sp-start {
-  background: linear-gradient(180deg, #ffc0ac 0%, #ff7a5c 24%, #d43a2a 60%, #9e1e14 100%); color: #fff; border-color: #ffc8b8;
-  box-shadow: 0 6px 0 #5a1008, 0 10px 18px rgba(0,0,0,.5), 0 0 22px rgba(255,70,50,.5), inset 0 2px 0 rgba(255,255,255,.42), inset 0 -3px 6px rgba(90,16,8,.6);
-  text-shadow: 0 1px 2px rgba(80,0,0,.5);
-}
-.sp-card.n-boss .sp-start:active { transform: translateY(4px); box-shadow: 0 2px 0 #5a1008, 0 4px 10px rgba(0,0,0,.5), 0 0 16px rgba(255,70,50,.45), inset 0 2px 0 rgba(255,255,255,.35), inset 0 -3px 6px rgba(90,16,8,.6); }
-.sp-card.n-free .sp-start { background: linear-gradient(180deg, #fff0b8 0%, #ffe27a 24%, #f2b736 58%, #c9880f 100%); color: #2a1900; border-color: #fff0b8; box-shadow: 0 6px 0 #6a4a08, 0 10px 18px rgba(0,0,0,.5), 0 0 22px rgba(255,190,60,.5), inset 0 2px 0 rgba(255,255,255,.55), inset 0 -3px 6px rgba(120,70,0,.5); }
+.sp-start::before { content: none; }
+.sp-start .btn-img { display: block; height: 66px; width: auto; object-fit: contain; filter: drop-shadow(0 5px 11px rgba(0,0,0,.55)); }
+.sp-start.cta-boss .btn-img { filter: drop-shadow(0 5px 12px rgba(140,14,14,.6)); }
+.sp-start:active { transform: translateY(3px) scale(.98); }
+@media (hover: hover) { .sp-start:hover { filter: brightness(1.07); } }
 .sp-locked { text-align: center; color: #ff9a7a; font-size: 11px; padding: 9px 4px 2px; }
 
 /* --- kártyák (bolt, labor) --- */

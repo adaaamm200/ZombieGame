@@ -49,6 +49,12 @@ ZD.ui = (() => {
     return f ? `<img class="aic${cls ? ' ' + cls : ''}" src="assets/ui/${f}.png" alt="" draggable="false" />` : IC(name, cls);
   };
 
+  /* GENERÁLT GOMB-ASSETEK (assets/ui/buttons/) — a PNG MAGA a teljes gomb (3D fém,
+     textúra, glow, felirat 1:1). A DOM-elem csak kattintható wrapper; a kép object-fit:
+     contain, nincs crop / sheet / extra CSS-keret. */
+  const BIMG = (file, label, cls) =>
+    `<img class="btn-img${cls ? ' ' + cls : ''}" src="assets/ui/buttons/${file}.png" alt="${label ? String(label).replace(/"/g, '&quot;') : ''}" draggable="false" />`;
+
   /* ---------- képernyő-kezelés ---------- */
   function show(name) {
     if (ZD.i18n) ZD.i18n.setLang(S().lang || 'en');
@@ -127,33 +133,40 @@ ZD.ui = (() => {
           <img class="brand-logo" src="assets/ui/logo.png" alt="ZombieChronicles" draggable="false" />
           <div class="menu" id="title-menu"></div>
           <button class="title-save" id="title-save" data-go="settings"></button>
-          <p class="title-note" id="title-note"></p>
         </div>
-        <span class="build-badge" id="build-badge"></span>
+        <!-- FIX alsó lábléc (nem a görgethető menü része): egyéni felhasználás + build -->
+        <div class="app-footer">
+          <span class="af-note" id="title-note"></span>
+          <span class="build-badge" id="build-badge"></span>
+        </div>
       </div>`);
 
     /* Pályaválasztó — CLEAN board-artwork (assets/references/day1_board_target_clean.png)
        háttérként + TELJESEN programozott UI overlay (HUD, nav, hotspotok, briefing). */
     screens.stages = el(`
       <div class="screen board-screen" id="s-stages">
-        <img class="board-bg" src="assets/references/day1_board_target_clean.png" alt="" draggable="false" />
-        <div class="board-scrim"></div>
-        <div class="board-overlay">
-          <div class="bhud">
-            <button class="bhud-back" data-go="title" aria-label="Menu"></button>
-            <div class="bhud-day"><span class="bd-num" id="bd-num">DAY 1</span><span class="bd-name" id="bd-name"></span></div>
-            <div class="bhud-right">
-              <span class="bhud-coin" id="bhud-coin"></span>
-              <button class="bhud-shop" data-go="armory"><span class="shop-ic" id="bhud-shop-ic"></span><span id="bhud-shop-t"></span></button>
-              <button class="bhud-gear" data-go="settings" aria-label="Settings"></button>
-            </div>
-          </div>
-          <div class="bnav">
-            <button class="bnav-item active"><span class="i" id="nav-camp-ic"></span><span class="t" id="nav-camp-t"></span></button>
-            <button class="bnav-item" id="bn-scavenge"><span class="i" id="nav-scav-ic"></span><span class="t" id="nav-scav-t"></span></button>
-            <button class="bnav-item" data-go="settings"><span class="i" id="nav-set-ic"></span><span class="t" id="nav-set-t"></span></button>
-          </div>
+        <!-- 16:9 board-frame: teljes szélességet kitölt, függőlegesen középre igazít
+             (a szélesebb-mint-16:9 mobil viewporton min. felül/alul crop) → full-bleed,
+             a hotspotok %-poziciója pontosan a festett helyszínekre esik. -->
+        <div class="board-frame">
+          <img class="board-bg" src="assets/references/day1_board_target_clean.png" alt="" draggable="false" />
+          <div class="board-scrim"></div>
           <div class="board-hotspots" id="board-hotspots"></div>
+        </div>
+        <!-- HUD / nav / briefing: a KÉPERNYŐ (safe-area) széleihez rögzítve, NEM a board-frame-hez -->
+        <div class="bhud">
+          <button class="bhud-back" data-go="title" aria-label="Menu"></button>
+          <div class="bhud-day"><span class="bd-num" id="bd-num">DAY 1</span><span class="bd-name" id="bd-name"></span></div>
+          <div class="bhud-right">
+            <span class="bhud-coin" id="bhud-coin"></span>
+            <button class="bhud-shop" data-go="armory" id="bhud-shop" aria-label="Shop"></button>
+            <button class="bhud-gear" data-go="settings" aria-label="Settings"></button>
+          </div>
+        </div>
+        <div class="bnav">
+          <button class="bnav-item active" id="bn-campaign" aria-label="Campaign"></button>
+          <button class="bnav-item" id="bn-scavenge" aria-label="Scavenge"></button>
+          <button class="bnav-item" data-go="settings" id="bn-settings" aria-label="Settings"></button>
         </div>
         <div class="stage-preview hidden" id="stage-preview">
           <div class="sp-card" id="sp-card">
@@ -570,17 +583,17 @@ ZD.ui = (() => {
   /* a board HUD/nav ikonjai + i18n feliratai (nyelvváltásra is frissül) */
   function fillBoardChrome() {
     const scr = screens.stages;
-    scr.querySelector('.bhud-back').innerHTML = AIMG('back', 'aic-btn');
+    scr.querySelector('.bhud-back').innerHTML = BIMG('btn_back', 'Back', 'bhud-back-img');
     scr.querySelector('.bhud-gear').innerHTML = AIMG('settings', 'aic-btn');
     $('#bd-num').textContent = T('day.label') + ' 1';
     $('#bd-name').textContent = boardDayName(1).toUpperCase();
     $('#bhud-coin').innerHTML = AIMG('coin', 'coin-ic') + `<b>${fmt(S().coins)}</b>`;
-    $('#bhud-shop-ic').innerHTML = AIMG('shop');
-    $('#bhud-shop-t').textContent = T('board.shop');
-    $('#nav-camp-ic').innerHTML = AIMG('campaign'); $('#nav-camp-t').textContent = T('nav.campaign');
-    $('#nav-scav-ic').innerHTML = AIMG('scavenge'); $('#nav-scav-t').textContent = T('nav.scavenge');
-    $('#nav-set-ic').innerHTML = AIMG('settings'); $('#nav-set-t').textContent = T('nav.settings');
-    $('#sp-close').innerHTML = IC('close');
+    /* SHOP + board nav = GENERÁLT GOMB-ASSETEK (a PNG maga a gomb) */
+    $('#bhud-shop').innerHTML = BIMG('btn_shop_cta', T('board.shop'));
+    $('#bn-campaign').innerHTML = BIMG('btn_campaign_board', T('nav.campaign'));
+    $('#bn-scavenge').innerHTML = BIMG('btn_scavenge_board', T('nav.scavenge'));
+    $('#bn-settings').innerHTML = BIMG('btn_settings_board', T('nav.settings'));
+    $('#sp-close').innerHTML = BIMG('btn_close', 'Close', 'sp-close-img');
   }
 
   /* A jelenlegi board-artwork Day 1 — a hotspotok a Day 1 misszióira mutatnak. */
@@ -677,7 +690,13 @@ ZD.ui = (() => {
     } else {
       lk.classList.add('hidden');
       start.classList.remove('hidden');
-      start.textContent = d.isFree ? T('brief.startFarm') : d.boss ? T('brief.startBoss') : d.done ? T('brief.startReplay') : T('brief.start');
+      /* mission CTA = GENERÁLT GOMB-ASSET (a PNG maga a gomb): boss→FIGHT BOSS (vörös),
+         completed→REPLAY, egyébként (current / scavenge / free)→START RUN. */
+      const label = d.isFree ? T('brief.startFarm') : d.boss ? T('brief.startBoss') : d.done ? T('brief.startReplay') : T('brief.start');
+      const asset = d.boss ? 'btn_fight_boss' : (d.done && !d.isFree) ? 'btn_replay' : 'btn_start_run';
+      start.className = 'sp-start btn-cta' + (d.boss ? ' cta-boss' : '');
+      start.setAttribute('aria-label', label);
+      start.innerHTML = BIMG(asset, label, 'cta-img');
       start.onclick = () => {
         ZD.audio.play('click');
         pv.classList.add('hidden');

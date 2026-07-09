@@ -1,5 +1,5 @@
 /* Zombi Krónika — offline service worker (cache-first) */
-const VERSION = 'zk-v28';
+const VERSION = 'zk-v29';
 const ASSETS = [
   './',
   './index.html',
@@ -41,6 +41,15 @@ const ASSETS = [
   './assets/ui/s-boss.png',
   './assets/ui/s-loot.png',
   './assets/ui/s-danger.png',
+  './assets/ui/buttons/btn_campaign_board.png',
+  './assets/ui/buttons/btn_scavenge_board.png',
+  './assets/ui/buttons/btn_settings_board.png',
+  './assets/ui/buttons/btn_shop_cta.png',
+  './assets/ui/buttons/btn_start_run.png',
+  './assets/ui/buttons/btn_replay.png',
+  './assets/ui/buttons/btn_fight_boss.png',
+  './assets/ui/buttons/btn_back.png',
+  './assets/ui/buttons/btn_close.png',
 ];
 
 self.addEventListener('install', (e) => {

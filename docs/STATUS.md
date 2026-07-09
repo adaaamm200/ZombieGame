@@ -11,6 +11,58 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## FULLSCREEN UI LOCKDOWN + GENERÁLT GOMB-ASSETEK 1:1 (2026-07-09)
+- **Cél**: UI-felület végleges lezárása — a ChatGPT-vel generált PNG gombok TÉNYLEGES
+  beépítése (a PNG MAGA a gomb, nincs több CSS-turbózás), teljes képernyős mobile
+  layout (safe-area / Dynamic Island), bal nav a képernyő szélére + nagyobbra, build
+  felirat fixen alulra.
+- **9 generált gomb-asset feldolgozva** (`tools/prepare-button-assets-v1.js`, zero-dep:
+  él-flood-fill háttér-eltávolítás + trim + ARÁNY-TARTÓ resize + safe padding → RGBA):
+  `assets/references/ChatGPT Image … .png` → `assets/ui/buttons/`:
+  - `…11_01_25 (1)` → **btn_campaign_board** (vertikális, arany keret + vörös térkép)
+  - `…11_01_26 (2)` → **btn_scavenge_board** (vertikális, lila + hátizsák)
+  - `…11_01_26 (3)` → **btn_settings_board** (vertikális, fogaskerék)
+  - `…11_01_26 (4)` → **btn_shop_cta** (vízszintes arany SHOP)
+  - `…11_01_26 (5)` → **btn_back** (fém plate, chevron)
+  - `…11_01_27 (8)` → **btn_fight_boss** (vörös vízszintes CTA)
+  - `…11_01_27 (9)` → **btn_close** (fém plate, X)
+  - `…11_04_32` → **btn_replay** · `…11_04_36` → **btn_start_run** (sötét fémes CTA-k)
+  A 3D fém/textúra/glow/felirat 1:1 megmarad; a széles gomb széles, a nav-kártya vertical.
+- **Integráció** (`js/ui.js` `BIMG()` helper): a board bal nav (Campaign/Scavenge/Settings),
+  a SHOP, a board-back és a briefing-close, valamint a mission CTA a GENERÁLT PNG — a DOM
+  csak kattintható wrapper (`object-fit: contain`, nincs crop/keret/dupla glow). Mission CTA
+  állapot→asset: current/scavenge→**START RUN**, completed→**REPLAY**, boss→**FIGHT BOSS**
+  (vörös, `.cta-boss`). **DOM-igazolt**: mind a 4 állapot a helyes assetet tölti (ctaH 66px).
+- **FULLSCREEN / SAFE-AREA**: a `#screens` konténer a `#stage` 16:9 dobozán KÍVÜLre került
+  (index.html) → a menü/board/bolt TELJES viewportot tölt (`position:fixed; inset:0;
+  pointer-events:none`, a `.screen` `pointer-events:auto`). A gameplay (canvas+HUD+touch)
+  marad a `#stage`-ben, **16:9** (RENDERING_RULES invariáns megőrizve). A board háttér egy
+  **16:9 board-frame** (teljes szélesség, függőlegesen `margin:auto` középre — NEM transform,
+  mert a `.screen.anim` felülírná): szélesebb-mint-16:9 mobil viewporton felül/alul crop →
+  **full-bleed, nincs oldalsó fekete sáv**, és a hotspot %-ok a festett helyszínekre esnek.
+  Új `--sat` (safe-area-inset-top); a bhud/bnav a safe-edge-hez igazít. Viewport-meta már
+  `viewport-fit=cover` volt.
+- **BAL NAV**: a KÉPERNYŐ bal széléhez (`left: max(12px, var(--sal))`), nagyobb generált
+  kártyák (desktop **118px** széles → ~162px magas; mobil 60px). Az aktív (Campaign) finom
+  arany glow. **DOM-igazolt**: desktop nav x12/118×162, shop x1106/110×50, back 46×46,
+  CTA 175×66; mobil 812×375 full-bleed (frame 812×457, oldalsó sáv 0), nav a bal szélen.
+  Mobil-korlát: alacsony landscape-en a legalsó (SETTINGS) kártya a briefing-panel MÖGÉ
+  bújhat (panel z8 > nav z7 → a panel teljesen látszik) — a SETTINGS a felső fogaskerékkel is elérhető.
+- **BUILD FOOTER**: a build felirat + „egyéni felhasználásra" mostantól FIX alsó lábléc
+  (`.app-footer`, `position:absolute; bottom:0`, safe-area, `pointer-events:none`) — NEM a
+  görgethető menü része. **DOM-igazolt**: footer alul (y+h=viewportH), „…personal use only"
+  + „build v29" együtt, középen.
+- **TESZTELVE** (böngésző, valós motor): 0 konzolhiba; board full 1280×720 / mobil 812×375
+  full-bleed / ultrawide 1600×600 full-bleed; nav/shop/back/CTA/close assetek betöltenek
+  (0 törött kép); mission CTA-állapotok (start_run/replay/fight_boss) helyesek; gameplay
+  regresszió: **16:9 stage megőrizve** (667×375 @ 812), a touch-gombok elérhetők
+  (`#screens` pointer-events:none átereszt). A preview screenshot-tool ebben a sessionben
+  továbbra is egy kis régióba tömöríti a kimenetet (ismert környezeti hiba) — a verifikáció
+  DOM-metrika + asset-fájl Read + object-fit garancia alapján (mérvadó).
+- Csak asset + CSS/HTML/JS-UI + tool változott — gameplay/economy/save/campaign-logika
+  ÉRINTETLEN. `node --check` mind a JS-re OK.
+- sw.js cache: **zk-v29** (9 gomb-asset precache-elve); `ZD.BUILD='v29'`.
+
 ## VERZIÓ-JELZŐ a főmenü sarkában (2026-07-09)
 - **Ok**: a felhasználó nehezen látja, tényleg a friss build töltött-e be (cache-beragadás).
 - **`ZD.BUILD` konstans** (`js/const.js`) = a betöltött kód verziója; a főmenü jobb-alsó

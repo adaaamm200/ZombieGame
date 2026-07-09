@@ -18,6 +18,50 @@ Entry format:
 
 ---
 
+### 2026-07-09 — Finalize fullscreen UI and integrate generated button assets
+- Goal: Lock down the UI surface — integrate the user's ChatGPT-generated PNG buttons 1:1
+  (the PNG IS the button, no more CSS button styling), modern fullscreen mobile layout with
+  safe-area/Dynamic Island support, left board nav to the screen edge + bigger, build label
+  fixed at the bottom (not inside the scrolling menu).
+- Files changed: tools/prepare-button-assets-v1.js (new), assets/ui/buttons/*.png (9 new),
+  js/ui.js (BIMG helper + board nav/shop/back/close + mission CTA as image buttons + fixed
+  footer), index.html (#screens moved out of #stage; footer note), css/style.css (fullscreen
+  #screens, board-frame full-bleed 16:9, nav/shop/CTA/close/back image styles, .app-footer,
+  --sat), js/const.js (v29), sw.js (zk-v29 + button precache), docs/STATUS.md, CHANGELOG_AI.md.
+- What changed:
+  - 9 generated button PNGs processed via a zero-dep tool (edge flood-fill bg removal +
+    trim + aspect-preserving resize + safe padding → RGBA): btn_campaign_board / scavenge_board
+    / settings_board (vertical nav cards), btn_shop_cta, btn_start_run, btn_replay,
+    btn_fight_boss (red), btn_back, btn_close. 3D metal/texture/glow/label preserved 1:1.
+  - Board left nav, SHOP, board-back, briefing-close and the mission CTA now render the
+    generated PNG (object-fit: contain, transparent wrapper, no CSS frame/double-glow).
+    Mission CTA by state: current/scavenge → START RUN, completed → REPLAY, boss → FIGHT BOSS.
+  - Fullscreen: #screens moved OUT of the 16:9 #stage → menu/board/shop fill the whole
+    viewport (position:fixed; pointer-events:none, .screen pointer-events:auto); gameplay
+    (canvas+HUD+touch) stays in #stage at 16:9 (rendering invariant preserved). Board bg is a
+    16:9 board-frame (full width, vertically margin:auto centered — not transform, since the
+    .screen entrance animation would clobber it) → full-bleed on wider-than-16:9 phones, no
+    side black bars, hotspot % still land on painted locations. Added --sat safe-area-top.
+  - Left nav aligned to the screen edge (left: max(12px, safe-area-left)), bigger cards
+    (desktop 118px wide → ~162px tall; mobile 60px). Build label + "personal use" moved to a
+    fixed .app-footer (position:absolute; bottom:0; safe-area; pointer-events:none).
+- Tests run: node --check all JS (OK); browser DOM metrics: board full 1280×720, mobile
+  812×375 full-bleed (frame 812×457, 0 side bars), ultrawide 1600×600 full-bleed; nav x12/
+  118×162, shop 110×50, back 46×46, CTA 175×66; all button assets load (0 broken images);
+  CTA states start_run/replay/fight_boss correct; footer at bottom with "build v29"; gameplay
+  regression: 16:9 stage preserved (667×375 @ 812), touch buttons reachable. 0 console errors.
+- Visual QA: preview screenshot tool still compresses output into a small region this session
+  (known environmental issue) — verified via DOM metrics + asset-file Read + object-fit
+  guarantee (authoritative). The compressed shot still confirms the 3 vertical nav cards at the
+  left edge, SHOP top-right, briefing with red CTA.
+- What was not changed: gameplay, economy, save, campaign logic, weapon stats, map background
+  content, sprites. No new sprites/characters. The assets/references/CHARACTER/ folder (user's
+  character refs) left untouched/untracked.
+- Open questions: (1) On very short landscape phones the lowest nav card (SETTINGS) tucks
+  behind the bottom briefing sheet — acceptable? (SETTINGS also reachable via the top gear.)
+- Next recommended step: user confirms on the actual phone (fullscreen, safe-area, buttons);
+  then optional board/briefing element polish (DAY banner/plaque, danger meter, XP, supply crate).
+
 ### 2026-07-09 — Add main-menu build version badge
 - Goal: Let the user confirm at a glance whether the fresh build actually loaded (cache issues).
 - Files changed: js/const.js (ZD.BUILD), js/ui.js (badge element + text), css/style.css

@@ -54,9 +54,12 @@
       </div>
     </div>
 
-    <!-- Menü képernyők (a js/ui.js tölti fel) -->
-    <div id="screens"></div>
     </div><!-- /stage -->
+
+    <!-- Menü / board / bolt képernyők: a #stage 16:9 dobozán KÍVÜL, TELJES viewportot
+         kitöltő modern fullscreen-mobile felület (safe-area aware). A gameplay
+         (canvas + HUD + touch-gombok) marad a #stage-ben, 16:9 arányban. -->
+    <div id="screens"></div>
 
     <div id="rotate-note">Rotate your device to landscape · Fordítsd fekvő módba</div>
   </div>
