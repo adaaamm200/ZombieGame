@@ -1531,23 +1531,27 @@ ZD.sprites = (() => {
   const MAPS = {};
   function img1(base, name) { const im = new Image(); im.src = base + name; return im; }
   function loadMap(theme, base, cfg) {
-    const m = { ready: false, base, props: {}, fx: {}, place: cfg.place || [] };
+    const m = { ready: false, base, struct: {}, props: {}, fx: {}, structPattern: cfg.structPattern || [], structPeriod: cfg.structPeriod || 560, place: cfg.place || [] };
     MAPS[theme] = m;
-    ['far', 'mid', 'near', 'ground', 'fg'].forEach((k) => { m[k] = img1(base, k + '.png'); });
+    /* tiszta réteg-modell: far (skyline) + ground (talaj) + diszkrét struktúrák + ritka propok */
+    ['far', 'ground'].forEach((k) => { m[k] = img1(base, k + '.png'); });
+    (cfg.struct || []).forEach((p) => { m.struct[p] = img1(base, p + '.png'); });
     (cfg.props || []).forEach((p) => { m.props[p] = img1(base, 'props/' + p + '.png'); });
     ['rain', 'fog', 'lightpool'].forEach((k) => { m.fx[k] = img1(base + 'fx/', k + '.png'); });
-    /* ready, amint a fő rétegek betöltöttek (a propok/fx best-effort) */
-    let n = 0; const need = 4;
-    ['far', 'mid', 'near', 'ground'].forEach((k) => { m[k].onload = () => { if (++n >= need) m.ready = true; }; m[k].onerror = () => { if (++n >= need) m.ready = !!(m.far.naturalWidth); }; });
+    /* ready, amint a far + ground betöltött (a struktúrák/propok/fx best-effort) */
+    let n = 0; const need = 2;
+    ['far', 'ground'].forEach((k) => { m[k].onload = () => { if (++n >= need) m.ready = true; }; m[k].onerror = () => { if (++n >= need) m.ready = !!(m.far.naturalWidth); }; });
   }
   function loadMaps() {
     loadMap(0, 'assets/maps/level_01/', {
-      props: ['bus', 'car', 'suv', 'police', 'barrier', 'barrel', 'xbarricade', 'trash'],
-      /* kézzel elhelyezett street-dressing (világ-x, prop) — determinisztikus, tud ismétlődni WORLD_W-vel */
-      place: [
-        [120, 'trash'], [180, 'bus'], [300, 'barrier'], [360, 'barrel'], [430, 'car'],
-        [520, 'xbarricade'], [600, 'barrel'], [700, 'suv'], [800, 'barrier'], [890, 'police'], [980, 'trash'],
-      ],
+      struct: ['bld_a', 'bld_b', 'watertower'],
+      /* diszkrét midground struktúra-minta (parallax 0.5), egy perióduson belüli x-eltolással
+         → NEM tilelt kollázs-strip, hanem néhány tiszta, ismétlődő épület/torony sziluett */
+      structPattern: [[20, 'bld_a'], [250, 'watertower'], [340, 'bld_b']],
+      structPeriod: 560,
+      props: ['bus', 'car', 'police'],
+      /* ritka, jól szeparált street-dressing (világ-x, prop) — kevés, de tiszta */
+      place: [[190, 'bus'], [470, 'car'], [820, 'police']],
     });
   }
   const rd2 = (v) => Math.round(v * ART) / ART;
@@ -1562,6 +1566,21 @@ ZD.sprites = (() => {
     ctx.globalAlpha = alpha;
     for (let x = off; x < C.VIEW_W; x += w) ctx.drawImage(im, rd2(x), bottomY - h, w, h);
     ctx.restore();
+  }
+  /* Diszkrét MIDGROUND struktúrák (épületek/víztorony) — NEM tilelt strip, hanem néhány
+     tiszta sziluett egy parallax-perióduson belül ismételve (par 0.5). Talp GY-en. */
+  function drawStructures(ctx, m, cam) {
+    const pat = m.structPattern; if (!pat || !pat.length) return;
+    const par = 0.5, P = m.structPeriod || 560;
+    let base = -((cam * par) % P); if (base > 0) base -= P;
+    for (let bx = base; bx < C.VIEW_W + P; bx += P) {
+      for (const [ox, name] of pat) {
+        const im = m.struct[name]; if (!im || !im.naturalWidth) continue;
+        const w = im.width / ART, h = im.height / ART, sx = bx + ox;
+        if (sx < -w - 20 || sx > C.VIEW_W + 20) continue;
+        ctx.drawImage(im, r2(sx), GY - h + 1, w, h);
+      }
+    }
   }
   /* HD propok kirajzolása (talp GY-en, lágy árnyék) — az entitások MÖGÖTT */
   function drawMapProps(ctx, m, cam) {
@@ -1583,14 +1602,19 @@ ZD.sprites = (() => {
     th.sky(ctx, t || 0);
     const hd = MAPS[theme];
     if (hd && hd.ready) {
-      /* HD parallax rétegek (a motor tileLayer-je logikai méreten rajzol) */
+      /* TISZTA RÉTEG-MODELL (kevés, nagy, tiszta elem — nincs kollázs):
+         far skyline → horizont-köd → diszkrét midground struktúrák → talaj → fény/prop/köd */
       if (hd.far.naturalWidth) tileLayer(ctx, hd.far, cam, 0.2, GY);
-      if (hd.mid.naturalWidth) tileLayer(ctx, hd.mid, cam, 0.5, GY);
-      if (hd.near.naturalWidth) tileLayer(ctx, hd.near, cam, 0.8, GY);
+      // lágy horizont-köd a far és a midground struktúrák közé (mélység + szeparáció)
+      const hfog = ctx.createLinearGradient(0, GY - 96, 0, GY);
+      hfog.addColorStop(0, 'rgba(16,20,26,0)');
+      hfog.addColorStop(1, 'rgba(22,28,34,.34)');
+      ctx.fillStyle = hfog; ctx.fillRect(0, GY - 96, C.VIEW_W, 96);
+      drawStructures(ctx, hd, cam);                              // épületek + víztorony (par 0.5)
       if (hd.ground.naturalWidth) tileLayer(ctx, hd.ground, cam, 1, C.VIEW_H);
-      addLayer(ctx, hd.fx.lightpool, cam, 1, GY + 8, 0.55, 0);   // utcalámpa fénypoolok a talajon
-      drawMapProps(ctx, hd, cam);                                // járművek/barikádok (entitások mögött)
-      addLayer(ctx, hd.fx.fog, cam, 0.6, GY - 8, 0.22, (t || 0) * 5); // sodródó köd
+      addLayer(ctx, hd.fx.lightpool, cam, 1, GY + 8, 0.5, 0);    // utcalámpa fénypoolok a talajon
+      drawMapProps(ctx, hd, cam);                                // ritka járművek (entitások mögött)
+      addLayer(ctx, hd.fx.fog, cam, 0.6, GY - 8, 0.18, (t || 0) * 5); // finom sodródó köd
       return drawBgOverlay(ctx);   // scene-grade + vignetta (entitások ELŐTT)
     }
     tileLayer(ctx, th.far, cam, 0.2, GY);
@@ -1638,14 +1662,13 @@ ZD.sprites = (() => {
     ctx.fillStyle = vg; ctx.fillRect(0, 0, VW, VH);
   }
 
-  /* HD ELŐTÉR (az entitások UTÁN rajzolva): sodródó eső + előtér-törmelék-sáv (5. mélység). */
+  /* HD ELŐTÉR (az entitások UTÁN rajzolva): CSAK finom sodródó eső (additív). A korábbi
+     előtér-törmelék-sáv (fg.png) eltávolítva — széttépett/zajos volt és rontotta a
+     játéktér olvashatóságát. Kevesebb, tisztább = jobb. */
   function drawForeground(ctx, cam, level, t) {
     const m = MAPS[C.themeFor(level)];
     if (!m || !m.ready) return;
-    // eső: additív, a levegőben (GY fölött), gyors vízszintes sodródással (szél)
-    addLayer(ctx, m.fx.rain, cam, 1.1, GY, 0.34, (t || 0) * 34);
-    // előtér-törmelék a legelöl, alul (a játékos mögötte halad → mélység)
-    if (m.fg && m.fg.naturalWidth) tileLayer(ctx, m.fg, cam, 1.12, C.VIEW_H + 3);
+    addLayer(ctx, m.fx.rain, cam, 1.1, GY, 0.28, (t || 0) * 34);
   }
 
   /* menü-háttér: lassan pásztázó jelenet vonuló zombi-sziluettekkel */

@@ -1,5 +1,5 @@
 /* Zombi Krónika — offline service worker (cache-first) */
-const VERSION = 'zk-v37';
+const VERSION = 'zk-v38';
 const ASSETS = [
   './',
   './index.html',
@@ -62,21 +62,16 @@ const ASSETS = [
   './assets/player/player_atlas.json',
   './assets/player/player_sheet.png',
   './assets/maps/level_01/far.png',
-  './assets/maps/level_01/mid.png',
-  './assets/maps/level_01/near.png',
+  './assets/maps/level_01/bld_a.png',
+  './assets/maps/level_01/bld_b.png',
+  './assets/maps/level_01/watertower.png',
   './assets/maps/level_01/ground.png',
-  './assets/maps/level_01/fg.png',
   './assets/maps/level_01/fx/rain.png',
   './assets/maps/level_01/fx/fog.png',
   './assets/maps/level_01/fx/lightpool.png',
   './assets/maps/level_01/props/bus.png',
   './assets/maps/level_01/props/car.png',
-  './assets/maps/level_01/props/suv.png',
   './assets/maps/level_01/props/police.png',
-  './assets/maps/level_01/props/barrier.png',
-  './assets/maps/level_01/props/barrel.png',
-  './assets/maps/level_01/props/xbarricade.png',
-  './assets/maps/level_01/props/trash.png',
 ];
 
 self.addEventListener('install', (e) => {

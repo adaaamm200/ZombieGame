@@ -17,3 +17,7 @@ zombikronika-mentes-*.txt
 # Nagy map FORRÁS anyagok (lokális referencia, NEM deploy) — csak a feldolgozott
 # assets/maps/ runtime rétegek kerülnek a repóba.
 assets/references/maps/
+
+# Map-audit karantén (lokális visszaállítás/rollback — régi hibás PNG-k, NEM deploy).
+# A szöveges audit-riportok (_asset_audit_reports/, _deleted_asset_logs/) VERSIONözve maradnak.
+_rejected_assets/

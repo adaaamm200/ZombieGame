@@ -11,6 +11,39 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## MAP AUDIT + REPAIR — kollázs/„svájcisajt" háttér tisztítása, tiszta rétegmodell (2026-07-09)
+- **Panasz**: a pálya-háttér töredezett/kollázs-szerű, foltos a propok körül, fekete-halo/
+  koszos vágásélek, „odadobott kivágások" hatás. **Gyökér-ok a PIPELINE volt, nem a forrás**
+  (a forrás-stripek tiszták, prémiumok):
+  1) `removeDarkBg()` flood-fill hard fekete-küszöbön → az üreges romokon/sötét-sötéten
+     ÁTfolyt → svájcisajt-lyukak, rojtos él, kerék-halo.
+  2) A `mid.png` (3 épület-kivágás) és `near.png` (különálló oszlop/torony-sor) **teljes-
+     szélességű tilelt parallax-rétegként** rajzolva → ismétlődő, lebegő kivágás-kollázs.
+- **Fix — új maszkolás** (`tools/prepare-map-layers.js` újraírva): **per-oszlop sziluett-
+  kitöltés** (oszloponként a magabiztos tárgy-pixelek közti teljes sávot szilárdra tölti,
+  a belső sötétséget IGNORÁLVA) → tiszta, tömör, halo-mentes sziluettek; 3×3 alfa-feather +
+  bbox-trim. **Kompozíció**: nincs több tilelt kivágás-strip — a midground néhány DISZKRÉT,
+  tisztán maszkolt struktúra (2 épület + víztorony, par 0.5); az előtér-törmelék-strip
+  eltávolítva; a propok 11→**3**.
+- **Tiszta réteg-modell** (`js/sprites.js`): far skyline → horizont-köd → diszkrét
+  struktúrák → talaj → fénypoolok → ritka jármű-propok → finom köd → scene-grade; előtér =
+  csak finom eső. Új `drawStructures()`; `loadMap/loadMaps` új assetkészlet; `drawForeground`
+  már csak eső (nincs `fg` strip).
+- **Assetek**: KEEP `far/ground/props/police + fx/*`; ÚJRAGENERÁLVA (tiszta) `bld_a` (bal
+  épület), `bld_b` (QUICK MART), `watertower`, `props/bus`, `props/car`; ELUTASÍTVA →
+  `_rejected_assets/level_01/` (MOZGATVA, nem törölve) `mid/near/fg` + a zajos/törött propok.
+  A középső **üreges rom** szándékosan kihagyva (átlátszik rajta az ég → nem maszkolható).
+- **Audit-riportok** (a felhasználó kérése szerint, projekt-lokálisan):
+  `_asset_audit_reports/map_asset_audit_report.md` + `.json`, `final_map_repair_summary.md`,
+  `_deleted_asset_logs/cleanup_log.md`. A karantén (`_rejected_assets/`) gitignore-olt
+  (lokális rollback, nem deploy); a szöveges riportok verzionálva.
+- **TESZTELVE** (saját dev-szerver, valós böngésző, Level 01): tiszta, kohézív jelenet —
+  diszkrét épületek + víztorony a far skyline előtt, bus/car/police tömör sziluettként a
+  nedves úton, finom eső/köd. **0 konzolhiba.** node --check mind a JS-re OK. Viewport-
+  invariáns ép: desktop 1280×720 stage=100% 16:9; mobil landscape 812×375 → 667×375, 100%
+  magasság, 16:9 (nincs kicsi-középen). **Projekten kívüli fájlt semmi nem érintett.**
+- sw.js cache: **zk-v38**; `ZD.BUILD='v38'`.
+
 ## UI HANDOFF PACK VÉGLEGESÍTÉS — footer-fix, prémium kártyák, clamp-robusztusság (2026-07-09)
 - **Forrás**: `assets/references/zombi_kronika_ui_handoff_pack/` (owner által adott
   implementációs csomag: `01_GLOBAL_UI_RULES.md`, `screen_specs/*`, `data/*.json`,

@@ -18,6 +18,33 @@ Entry format:
 
 ---
 
+### 2026-07-09 — Map audit + repair: kill the collage/"swiss-cheese" background
+- Goal: The Level 01 background looked fragmented, collage-like, patchy around props, with
+  black-halo/dirty crop edges. Full audit, quarantine bad assets, rebuild a clean layered map.
+- Files: tools/prepare-map-layers.js (rewritten), js/sprites.js (clean layer model +
+  drawStructures), js/const.js + sw.js (v38/zk-v38 + precache list), .gitignore, plus
+  _asset_audit_reports/{map_asset_audit_report.md,.json,final_map_repair_summary.md} and
+  _deleted_asset_logs/cleanup_log.md. Assets: added bld_a/bld_b/watertower + re-masked
+  bus/car/police under assets/maps/level_01/; moved mid/near/fg + noisy props to
+  _rejected_assets/ (quarantine, gitignored).
+- Root cause: (1) removeDarkBg() flood-fill on a hard near-black threshold flooded THROUGH
+  hollow ruins / dark-on-dark vehicles → swiss-cheese holes, ragged fringe, wheel halos;
+  (2) mid/near cutout strips were tiled full-width as parallax layers → repeating floating
+  collage.
+- Fix: new per-column SILHOUETTE fill (fill the vertical span between confident object
+  pixels → solid, halo-free silhouette) + alpha feather + trim. Composition simplified to a
+  few DISCRETE cleanly-masked midground structures (2 buildings + water tower, not tiled),
+  ground kept, foreground debris strip removed, props cut 11→3. Middle hollow ruin excluded
+  (sky shows through it).
+- Tests run: node --check all JS (OK). Real browser (own dev server), Level 01: clean
+  cohesive scene — discrete buildings + water tower over the far skyline, bus/car/police as
+  clean silhouettes on the wet road, subtle rain/fog; 0 console errors. Viewport invariant
+  intact (desktop 16:9 full, mobile landscape 812×375 → 667×375 16:9 full).
+- What was NOT changed: gameplay/movement/shooting/zombies; far.png + ground.png + fx kept
+  as-is; procedural fallback themes untouched; nothing outside PROJECT_ROOT touched (rejected
+  assets moved to a project-local quarantine, none deleted).
+- Next: extend the silhouette pipeline to levels 02–05 (currently source-only, gitignored).
+
 ### 2026-07-09 — Level 01 map build-out: HD props, effects, foreground (fuller scene)
 - Goal: The Level 01 slice was too bare ("chunky", missing parts). Add HD street props,
   atmospheric effects and a foreground layer so the level reads as a full premium scene.

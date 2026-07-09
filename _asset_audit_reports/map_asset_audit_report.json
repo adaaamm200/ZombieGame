@@ -1,0 +1,52 @@
+{
+  "date": "2026-07-09",
+  "scope": "assets/maps/level_01 (theme 0 = Quarantine Street, campaign days 1-5). Only HD map wired into engine.",
+  "out_of_scope": ["themes 1-2 (procedural)", "levels 02-05 (gitignored source, not implemented)"],
+  "root_cause": {
+    "destructive_alpha": "removeDarkBg() flood-fill on hard near-black threshold floods through hollow ruined buildings and eats interior detail -> swiss-cheese holes + ragged fringe.",
+    "collage_by_tiling": "mid.png (3 building cutouts) and near.png (row of individual poles/towers) are drawn as full-width tiled parallax layers -> repetitive, floating-cutout collage."
+  },
+  "kept": [
+    { "file": "far.png", "bytes": 591895, "role": "far_background", "reason": "cohesive premium night skyline, opaque, no artifacts" },
+    { "file": "ground.png", "bytes": 211026, "role": "ground", "reason": "clean continuous wet-road strip, opaque" },
+    { "file": "props/police.png", "bytes": 11240, "role": "prop_vehicle", "reason": "clean silhouette, minimal fringe" },
+    { "file": "fx/fog.png", "bytes": 145977, "role": "atmosphere", "reason": "additive blend, black vanishes" },
+    { "file": "fx/lightpool.png", "bytes": 30882, "role": "atmosphere", "reason": "additive streetlamp glow, clean" },
+    { "file": "fx/rain.png", "bytes": 185927, "role": "atmosphere", "reason": "additive rain/dust, used subtly" }
+  ],
+  "reprocess": [
+    { "file": "mid.png", "bytes": 437995, "problem": "buildings shredded + tiled", "action": "regenerate as 2 discrete chroma-keyed buildings, skip hollow-ruin centre" },
+    { "file": "props/bus.png", "bytes": 60833, "problem": "wheel halos, ragged", "action": "re-mask chroma-key" },
+    { "file": "props/car.png", "bytes": 19567, "problem": "wheel halos, ragged", "action": "re-mask chroma-key" },
+    { "file": "props/suv.png", "bytes": 16473, "problem": "wheel halos; near-duplicate of car", "action": "drop unless second car needed" }
+  ],
+  "rejected": [
+    { "file": "near.png", "bytes": 157581, "reason": "prop-palette tiled as layer = floating-cutout collage; poles shredded. Water tower salvaged separately." },
+    { "file": "fg.png", "bytes": 39603, "reason": "debris strip shredded (swiss-cheese); noise across bottom, hurts readability" },
+    { "file": "props/barrel.png", "bytes": 2669, "reason": "unreadable near-black blob, low value" },
+    { "file": "props/trash.png", "bytes": 2781, "reason": "shredded noise, broken alpha" },
+    { "file": "props/xbarricade.png", "bytes": 3174, "reason": "reduced to illegible sliver, broken" },
+    { "file": "props/barrier.png", "bytes": 7398, "reason": "low value, favour fewer/bigger elements" }
+  ],
+  "duplicates": [
+    { "group": ["car.png", "suv.png", "bus.png"], "note": "all wrecked vehicles; keep bus + one car + police (3 total), drop suv as near-dup of car" },
+    { "group": ["mid.png buildings", "far.png buildings"], "note": "midground overlaps far skyline; use only 2 discrete midground buildings to avoid building-on-building noise" }
+  ],
+  "moved_to_quarantine": [
+    "mid.png", "near.png", "fg.png",
+    "props/bus.png", "props/car.png", "props/suv.png",
+    "props/barrel.png", "props/trash.png", "props/xbarricade.png", "props/barrier.png"
+  ],
+  "final_map_assets": {
+    "far": "far.png",
+    "midground": ["bld_a.png", "bld_b.png", "watertower.png"],
+    "ground": "ground.png",
+    "props": ["bus.png", "car.png", "police.png"],
+    "atmosphere": ["fx/fog.png", "fx/lightpool.png", "fx/rain.png"]
+  },
+  "risky": [
+    "middle hollow ruined building excluded (sky passes through, cannot mask cleanly)",
+    "fx/rain.png multi-effect sheet may band when tiled; mitigate with low alpha",
+    "levels 02-05 not implemented; pipeline extendable later"
+  ]
+}

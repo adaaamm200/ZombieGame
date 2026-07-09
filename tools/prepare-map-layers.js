@@ -1,11 +1,20 @@
-/* ZombieChronicles — MAP PARALLAX-RÉTEG előkészítő (zero-dep: zlib + fs).
-   A rétegre bontott HD forrás-stripekből (assets/references/maps/levels/) kicsi, játékkész
-   runtime parallax-rétegeket készít az assets/maps/ alá.
-     - FAR / GROUND: teljes-bleed, ATLÁTSZATLAN → csak leméretezés a játék-felbontásra.
-     - MIDGROUND: a near-black ÉG-hátteret ÉL-FLOOD-FILL-lel a FELSŐ élről átlátszóvá teszi
-       (a sötét ÉPÜLET-részletek MEGmaradnak — NEM naiv fekete-küszöb!), majd leméretez.
-   A `tile` a motorban logikai méreten (px/ART, ART=2) rajzol → a kimeneti PNG szélessége/
-   magassága = kívánt_logikai × ART. */
+/* ZombieChronicles — MAP LAYER előkészítő (zero-dep: zlib + fs).  [v2 — CLEAN REBUILD]
+
+   A régi flood-fill (removeDarkBg) a sötét-hátterű HD festett rétegeket SZÉTTÉPTE
+   (svájcisajt-lyukak, rojtos él, kerék-halo), mert a küszöb-alapú fill a lyukas romokon
+   ÁT is befolyt. Ezt egy NEM-destruktív eljárás váltja:
+
+     chromaKey(): fényesség-alapú alfa-RAMP a mintázott háttérszínhez képest (nincs fill,
+       nincs lyuk) → tiszta, él-simított perem; MAJD „exterior flood" csak a KÜLSŐ hátteret
+       teszi átlátszóvá, a BEZÁRT (objektum-belső) sötét foltokat SZILÁRDRA tölti (solid),
+       így nincs kerék-halo és nincs belső lyuk. 1px lágy perem-feather.
+
+   Kompozíció: NEM tileljük a különálló kivágás-stripeket (az kollázs). Helyette a
+   midground épületeket a stripből SZEGMENSEKRE bontjuk, és a motorban NÉHÁNY diszkrét
+   struktúraként helyezzük el. Kevesebb, nagyobb, tisztább elem.
+
+   Kimenet: assets/maps/level_01/  (bld_a, bld_b, watertower, props/bus, props/car).
+   A far.png / ground.png / props/police.png / fx/* MEGMARAD (jók) — ezeket nem érinti. */
 const fs = require('fs'), zlib = require('zlib'), path = require('path');
 const ART = 2;
 
@@ -25,75 +34,122 @@ function chunk(t, d) { const l = Buffer.alloc(4); l.writeUInt32BE(d.length, 0); 
 function writePNG(file, w, h, rgba) { const stride = w * 4; const f = Buffer.alloc(h * (stride + 1)); for (let y = 0; y < h; y++) { f[y * (stride + 1)] = 0; rgba.copy(f, y * (stride + 1) + 1, y * stride, y * stride + stride); } const idat = zlib.deflateSync(f, { level: 9 }); const ih = Buffer.alloc(13); ih.writeUInt32BE(w, 0); ih.writeUInt32BE(h, 4); ih[8] = 8; ih[9] = 6; fs.writeFileSync(file, Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ih), chunk('IDAT', idat), chunk('IEND', Buffer.alloc(0))])); }
 function resize(px, w, h, dw, dh) { const out = Buffer.alloc(dw * dh * 4); for (let y = 0; y < dh; y++) { let sy = (y + .5) * h / dh - .5; let y0 = Math.floor(sy); let fy = sy - y0; if (y0 < 0) { y0 = 0; fy = 0 } if (y0 > h - 2) { y0 = Math.max(0, h - 2); fy = h === 1 ? 0 : 1 } for (let x = 0; x < dw; x++) { let sx = (x + .5) * w / dw - .5; let x0 = Math.floor(sx); let fx = sx - x0; if (x0 < 0) { x0 = 0; fx = 0 } if (x0 > w - 2) { x0 = Math.max(0, w - 2); fx = w === 1 ? 0 : 1 } for (let c = 0; c < 4; c++) { const i00 = (y0 * w + x0) * 4 + c, i10 = (y0 * w + x0 + 1) * 4 + c, i01 = ((y0 + 1) * w + x0) * 4 + c, i11 = ((y0 + 1) * w + x0 + 1) * 4 + c; const t = px[i00] + (px[i10] - px[i00]) * fx, b = px[i01] + (px[i11] - px[i01]) * fx; out[(y * dw + x) * 4 + c] = Math.round(t + (b - t) * fy); } } } return out; }
 
-/* SÖTÉT háttér-eltávolítás flood-fillel a megadott élekről: a near-black (max-csatorna <
-   darkTh), az élhez KAPCSOLÓDÓ tartományt átlátszóvá teszi. A zárt (objektum-belső) sötét
-   részek NEM élhez kapcsolódnak → megmaradnak (NEM naiv fekete-küszöb!). Lágy feather + defringe. */
-function removeDarkBg(s, darkTh, soft, allEdges) {
-  const { w, h, px } = s; const N = w * h; const bg = new Uint8Array(N); const stack = [];
-  const isDark = (i) => { const o = i * 4; return Math.max(px[o], px[o + 1], px[o + 2]) < darkTh; };
-  const pushIf = (i) => { if (!bg[i] && isDark(i)) { bg[i] = 1; stack.push(i); } };
-  for (let x = 0; x < w; x++) { pushIf(x); if (allEdges) pushIf((h - 1) * w + x); } // felső (+ alsó ha allEdges)
-  for (let y = 0; y < h; y++) { pushIf(y * w); pushIf(y * w + w - 1); }             // bal/jobb él
-  while (stack.length) { const i = stack.pop(); const x = i % w, y = (i / w) | 0; if (x > 0) pushIf(i - 1); if (x < w - 1) pushIf(i + 1); if (y > 0) pushIf(i - w); if (y < h - 1) pushIf(i + w); }
-  for (let i = 0; i < N; i++) {
-    const o = i * 4;
-    if (bg[i]) { px[o + 3] = 0; px[o] = 0; px[o + 1] = 0; px[o + 2] = 0; continue; }
-    const x = i % w, y = (i / w) | 0;
-    const nb = (x > 0 && bg[i - 1]) || (x < w - 1 && bg[i + 1]) || (y > 0 && bg[i - w]) || (y < h - 1 && bg[i + w]);
-    if (nb) { const mx = Math.max(px[o], px[o + 1], px[o + 2]); if (mx < soft) px[o + 3] = Math.max(0, Math.min(255, Math.round(255 * (mx - darkTh) / (soft - darkTh)))); }
+/* háttérszín mintázása a keretről (a sötét sarkok/élek átlaga) */
+function sampleBg(s) { const { w, h, px } = s; let r = 0, g = 0, b = 0, n = 0; const pts = [[2, 2], [w - 3, 2], [2, h - 3], [w - 3, h - 3], [(w / 2) | 0, 2], [(w / 2) | 0, h - 3], [2, (h / 2) | 0], [w - 3, (h / 2) | 0]]; for (const [x, y] of pts) { const o = (y * w + x) * 4; r += px[o]; g += px[o + 1]; b += px[o + 2]; n++; } return [Math.round(r / n), Math.round(g / n), Math.round(b / n)]; }
+
+/* PER-OSZLOP SZILUETT-KITÖLTÉS. A festett tárgyak (épület/jármű/torony) sötét részei
+   ugyanolyan feketék, mint a háttér, ÉS összefüggnek vele → semmilyen küszöb/flood nem
+   választja szét tisztán (ez okozta a svájcisajt-lyukakat). Megoldás: a tárgy egy a talajon
+   ÁLLÓ tömör tömeg. Oszloponként megkeressük a MAGABIZTOSAN tárgy-pixelek (lum > confLo)
+   legfelső és legalsó sorát, és a KÖZTÜK lévő teljes függőleges sávot SZILÁRDRA töltjük
+   (255), a sávon kívül (ég fent, semmi lent) átlátszó. Így nincs belső lyuk, a perem az
+   igazi sziluettet követi. gapClose: kis függőleges rések áthidalása. */
+function silhouette(s, confLo, gapClose) {
+  const { w, h, px } = s; gapClose = gapClose || 0;
+  const conf = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) { const o = i * 4; conf[i] = Math.max(px[o], px[o + 1], px[o + 2]) > confLo ? 1 : 0; }
+  const alpha = new Uint8Array(w * h);
+  for (let x = 0; x < w; x++) {
+    let top = -1, bot = -1;
+    for (let y = 0; y < h; y++) { if (conf[y * w + x]) { if (top < 0) top = y; bot = y; } }
+    if (top < 0) continue;
+    for (let y = top; y <= bot; y++) alpha[y * w + x] = 255;
+  }
+  /* vízszintes rés-zárás: keskeny átlátszó oszlop-hézagok kitöltése a szomszédokból */
+  if (gapClose > 0) {
+    for (let y = 0; y < h; y++) {
+      let x = 0;
+      while (x < w) {
+        if (alpha[y * w + x]) { x++; continue; }
+        let g = x; while (g < w && !alpha[y * w + g]) g++;
+        if (x > 0 && g < w && (g - x) <= gapClose) for (let k = x; k < g; k++) alpha[y * w + k] = 255;
+        x = g + 1;
+      }
+    }
+  }
+  for (let i = 0; i < w * h; i++) { const o = i * 4; px[o + 3] = alpha[i]; if (!alpha[i]) { px[o] = 0; px[o + 1] = 0; px[o + 2] = 0; } }
+  return s;
+}
+/* alfa 3×3 átlag-lágyítás (perem-feather, jaggie-mentes él) */
+function featherAlpha(s, passes) {
+  const { w, h, px } = s; passes = passes || 1;
+  for (let p = 0; p < passes; p++) {
+    const a = new Uint8Array(w * h); for (let i = 0; i < w * h; i++) a[i] = px[i * 4 + 3];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let sum = 0, n = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue; sum += a[yy * w + xx]; n++; }
+      px[(y * w + x) * 4 + 3] = Math.round(sum / n);
+    }
   }
   return s;
 }
-/* felső N% levágása (a set-lapok címkéje) */
-function cropTop(s, frac) {
-  const { w, h, px } = s; const y0 = Math.round(h * frac); const nh = h - y0;
-  const out = Buffer.alloc(w * nh * 4); px.copy(out, 0, y0 * w * 4, h * w * 4);
-  return { w, h: nh, ch: 4, px: out };
+/* diszkrét struktúra/prop tisztítása: sziluett + feather + trim */
+function cleanObject(s, delta, gapClose) {
+  const bg = sampleBg(s); const bgMax = Math.max(bg[0], bg[1], bg[2]);
+  silhouette(s, bgMax + (delta == null ? 20 : delta), gapClose);
+  featherAlpha(s, 1);
+  return trim(s, 24, 2);
 }
 
-/* [forrás, kimenet, logikai_magasság, mód('opaque'|'sky'|'prop'|'fx'), cropTopFrac?] */
-function process(src, out, logicalH, mode, ct) {
-  let s = toRGBA(readPNG(src));
-  if (ct) s = cropTop(s, ct);
-  if (mode === 'sky') s = removeDarkBg(s, 26, 46, false);
-  else if (mode === 'prop') s = removeDarkBg(s, 17, 33, true); // dark-on-dark: csak a near-fekete hátteret, az objektumot megtartja
-  const dh = Math.max(1, Math.round(logicalH * ART));
-  const dw = Math.max(1, Math.round(s.w * dh / s.h));
-  const px = resize(s.px, s.w, s.h, dw, dh);
-  writePNG(out, dw, dh, px);
-  return { file: path.basename(out), lw: Math.round(dw / ART), lh: logicalH };
+/* alfa-bounding-box vágás kis paddinggal */
+function trim(s, athr, pad) {
+  athr = athr || 24; pad = pad || 2; const { w, h, px } = s;
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { if (px[(y * w + x) * 4 + 3] > athr) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
+  if (x1 < 0) return s;
+  x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+  const nw = x1 - x0 + 1, nh = y1 - y0 + 1; const out = Buffer.alloc(nw * nh * 4);
+  for (let y = 0; y < nh; y++) px.copy(out, y * nw * 4, ((y + y0) * w + x0) * 4, ((y + y0) * w + x0 + nw) * 4);
+  return { w: nw, h: nh, ch: 4, px: out };
 }
+
+/* vízszintes szegmensekre bontás: a (jórészt) üres oszlopok mentén elvágva */
+function segments(s, minW, minGap) {
+  minW = minW || 60; minGap = minGap || 14; const { w, h, px } = s;
+  const solidCol = new Uint8Array(w); const need = Math.max(3, Math.round(h * 0.05));
+  for (let x = 0; x < w; x++) { let c = 0; for (let y = 0; y < h; y++) if (px[(y * w + x) * 4 + 3] > 60) c++; solidCol[x] = c >= need ? 1 : 0; }
+  const segs = []; let x = 0;
+  while (x < w) {
+    while (x < w && !solidCol[x]) x++;
+    if (x >= w) break; let s0 = x;
+    let gap = 0, last = x;
+    while (x < w) { if (solidCol[x]) { last = x; gap = 0; } else { gap++; if (gap > minGap) break; } x++; }
+    if (last - s0 + 1 >= minW) segs.push([s0, last]);
+  }
+  return segs;
+}
+function cropCols(s, x0, x1) { const { w, h, px } = s; const nw = x1 - x0 + 1; const out = Buffer.alloc(nw * h * 4); for (let y = 0; y < h; y++) px.copy(out, y * nw * 4, (y * w + x0) * 4, (y * w + x1 + 1) * 4); return { w: nw, h, ch: 4, px: out }; }
+
+function scaleH(s, logicalH) { const dh = Math.max(1, Math.round(logicalH * ART)); const dw = Math.max(1, Math.round(s.w * dh / s.h)); return { w: dw, h: dh, px: resize(s.px, s.w, s.h, dw, dh) }; }
+function emit(out, s, logicalH) { const r = scaleH(s, logicalH); writePNG(out, r.w, r.h, r.px); return { file: path.basename(out), lw: Math.round(r.w / ART), lh: logicalH }; }
 
 const L1 = 'assets/references/maps/levels/level_01_quarantine_street';
-const OUT = 'assets/maps/level_01';
+const OUT = process.env.MAP_OUT || 'assets/maps/level_01';
 fs.mkdirSync(OUT, { recursive: true });
 fs.mkdirSync(path.join(OUT, 'props'), { recursive: true });
-fs.mkdirSync(path.join(OUT, 'fx'), { recursive: true });
-console.log('level_01 quarantine street:');
-/* parallax rétegek */
+
+console.log('level_01 quarantine street — CLEAN rebuild →', OUT);
+
+/* --- MIDGROUND ÉPÜLETEK: 2 diszkrét, TÖMÖR épület a stripből (a középső üreges rom
+   KIHAGYVA — az nem maszkolható tisztán, mert átlátszik rajta az ég). --- */
+{
+  const strip = toRGBA(readPNG(path.join(L1, '01_layers/quarantine_midground_buildings_strip.png')));
+  [
+    ['bld_a.png', 16, 258],    // bal, tömör kétszintes (napellenzővel)
+    ['bld_b.png', 606, 1001],  // jobb, „QUICK MART" saroképület
+  ].forEach(([out, x0, x1]) => { const seg = cleanObject(cropCols(strip, x0, x1), 20, 6); const r = emit(path.join(OUT, out), seg, 156); console.log('  bld  ', out.padEnd(10), r.lw + 'x' + r.lh, '(src x' + x0 + '..' + x1 + ')'); });
+}
+
+/* --- WATCHTOWER: diszkrét midground silhouette (lattice rések megmaradnak) --- */
+{
+  const s = cleanObject(toRGBA(readPNG(path.join(L1, '03_props/watchtower_large.png'))), 26, 0);
+  const r = emit(path.join(OUT, 'watertower.png'), s, 150); console.log('  watertower', r.lw + 'x' + r.lh);
+}
+
+/* --- PROPOK (ritka): bus + car + police (tömör jármű-sziluett) --- */
 [
-  ['01_layers/quarantine_far_background.png', 'far.png', 118, 'opaque'],
-  ['01_layers/quarantine_midground_buildings_strip.png', 'mid.png', 150, 'sky'],
-  ['01_layers/quarantine_midground_infrastructure_strip.png', 'near.png', 140, 'sky'],
-  ['05_ground/wet_road_long_no_line.png', 'ground.png', 46, 'opaque'],
-  ['06_foreground/debris_pile_long_wood_barrel_tires.png', 'fg.png', 34, 'prop'],
-].forEach(([s, o, hh, m]) => { const r = process(path.join(L1, s), path.join(OUT, o), hh, m); console.log('  layer', r.file.padEnd(12), r.lw + 'x' + r.lh); });
-/* propok (sötét-maszk minden élről) */
-const PROPS = [
-  ['03_props/bus_rusted.png', 'bus.png', 46],
-  ['04_vehicles_street_props/car_wreck_01.png', 'car.png', 30],
-  ['04_vehicles_street_props/suv_wreck_01.png', 'suv.png', 32],
-  ['03_props/police_car_lightbar.png', 'police.png', 30],
-  ['03_props/concrete_barrier_01.png', 'barrier.png', 20],
-  ['03_props/dirty_barrel.png', 'barrel.png', 24],
-  ['03_props/wooden_x_barricade.png', 'xbarricade.png', 22],
-  ['04_vehicles_street_props/trash_pile_small.png', 'trash.png', 16],
-];
-PROPS.forEach(([s, o, hh]) => { const r = process(path.join(L1, s), path.join(OUT, 'props', o), hh, 'prop'); console.log('  prop ', r.file.padEnd(12), r.lw + 'x' + r.lh); });
-/* effektek (additív blendhez, felső címke levágva) */
-[
-  ['07_effects/atmospheric_particles_set.png', 'rain.png', 120, 0.34],
-  ['07_effects/fog_smoke_set.png', 'fog.png', 90, 0.24],
-  ['07_effects/streetlamp_light_pools_set.png', 'lightpool.png', 28, 0.34],
-].forEach(([s, o, hh, ct]) => { const r = process(path.join(L1, s), path.join(OUT, 'fx', o), hh, 'fx', ct); console.log('  fx   ', r.file.padEnd(12), r.lw + 'x' + r.lh); });
+  ['03_props/bus_rusted.png', 'props/bus.png', 44],
+  ['04_vehicles_street_props/car_wreck_01.png', 'props/car.png', 28],
+  ['03_props/police_car_lightbar.png', 'props/police.png', 28],
+].forEach(([src, out, hh]) => { const s = cleanObject(toRGBA(readPNG(path.join(L1, src))), 18, 10); const r = emit(path.join(OUT, out), s, hh); console.log('  prop ', r.file.padEnd(12), r.lw + 'x' + r.lh); });
+
 console.log('done -> ' + OUT);
