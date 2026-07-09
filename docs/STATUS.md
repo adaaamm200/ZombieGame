@@ -11,6 +11,29 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## GAMEPLAY TELJES-KÉPERNYŐS KITÖLTÉS — dinamikus látótér-szélesség (2026-07-09)
+- **Valós ok a „gameplay nem tölti ki, oldalt fekete sávok"-ra**: a menü (`#screens`) a
+  `#stage`-en KÍVÜL, teljes viewportot tölt; a gameplay (`#cv`+`#hud`+`#controls`) a `#stage`
+  FIX 16:9 dobozában volt → 16:9-nél szélesebb képernyőn oldalsó pillarbox. A menü full-screen,
+  a játék nem → a felhasználó által jelzett eltérés.
+- **Fix (a user választása: „szélesebb látótér")** — `js/main.js` `fit()`: a logikai MAGASSÁG
+  fix (VIEW_H=270), a SZÉLESSÉG (`C.VIEW_W`) mostantól a képernyő-arányhoz igazodik
+  (clamp **1.6–2.6×**), a canvas-buffer szélessége ehhez frissül (`cv.width=VIEW_W*RS`). Így a
+  gameplay KITÖLTI a viewportot (mint a menü), side-scrollerként széles képernyőn **több pálya
+  látszik oldalt** — nincs vágás, nincs torzítás, a HUD/gombok a képernyő széléhez igazodnak.
+  A függőleges keretezés (GROUND_Y ~86%) és a balansz VÁLTOZATLAN. Minden modul futásidőben
+  olvassa `C.VIEW_W`-t (kamera-clamp, spawn, HUD-közép, bannerek) → automatikusan igazodik.
+- **Extrém arány** (>2.6:1 vagy <1.6:1) esetén a clamp miatt minimális, kontrollált letterbox
+  marad (az in-canvas HUD SOSEM vágódik le, perf/balansz védve).
+- **TESZTELVE** (valós böngésző, Level 01, mérve): 16:9 1280×720 → VIEW_W 480, 100% kitöltés;
+  **1760×820 (2.15:1) → VIEW_W 580, oldalsáv 0, 100% kitöltés** (ez volt a panasz esete);
+  mobil landscape 812×375 → VIEW_W 584, oldalsáv 0, 100% (korábban 73px/oldal sáv volt);
+  ultrawide 2400×800 (3:1) → clamp 2.6, kontrollált 160px/oldal (kirívó eset). Player a
+  talajvonalon, HUD/gombok a széleken, atmoszféra OK. **0 konzolhiba.** node --check OK.
+- Csak `js/main.js` (`fit()`) + `js/const.js` (VIEW_W komment) + build/cache bump. Map-art,
+  pipeline, atmoszféra ÉRINTETLEN; elutasított asset NEM tért vissza; projekten kívül semmi.
+- sw.js cache: **zk-v41**; `ZD.BUILD='v41'`.
+
 ## LEVEL 01 IGAZÍTÁS-ELLENŐRZÉS + ALIGN-DEBUG overlay (2026-07-09)
 - **Kérés**: a stage/háttér „megint elcsúszott" — javítás a maps 02–05 előtt. **Vizsgálat**:
   a fit()/stage-centrálás/kamera-transzform ÉRINTETLEN a map-munkák óta; méréssel a stage

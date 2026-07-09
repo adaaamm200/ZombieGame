@@ -18,6 +18,28 @@ Entry format:
 
 ---
 
+### 2026-07-09 — Gameplay fills the viewport: dynamic field-of-view width (no side bars)
+- Goal: user reported gameplay was NOT fullscreen (black bars left/right) while the menu was.
+  Root cause: menus (#screens) fill the full viewport, but gameplay (#cv/#hud/#controls) lived
+  in the #stage FIXED 16:9 box → pillarbox on any viewport wider than 16:9.
+- Fix (user picked "wider field of view"): js/main.js fit() now keeps logical HEIGHT fixed
+  (VIEW_H=270) and derives logical WIDTH (C.VIEW_W) from the viewport aspect (clamped 1.6–2.6),
+  updating the canvas buffer width (cv.width=VIEW_W*RS). Gameplay fills the viewport like the
+  menu; a side-scroller shows MORE level width on wide screens — no crop, no distortion; HUD/
+  controls sit at the screen edges. Vertical framing (GROUND_Y ~86%) and balance unchanged.
+  All modules read C.VIEW_W at runtime (camera clamp, spawn, HUD centering, banners) so they
+  auto-adjust. Extreme aspect (>2.6:1 or <1.6:1) keeps a minimal controlled letterbox so the
+  in-canvas HUD never gets cropped.
+- Files: js/main.js (fit dynamic VIEW_W), js/const.js (VIEW_W note + BUILD v41), sw.js (zk-v41).
+- Tests run: node --check all JS (OK). Real browser Level 01 measured: 16:9 1280×720 → VIEW_W
+  480 fills 100%; 1760×820 (2.15:1) → VIEW_W 580, sideGap 0, fills 100% (the reported case);
+  mobile landscape 812×375 → VIEW_W 584, sideGap 0, fills 100% (was 73px bars/side); ultrawide
+  2400×800 (3:1) → clamped 2.6, controlled 160px/side. Player on ground line, HUD/controls at
+  edges, atmosphere OK; 0 console errors.
+- What was NOT changed: map art / silhouette pipeline / atmosphere / assets / gameplay balance;
+  no rejected asset reintroduced; nothing outside PROJECT_ROOT touched.
+- Next: user confirms fullscreen gameplay on their device; then Level 02 only (per their gating).
+
 ### 2026-07-09 — Level 01 alignment verify + align-debug overlay (no offset bug found)
 - Goal: user reported the stage/background "shifted again" before doing maps 02–05; fix Level
   01 alignment first.

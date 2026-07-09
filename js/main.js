@@ -13,8 +13,23 @@ window.ZD = window.ZD || {};
   /* stage (canvas + HUD + gombok + menük) illesztése a képernyőhöz:
      arányos 16:9, maximális kitöltés, minimális letterbox */
   const stage = document.getElementById('stage');
+  /* DINAMIKUS LÁTÓTÉR: a logikai MAGASSÁG fix (VIEW_H=270), a SZÉLESSÉG a képernyő-
+     arányhoz igazodik (clamp) → a gameplay KITÖLTI a viewportot, mint a menü (nincs
+     oldalsó fekete sáv). Side-scrollerként széles képernyőn TÖBB pálya látszik oldalt;
+     a függőleges keretezés (GROUND_Y ~86%) és a balansz VÁLTOZATLAN.
+     Extrém (ultrawide/keskeny) aránynál a clamp miatt minimális, kontrollált letterbox
+     marad — így az in-canvas HUD (boss-sáv, bannerek) SOSEM vágódik le. */
+  const ASPECT_MIN = 1.6, ASPECT_MAX = 2.6;
   function fit() {
     const w = window.innerWidth, h = window.innerHeight;
+    const aspect = Math.max(ASPECT_MIN, Math.min(ASPECT_MAX, w / h));
+    const vw = Math.round(C.VIEW_H * aspect / 2) * 2; // páros (RS-hez)
+    if (vw !== C.VIEW_W) {
+      C.VIEW_W = vw;
+      cv.width = C.VIEW_W * C.RS; // belső buffer-szélesség frissítése (magasság fix 540)
+    }
+    /* contain: ha az arány a clamp-tartományban van, a buffer-arány = viewport-arány →
+       teljes kitöltés, nulla sáv; extrém aránynál minimális letterbox (nem crop). */
     const scale = Math.min(w / C.VIEW_W, h / C.VIEW_H);
     stage.style.width = `${Math.round(C.VIEW_W * scale)}px`;
     stage.style.height = `${Math.round(C.VIEW_H * scale)}px`;

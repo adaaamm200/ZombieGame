@@ -3,12 +3,13 @@ window.ZD = window.ZD || {};
 
 /* Betöltött build-verzió (a főmenü sarkában látszik). BUMPOLD az sw.js VERSION-nel együtt!
    Ha a telefonon régi számot látsz → a régi cache ragadt be (töröld a webhelyadatot). */
-ZD.BUILD = 'v40';
+ZD.BUILD = 'v41';
 
 ZD.C = {
-  VIEW_W: 480,
-  VIEW_H: 270,
-  RS: 2,             // render-skála: canvas 960×540, logika 480×270 marad
+  VIEW_W: 480,       // DINAMIKUS: a main.js fit() a képernyő-arányhoz igazítja (clamp 1.6–2.6×VIEW_H)
+                     // → a gameplay kitölti a viewportot; minden modul futásidőben olvassa
+  VIEW_H: 270,       // FIX logikai magasság (a függőleges keretezés/balansz stabil)
+  RS: 2,             // render-skála: buffer = VIEW_W*RS × 540, logika VIEW_W×270
   ZOOM: 1.75,        // kamera-nagyítás: a karakterek ~2× nagyobbak a képernyőn,
                      // a játéklogika és a balansz érintetlen marad
   GROUND_Y: 234,
