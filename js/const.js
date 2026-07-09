@@ -3,7 +3,7 @@ window.ZD = window.ZD || {};
 
 /* Betöltött build-verzió (a főmenü sarkában látszik). BUMPOLD az sw.js VERSION-nel együtt!
    Ha a telefonon régi számot látsz → a régi cache ragadt be (töröld a webhelyadatot). */
-ZD.BUILD = 'v38';
+ZD.BUILD = 'v39';
 
 ZD.C = {
   VIEW_W: 480,
@@ -18,6 +18,26 @@ ZD.C = {
 
   /* meccs közbeni (emergency) lőszervásárlás felára a bolti kis-pack árához képest */
   AMMO_EMERGENCY: 1.25,
+
+  /* ---- ATMOSZFÉRA (köd/eső) — CSAK hangulat, NEM teljes-képernyős szűrő ----
+     A köd procedurális, MÉLYSÉG-SÁVOKBAN (far erősebb, mid halvány, előtér szinte
+     láthatatlan), soha nem borítja be az egész képet; az eső vékony, ritka, mozgó csík.
+     Gyors összehasonlításhoz: `enabled` (be/ki) + `intensity` ('off'|'subtle'|'strong'
+     vagy szorzó-szám). Alapértelmezés: SUBTLE (nem cinematic-heavy).
+     Runtime hangolható: ZD.C.atmosphere.intensity = 'strong' stb. */
+  atmosphere: {
+    enabled: true,          // atmosphereEnabled — teljes ki/be (ki = tökéletesen tiszta jelenet)
+    intensity: 'subtle',    // atmosphereIntensity — 'off' | 'subtle' | 'strong' | szám (szorzó)
+    fogEnabled: true,
+    fogFarAlpha: 0.10,      // horizont/far mist — a legerősebb (de még halvány)
+    fogMidAlpha: 0.05,      // midground/struktúra-tő — nagyon halvány
+    fogForegroundAlpha: 0.02, // játéktér/előtér — szinte láthatatlan
+    rainEnabled: true,
+    rainAlpha: 0.12,        // vékony, féláttetsző csíkok
+    rainDensity: 0.35,      // ritka (0..1)
+    rainSpeed: 1.0,
+    lightPools: true,       // utcalámpa-fény a talajon (meleg, lokális — nem wash)
+  },
 
   /* pályatéma: 5 pályánként váltakozik (utca → labor → romváros) */
   themeFor(level) { return Math.floor((level - 1) / 5) % 3; },

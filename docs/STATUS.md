@@ -11,6 +11,30 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## ATMOSZFÉRA-FINOMHANGOLÁS — procedurális, mélység-sávos köd + vékony eső (2026-07-09)
+- **Panasz**: a köd/eső overlay olcsó, teljes-képernyős szűrőként washol, elmossa a képet,
+  rontja az olvashatóságot (karakter/zombi/prop/talaj). **CSAK az atmoszféra változott** —
+  a tiszta réteg-pipeline és a kompozíció ÉRINTETLEN, elutasított asset NEM tért vissza.
+- **Kiváltva a PNG-overlayek** (`fog.png`, `rain.png` additív, teljes-szélességű tilelt
+  rétegek + a 0.34-es horizont-gradient) → **procedurális, mélység-sávos** rendszer
+  (`js/sprites.js`): `drawFogBand()` finom, sodródó köd-pamacsok 3 mélység-sávban
+  (far erősebb → mid halvány → előtér szinte láthatatlan), soha nem full-screen; `drawAtmoRain()`
+  vékony, ritka, determinisztikus, mozgó eső-csíkok (rövid, féláttetsző, enyhén átlós, nincs
+  PNG-felhő). Az utcalámpa-fény (`lightpool.png`, lokális, meleg) megmarad, halványabban.
+- **Render-sorrend**: far → FAR mist → struktúrák → MID mist → talaj → fénypool → propok →
+  (entitások) → előtér-köd + eső (drawForeground, az entitások UTÁN, halványan).
+- **Config + gyors toggle** (`js/const.js` `C.atmosphere`): `enabled` (atmosphereEnabled) +
+  `intensity` (atmosphereIntensity: 'off' | 'subtle' | 'strong' | szám-szorzó) + per-mélység
+  köd-alfák (0.10/0.05/0.02) + rain (alpha 0.12 / density 0.35 / speed 1.0) + lightPools.
+  **Alap: SUBTLE** (nem cinematic-heavy). Runtime: `ZD.C.atmosphere.intensity='strong'` stb.
+- **TESZTELVE** (valós böngésző, Level 01, 3 mód): OFF = teljesen tiszta; SUBTLE (alap) =
+  finom hangulat, éles/olvasható artwork (katona/torony/QUICK MART/talaj crisp, nincs wash);
+  STRONG = láthatóbb eső-csíkok + több horizont-mist, de MÉG mindig olvasható. **0 konzolhiba.**
+  node --check OK. Viewport-invariáns ép (desktop 1280×720 = 100% 16:9).
+- A most már használaton kívüli `fog.png`/`rain.png` → `_rejected_assets/level_01/fx/`
+  (karantén, gitignore); a `fx/lightpool.png` marad.
+- sw.js cache: **zk-v39**; `ZD.BUILD='v39'`.
+
 ## MAP AUDIT + REPAIR — kollázs/„svájcisajt" háttér tisztítása, tiszta rétegmodell (2026-07-09)
 - **Panasz**: a pálya-háttér töredezett/kollázs-szerű, foltos a propok körül, fekete-halo/
   koszos vágásélek, „odadobott kivágások" hatás. **Gyökér-ok a PIPELINE volt, nem a forrás**

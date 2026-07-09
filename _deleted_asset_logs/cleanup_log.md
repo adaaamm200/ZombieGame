@@ -22,6 +22,19 @@ mirroring their original subpath, so they can be restored instantly if needed.
 | `assets/maps/level_01/props/xbarricade.png` | `_rejected_assets/level_01/props/xbarricade.png` | Illegible sliver, broken |
 | `assets/maps/level_01/props/barrier.png` | `_rejected_assets/level_01/props/barrier.png` | Low value; favour fewer/bigger elements |
 
+### Follow-up move — atmosphere refinement (2026-07-09, build v39)
+
+The fog/rain overlay was replaced by **procedural** depth-banded fog + thin rain streaks
+(see `js/sprites.js` `drawFogBand`/`drawAtmoRain`, config `C.atmosphere`). The two PNG
+overlay sheets are no longer referenced or precached, so they were moved to quarantine:
+
+| Original path | Moved to | Reason |
+|---|---|---|
+| `assets/maps/level_01/fx/fog.png` | `_rejected_assets/level_01/fx/fog.png` | Full-width additive PNG haze washed out the scene; replaced by procedural banded fog |
+| `assets/maps/level_01/fx/rain.png` | `_rejected_assets/level_01/fx/rain.png` | Cloudy multi-effect PNG sheet; replaced by procedural thin rain streaks |
+
+`fx/lightpool.png` is kept (localized warm streetlamp ground glow, not a wash).
+
 **Permanently deleted:** none.
 
 **Remaining in `assets/maps/level_01/` after cleanup:**

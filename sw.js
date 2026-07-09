@@ -1,5 +1,5 @@
 /* Zombi Krónika — offline service worker (cache-first) */
-const VERSION = 'zk-v38';
+const VERSION = 'zk-v39';
 const ASSETS = [
   './',
   './index.html',
@@ -66,8 +66,6 @@ const ASSETS = [
   './assets/maps/level_01/bld_b.png',
   './assets/maps/level_01/watertower.png',
   './assets/maps/level_01/ground.png',
-  './assets/maps/level_01/fx/rain.png',
-  './assets/maps/level_01/fx/fog.png',
   './assets/maps/level_01/fx/lightpool.png',
   './assets/maps/level_01/props/bus.png',
   './assets/maps/level_01/props/car.png',

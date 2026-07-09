@@ -1537,7 +1537,8 @@ ZD.sprites = (() => {
     ['far', 'ground'].forEach((k) => { m[k] = img1(base, k + '.png'); });
     (cfg.struct || []).forEach((p) => { m.struct[p] = img1(base, p + '.png'); });
     (cfg.props || []).forEach((p) => { m.props[p] = img1(base, 'props/' + p + '.png'); });
-    ['rain', 'fog', 'lightpool'].forEach((k) => { m.fx[k] = img1(base + 'fx/', k + '.png'); });
+    /* az atmoszféra (köd/eső) most PROCEDURÁLIS — csak a lokális utcalámpa-fény PNG marad */
+    ['lightpool'].forEach((k) => { m.fx[k] = img1(base + 'fx/', k + '.png'); });
     /* ready, amint a far + ground betöltött (a struktúrák/propok/fx best-effort) */
     let n = 0; const need = 2;
     ['far', 'ground'].forEach((k) => { m[k].onload = () => { if (++n >= need) m.ready = true; }; m[k].onerror = () => { if (++n >= need) m.ready = !!(m.far.naturalWidth); }; });
@@ -1567,6 +1568,68 @@ ZD.sprites = (() => {
     for (let x = off; x < C.VIEW_W; x += w) ctx.drawImage(im, rd2(x), bottomY - h, w, h);
     ctx.restore();
   }
+  /* ================= ATMOSZFÉRA (procedurális, mélység-sávos) =================
+     NEM teljes-képernyős haze/PNG-felhő. A köd MÉLYSÉG-SÁVOKBAN, finom sodródó
+     pamacsokként (far erősebb → mid halvány → előtér szinte láthatatlan); az eső
+     vékony, ritka, mozgó csík. Vezérlés: C.atmosphere (enabled + intensity + alfák). */
+  const AMUL = { off: 0, subtle: 1, strong: 1.85 };
+  function atmoCfg() { return C.atmosphere || {}; }
+  function atmoMul() { const a = atmoCfg(); if (a.enabled === false) return 0; const iv = a.intensity; return typeof iv === 'number' ? Math.max(0, iv) : (AMUL[iv] != null ? AMUL[iv] : 1); }
+  function atmoOn() { return atmoMul() > 0; }
+  /* egy mélység-sáv finom, sodródó köd-pamacsokkal (lokális sáv, nem full-screen).
+     key: 'far'|'mid'|'fg' → a config megfelelő alfája; yc = sáv-közép, hh = sáv-magasság. */
+  function drawFogBand(ctx, cam, t, key, yc, hh) {
+    const a = atmoCfg(); if (!atmoOn() || a.fogEnabled === false) return;
+    const baseA = key === 'far' ? (a.fogFarAlpha != null ? a.fogFarAlpha : 0.10)
+      : key === 'mid' ? (a.fogMidAlpha != null ? a.fogMidAlpha : 0.05)
+        : (a.fogForegroundAlpha != null ? a.fogForegroundAlpha : 0.02);
+    const alpha = baseA * atmoMul(); if (alpha <= 0.004) return;
+    const par = key === 'far' ? 0.18 : key === 'mid' ? 0.42 : 0.85;   // sodródás-parallax
+    const speed = key === 'far' ? 6 : key === 'mid' ? 9 : 12;          // lassú vízszintes drift
+    const span = C.VIEW_W + 260, puffs = key === 'fg' ? 3 : 4;
+    const tint = key === 'far' ? '150,166,184' : key === 'mid' ? '140,152,168' : '120,132,150';
+    ctx.save();
+    for (let i = 0; i < puffs; i++) {
+      const seed = i * 2.3994;
+      let x = (i + 0.5) * span / puffs - cam * par - t * speed + Math.sin(t * 0.25 + seed) * 16;
+      x = ((x % span) + span) % span - 130;                            // vízszintes wrap
+      const y = yc + Math.sin(t * 0.4 + seed) * 3;
+      const rw = 150 + (i % 2) * 54;
+      ctx.save(); ctx.translate(r2(x), y); ctx.scale(1, hh / rw);       // lapos ellipszis-pamacs
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rw);
+      g.addColorStop(0, 'rgba(' + tint + ',' + alpha.toFixed(3) + ')');
+      g.addColorStop(0.6, 'rgba(' + tint + ',' + (alpha * 0.5).toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(' + tint + ',0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rw, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+  const frac = (v) => v - Math.floor(v);
+  /* vékony, ritka, mozgó eső-csíkok (procedurális — nincs PNG-felhő). A legelöl, halványan. */
+  function drawAtmoRain(ctx, cam, t) {
+    const a = atmoCfg(); if (!atmoOn() || a.rainEnabled === false) return;
+    const alpha = (a.rainAlpha != null ? a.rainAlpha : 0.12) * atmoMul(); if (alpha <= 0.004) return;
+    const density = Math.min(1, (a.rainDensity != null ? a.rainDensity : 0.35) * atmoMul());
+    const speed = a.rainSpeed != null ? a.rainSpeed : 1;
+    const N = Math.round(78 * density); if (N <= 0) return;
+    const W = C.VIEW_W, H = C.VIEW_H, span = W + 40, wind = 2.4;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(206,220,236,' + alpha.toFixed(3) + ')';
+    ctx.lineWidth = 0.7; ctx.beginPath();
+    for (let i = 0; i < N; i++) {
+      const h1 = frac(Math.sin(i * 12.9898) * 43758.5453);   // determinisztikus „random" per csík
+      const h2 = frac(Math.sin(i * 78.233) * 12543.113);
+      const h3 = frac(Math.sin(i * 39.425) * 9631.31);
+      const sp = (128 + h2 * 150) * speed;                    // randomizált sebesség
+      let x = h1 * span - (cam * 0.3) % span; x = ((x % span) + span) % span - 20;
+      const y = ((t * sp + h3 * (H + 40)) % (H + 40)) - 20;   // függőleges hurok
+      const len = 5 + h2 * 7;                                 // rövid szakasz
+      ctx.moveTo(r2(x), r2(y)); ctx.lineTo(r2(x - wind), r2(y + len));  // enyhén átlós (szél)
+    }
+    ctx.stroke(); ctx.restore();
+  }
+
   /* Diszkrét MIDGROUND struktúrák (épületek/víztorony) — NEM tilelt strip, hanem néhány
      tiszta sziluett egy parallax-perióduson belül ismételve (par 0.5). Talp GY-en. */
   function drawStructures(ctx, m, cam) {
@@ -1602,19 +1665,16 @@ ZD.sprites = (() => {
     th.sky(ctx, t || 0);
     const hd = MAPS[theme];
     if (hd && hd.ready) {
-      /* TISZTA RÉTEG-MODELL (kevés, nagy, tiszta elem — nincs kollázs):
-         far skyline → horizont-köd → diszkrét midground struktúrák → talaj → fény/prop/köd */
+      /* TISZTA RÉTEG-MODELL + FINOM MÉLYSÉG-SÁVOS ATMOSZFÉRA (nem full-screen szűrő):
+         far → FAR mist → struktúrák → MID mist (halvány) → talaj → fénypool → propok.
+         Az előtér-köd + eső a drawForeground-ban, az entitások UTÁN. */
       if (hd.far.naturalWidth) tileLayer(ctx, hd.far, cam, 0.2, GY);
-      // lágy horizont-köd a far és a midground struktúrák közé (mélység + szeparáció)
-      const hfog = ctx.createLinearGradient(0, GY - 96, 0, GY);
-      hfog.addColorStop(0, 'rgba(16,20,26,0)');
-      hfog.addColorStop(1, 'rgba(22,28,34,.34)');
-      ctx.fillStyle = hfog; ctx.fillRect(0, GY - 96, C.VIEW_W, 96);
+      drawFogBand(ctx, cam, t || 0, 'far', GY - 60, 30);        // horizont/far mist (erősebb, de halvány)
       drawStructures(ctx, hd, cam);                              // épületek + víztorony (par 0.5)
+      drawFogBand(ctx, cam, t || 0, 'mid', GY - 16, 18);        // midground/struktúra-tő (nagyon halvány)
       if (hd.ground.naturalWidth) tileLayer(ctx, hd.ground, cam, 1, C.VIEW_H);
-      addLayer(ctx, hd.fx.lightpool, cam, 1, GY + 8, 0.5, 0);    // utcalámpa fénypoolok a talajon
+      if (atmoOn() && atmoCfg().lightPools !== false) addLayer(ctx, hd.fx.lightpool, cam, 1, GY + 8, 0.3, 0); // utcalámpa-fény a talajon (lokális, meleg)
       drawMapProps(ctx, hd, cam);                                // ritka járművek (entitások mögött)
-      addLayer(ctx, hd.fx.fog, cam, 0.6, GY - 8, 0.18, (t || 0) * 5); // finom sodródó köd
       return drawBgOverlay(ctx);   // scene-grade + vignetta (entitások ELŐTT)
     }
     tileLayer(ctx, th.far, cam, 0.2, GY);
@@ -1662,13 +1722,14 @@ ZD.sprites = (() => {
     ctx.fillStyle = vg; ctx.fillRect(0, 0, VW, VH);
   }
 
-  /* HD ELŐTÉR (az entitások UTÁN rajzolva): CSAK finom sodródó eső (additív). A korábbi
-     előtér-törmelék-sáv (fg.png) eltávolítva — széttépett/zajos volt és rontotta a
-     játéktér olvashatóságát. Kevesebb, tisztább = jobb. */
+  /* HD ELŐTÉR (az entitások UTÁN rajzolva): szinte láthatatlan előtér-köd + vékony,
+     ritka, procedurális eső-csíkok. NINCS PNG-felhő és NINCS teljes-képernyős haze —
+     az artwork éles és olvasható marad. */
   function drawForeground(ctx, cam, level, t) {
     const m = MAPS[C.themeFor(level)];
     if (!m || !m.ready) return;
-    addLayer(ctx, m.fx.rain, cam, 1.1, GY, 0.28, (t || 0) * 34);
+    drawFogBand(ctx, cam, t || 0, 'fg', C.VIEW_H - 6, 14);   // előtér-köd — szinte láthatatlan
+    drawAtmoRain(ctx, cam, t || 0);                          // vékony eső a legelöl
   }
 
   /* menü-háttér: lassan pásztázó jelenet vonuló zombi-sziluettekkel */

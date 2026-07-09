@@ -18,6 +18,31 @@ Entry format:
 
 ---
 
+### 2026-07-09 — Atmosphere refine: procedural depth-banded fog + thin rain (no wash-out)
+- Goal: The fog/rain overlay looked cheap — a full-screen filter that washed out the scene,
+  lowered contrast and hurt readability of player/zombies/props/ground. Refine ONLY the
+  atmosphere; keep the cleaned layer pipeline and composition; do not reintroduce rejected
+  assets or add clutter.
+- Files: js/sprites.js (drawFogBand + drawAtmoRain procedural; HD drawBackground + drawForeground
+  rewired; stopped loading fog/rain PNGs), js/const.js (new C.atmosphere config + BUILD v39),
+  sw.js (zk-v39, dropped fog/rain from precache), _rejected_assets/level_01/fx/ (fog/rain PNGs
+  quarantined), _deleted_asset_logs/cleanup_log.md.
+- What changed: replaced the additive full-width fog.png + rain.png overlays (and the 0.34
+  horizon gradient) with a procedural system: fog is drawn as a few soft drifting puffs in 3
+  DEPTH BANDS (far stronger → mid faint → foreground almost invisible), never full-screen;
+  rain is thin, sparse, deterministic, moving short diagonal streaks (no cloud PNG). Streetlamp
+  lightpool PNG kept (localized warm ground glow), lowered.
+- Config + toggles (C.atmosphere): enabled (atmosphereEnabled) + intensity (atmosphereIntensity:
+  'off' | 'subtle' | 'strong' | numeric multiplier) + per-depth fog alphas (0.10/0.05/0.02) +
+  rain (alpha 0.12 / density 0.35 / speed 1.0) + lightPools. Default intensity = SUBTLE.
+- Tests run: node --check all JS (OK). Real browser Level 01, all 3 modes: off = fully clean;
+  subtle (default) = faint mood, artwork sharp/readable (soldier/tower/QUICK MART/ground crisp,
+  no wash); strong = visible rain streaks + more horizon mist, still readable. 0 console errors.
+  Viewport invariant intact (desktop 1280×720 = 100% 16:9).
+- What was NOT changed: map composition / layer pipeline / cleaned assets / gameplay; no rejected
+  asset reintroduced; nothing outside PROJECT_ROOT touched.
+- Next: (optional) expose atmosphere toggle in Settings UI; extend to levels 02–05 when wired.
+
 ### 2026-07-09 — Map audit + repair: kill the collage/"swiss-cheese" background
 - Goal: The Level 01 background looked fragmented, collage-like, patchy around props, with
   black-halo/dirty crop edges. Full audit, quarantine bad assets, rebuild a clean layered map.
