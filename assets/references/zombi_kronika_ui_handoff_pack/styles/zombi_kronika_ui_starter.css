@@ -1,0 +1,285 @@
+/* Zombi Krónika UI starter styles
+   Cél: a mostani lapozható/scrollozható UI hibáit lezárni:
+   - teljes képernyő, safe-area kompatibilis
+   - fix footer legalul
+   - prémium, bevel/glow gombok
+   - ne legyen kör alakú/alátétes gombháttér a kampány oldalsó navban
+*/
+
+:root {
+  --zk-bg: #05070A;
+  --zk-panel: rgba(10,14,20,.88);
+  --zk-panel-deep: #0B0F15;
+  --zk-text: #F2F0E6;
+  --zk-text-2: #A9A7A0;
+  --zk-muted: #626973;
+  --zk-gold: #F2B632;
+  --zk-gold-light: #FFE58A;
+  --zk-green: #72F05E;
+  --zk-red: #E24A3B;
+  --zk-purple: #9A4DFF;
+  --zk-blue: #36B8FF;
+  --zk-orange: #FF8A2A;
+  --zk-safe-top: max(12px, env(safe-area-inset-top));
+  --zk-safe-bottom: max(10px, env(safe-area-inset-bottom));
+  --zk-font-title: "Cinzel", Georgia, serif;
+  --zk-font-ui: "Rajdhani", "Oswald", "Arial Narrow", sans-serif;
+  --zk-font-mono: "Special Elite", "Courier New", monospace;
+}
+
+html, body, #root, #game-root {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--zk-bg);
+  color: var(--zk-text);
+}
+
+.zk-screen {
+  position: fixed;
+  inset: 0;
+  width: 100dvw;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--zk-bg);
+  isolation: isolate;
+}
+
+.zk-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.02);
+  z-index: 0;
+}
+
+.zk-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 25%, rgba(255, 190, 70, .12), transparent 35%),
+    linear-gradient(180deg, rgba(0,0,0,.12), rgba(0,0,0,.82) 85%),
+    rgba(1,4,7,.35);
+}
+
+.zk-top-hud {
+  position: fixed;
+  top: var(--zk-safe-top);
+  left: clamp(12px, 3vw, 28px);
+  right: clamp(12px, 3vw, 28px);
+  z-index: 40;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.zk-top-hud > * {
+  pointer-events: auto;
+}
+
+.zk-scroll-content {
+  position: absolute;
+  z-index: 10;
+  top: calc(var(--zk-safe-top) + 104px);
+  left: 0;
+  right: 0;
+  bottom: calc(var(--zk-safe-bottom) + 74px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 clamp(14px, 4vw, 36px) 22px;
+}
+
+.zk-fixed-footer {
+  position: fixed;
+  z-index: 45;
+  left: 0;
+  right: 0;
+  bottom: var(--zk-safe-bottom);
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-family: var(--zk-font-mono);
+  font-size: clamp(10px, 2.4vw, 13px);
+  letter-spacing: .06em;
+  color: rgba(242,240,230,.56);
+  text-shadow: 0 0 10px rgba(0,0,0,.8);
+  pointer-events: none;
+}
+
+/* Főmenü kártyák */
+.zk-menu-card {
+  position: relative;
+  min-height: clamp(112px, 16dvh, 154px);
+  margin: 14px auto;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent), white 12%);
+  background: linear-gradient(90deg, rgba(9,12,18,.92), rgba(10,15,22,.74));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.08),
+    inset 0 18px 44px rgba(255,255,255,.035),
+    0 18px 60px rgba(0,0,0,.54),
+    0 0 24px color-mix(in srgb, var(--accent), transparent 55%);
+  cursor: pointer;
+  transform: translateZ(0);
+  transition: transform 160ms ease-out, filter 160ms ease-out;
+}
+
+.zk-menu-card:active { transform: scale(.985); }
+.zk-menu-card:hover { filter: brightness(1.08); }
+
+.zk-menu-card__art {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center right;
+  opacity: .55;
+  mix-blend-mode: screen;
+}
+
+.zk-menu-card__shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(5,7,10,.96) 0%, rgba(5,7,10,.70) 46%, rgba(5,7,10,.35) 100%),
+    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,0) 34%);
+}
+
+.zk-menu-card__content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: grid;
+  grid-template-columns: clamp(74px, 17vw, 108px) 1fr clamp(30px, 8vw, 52px);
+  gap: clamp(12px, 3vw, 26px);
+  align-items: center;
+  padding: clamp(16px, 3.6vw, 24px);
+}
+
+.zk-menu-card__icon {
+  aspect-ratio: 1;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--accent), white 20%);
+  background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.03));
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.75), 0 0 22px color-mix(in srgb, var(--accent), transparent 50%);
+  display: grid;
+  place-items: center;
+}
+
+.zk-menu-card__title {
+  margin: 0;
+  font-family: var(--zk-font-title);
+  font-size: clamp(30px, 8vw, 54px);
+  line-height: .96;
+  letter-spacing: .06em;
+  color: var(--zk-text);
+  text-transform: uppercase;
+  text-shadow: 0 3px 0 rgba(0,0,0,.65), 0 0 18px rgba(255,255,255,.08);
+}
+
+.zk-menu-card__subtitle {
+  margin-top: 8px;
+  font-family: var(--zk-font-mono);
+  font-size: clamp(12px, 3vw, 18px);
+  line-height: 1.25;
+  color: var(--zk-text-2);
+}
+
+.zk-menu-card__chevron {
+  color: var(--accent);
+  font-size: clamp(32px, 8vw, 54px);
+  text-shadow: 0 0 18px currentColor;
+}
+
+/* Általános prémium gomb */
+.zk-premium-button {
+  --btn-color: var(--zk-gold);
+  --btn-text: #171008;
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--btn-color), white 18%);
+  border-radius: 14px;
+  padding: 18px 24px;
+  min-height: 58px;
+  font-family: var(--zk-font-title);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .10em;
+  color: var(--btn-text);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--btn-color), white 45%), var(--btn-color) 48%, color-mix(in srgb, var(--btn-color), black 22%)),
+    linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,.55),
+    inset 0 -4px 0 rgba(0,0,0,.28),
+    0 12px 26px rgba(0,0,0,.5),
+    0 0 22px color-mix(in srgb, var(--btn-color), transparent 45%);
+  cursor: pointer;
+  transition: transform 160ms ease-out, filter 160ms ease-out;
+}
+
+.zk-premium-button:active { transform: scale(.985); }
+.zk-premium-button:hover { filter: brightness(1.08); }
+.zk-premium-button--red { --btn-color: var(--zk-red); --btn-text: #fff3ee; }
+.zk-premium-button--green { --btn-color: var(--zk-green); --btn-text: #061207; }
+.zk-premium-button--blue { --btn-color: var(--zk-blue); --btn-text: #041018; }
+.zk-premium-button--dark {
+  --btn-color: #29313A;
+  --btn-text: var(--zk-text-2);
+  background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.015));
+}
+
+/* Kampány oldalsó gombok: nincs kör / nincs halo alátét */
+.zk-side-plaque {
+  width: clamp(84px, 10vw, 124px);
+  min-height: clamp(92px, 13vh, 132px);
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent), white 14%);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.02)),
+    rgba(8,11,15,.90);
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.78),
+    0 0 20px color-mix(in srgb, var(--accent), transparent 58%);
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  padding: 10px;
+}
+
+.zk-side-plaque__label {
+  font-family: var(--zk-font-title);
+  font-size: clamp(13px, 1.7vw, 18px);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--zk-text);
+}
+
+/* Modal */
+.zk-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,.62);
+  backdrop-filter: blur(10px);
+}
+
+.zk-modal-panel {
+  z-index: 100;
+  width: min(88vw, 760px);
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,.16);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02)),
+    rgba(9,12,17,.94);
+  box-shadow: 0 26px 90px rgba(0,0,0,.72), inset 0 0 0 1px rgba(0,0,0,.75);
+  padding: clamp(24px, 4vw, 44px);
+}

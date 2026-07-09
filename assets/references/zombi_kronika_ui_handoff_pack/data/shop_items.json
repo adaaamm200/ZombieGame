@@ -1,0 +1,63 @@
+[
+  {
+    "id": "ammo_9mm_pack",
+    "name": "9mm Ammo Pack",
+    "type": "ammo",
+    "gives": {
+      "ammo_9mm": 90
+    },
+    "price": 150,
+    "icon": "ammo_box_9mm"
+  },
+  {
+    "id": "shotgun_shells",
+    "name": "Shotgun Shells",
+    "type": "ammo",
+    "gives": {
+      "shell": 30
+    },
+    "price": 200,
+    "icon": "shotgun_shells"
+  },
+  {
+    "id": "frag_grenade_bundle",
+    "name": "Frag Grenade",
+    "type": "combat",
+    "gives": {
+      "grenade": 3
+    },
+    "price": 300,
+    "icon": "frag_grenade"
+  },
+  {
+    "id": "medkit_bundle",
+    "name": "Medkit",
+    "type": "survival",
+    "gives": {
+      "medkit": 2
+    },
+    "price": 250,
+    "icon": "medkit_red"
+  },
+  {
+    "id": "upgrade_materials",
+    "name": "Upgrade Materials",
+    "type": "lab",
+    "gives": {
+      "upgrade_material": 5
+    },
+    "price": 400,
+    "icon": "gears_materials"
+  },
+  {
+    "id": "perk_booster_xp",
+    "name": "Perk Booster",
+    "type": "booster",
+    "gives": {
+      "xp_multiplier": 1.5,
+      "duration_minutes": 30
+    },
+    "price": 300,
+    "icon": "skull_badge_xp"
+  }
+]

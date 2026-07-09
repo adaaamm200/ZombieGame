@@ -1,0 +1,58 @@
+{
+  "project": "Zombi Krónika",
+  "ui_theme": "premium dark post-apocalyptic zombie shooter",
+  "safe_area": {
+    "top": "env(safe-area-inset-top) + 12px",
+    "bottom": "env(safe-area-inset-bottom) + 10px",
+    "rule": "A HUD és footer soha ne kerüljön scrollozható konténerbe. A menükártyák scrollozhatók lehetnek, de a build/personal-use footer fixen a viewport legalján marad."
+  },
+  "colors": {
+    "background": "#05070A",
+    "panel": "rgba(10,14,20,0.88)",
+    "panel_deep": "#0B0F15",
+    "panel_light": "rgba(35,42,52,0.55)",
+    "text_primary": "#F2F0E6",
+    "text_secondary": "#A9A7A0",
+    "muted": "#626973",
+    "gold": "#F2B632",
+    "gold_light": "#FFE58A",
+    "green": "#72F05E",
+    "red": "#E24A3B",
+    "purple": "#9A4DFF",
+    "blue": "#36B8FF",
+    "orange": "#FF8A2A"
+  },
+  "typography": {
+    "title_font_stack": "'Cinzel', 'Georgia', serif",
+    "ui_font_stack": "'Rajdhani', 'Oswald', 'Arial Narrow', sans-serif",
+    "mono_font_stack": "'Special Elite', 'Courier New', monospace",
+    "title_tracking": "0.08em",
+    "button_tracking": "0.10em"
+  },
+  "radii": {
+    "card": "18px",
+    "button": "14px",
+    "small": "10px"
+  },
+  "shadows": {
+    "panel": "0 22px 80px rgba(0,0,0,.65)",
+    "gold_glow": "0 0 22px rgba(242,182,50,.55)",
+    "red_glow": "0 0 28px rgba(226,74,59,.55)",
+    "green_glow": "0 0 24px rgba(114,240,94,.42)",
+    "blue_glow": "0 0 24px rgba(54,184,255,.42)"
+  },
+  "interaction": {
+    "tap_scale": "active: scale(0.985)",
+    "hover_lift": "translateY(-1px)",
+    "transition": "160ms ease-out",
+    "disabled_opacity": 0.42
+  },
+  "z_index": {
+    "background": 0,
+    "content": 10,
+    "hud": 40,
+    "fixed_footer": 45,
+    "modal_backdrop": 90,
+    "modal": 100
+  }
+}

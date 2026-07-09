@@ -11,6 +11,40 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## UI HANDOFF PACK VÉGLEGESÍTÉS — footer-fix, prémium kártyák, clamp-robusztusság (2026-07-09)
+- **Forrás**: `assets/references/zombi_kronika_ui_handoff_pack/` (owner által adott
+  implementációs csomag: `01_GLOBAL_UI_RULES.md`, `screen_specs/*`, `data/*.json`,
+  `styles/*`, `implementation/*`, `visual_references/*`). A v29 UI-t a spec szerint
+  véglegesítettem. **FONTOS**: a pack data-JSON-jait (weapons/upgrades/shop) NEM építettem
+  be — a játék saját `const.js` adata marad (8. cél: meglévő működés ne törjön).
+- **FOOTER-BUG VÉGLEGES FIX (spec 2. pont)**: a „For personal use only. | build vXX" eddig
+  `position:absolute` volt a görgethető `.title-screen`-en belül → görgetéskor elmozdult.
+  Mostantól **`position:fixed; bottom:0; z-index:45`** (a `#screens` nem transzformált →
+  valódi viewport-relatív), plain-mono, `|` szeparátorral. **DOM-igazolt**: a footer alja a
+  viewport aljához rögzül (390=390), és scrollTop 0↔max között KONSTANS (nincs drift).
+  Szöveg i18n: `menu.note` EN „For personal use only." / HU „Kizárólag magáncélra.".
+- **PRÉMIUM MENÜKÁRTYÁK (spec 3. pont)**: `.menu-btn` `min-height: clamp(84px,12.5vh,116px)`
+  + clamp-alapú padding/ikon(52–66px)/cím(18–23px)/subtitle/arrow. **DOM-igazolt**: a kártya
+  ~106px magas (≥100px spec-cél), tap-target nagy.
+- **EGYSÉGES KOMPONENSEK + PAUSE (spec 6. pont)**: a `.screen.modal` erős dim+blur (blur 3→6px,
+  rgba .8) + függőleges közép; a modal fő CTA-k (`.modalbox .btn`) `min-height: clamp(58px,
+  9vh,66px)` (a lista-inline gombok/nyilak kivételével). **DOM-igazolt**: pause RESUME(gold)+
+  QUIT(red) 58px, középen; loadout START(gold) 55px + BACK(ghost); a `.btn` rendszer
+  (primary/danger/ok/ghost, disabled .4) végig egységes.
+- **ROBUSZTUSSÁG (spec 7. pont)**: `clamp()/min()/max()` a footeren, menükártyákon, board nav
+  (`width: clamp(96px,11vw,122px)`), SHOP (`h: clamp(42px,7.5vh,54px)`), mission CTA
+  (`h: clamp(54px,9vh,70px)`) — nincs fix-pixelre széteső layout.
+- **Bal kampány-nav (spec 4. pont)**: már a v29-ben generált PNG-plaque (Campaign/Scavenge/
+  Settings) a KÉPERNYŐ bal szélén — nincs kör/halo alátét. SHOP + FIGHT BOSS prémium CTA (v29).
+- **TESZTELVE** (böngésző, valós motor): 844×390 landscape — footer fixen alul + görgetés-
+  független, kártya 106px, pause 58px, board nav/shop/CTA rendben; gameplay regresszió:
+  menu→scavenge→loadout(START 55px)→game **running**, fire elérhető; armory 8 fegyverkártya
+  +2 tab +coin +back 48px, lab 7 upgrade-kártya — **meglévő működés ép**. **0 konzolhiba.**
+  `node --check` OK. (A preview screenshot-tool továbbra is kis régióba tömöríti a kimenetet —
+  ismert környezeti hiba; verifikáció DOM-metrika alapján, mérvadó.)
+- Csak CSS + i18n(2 string) + ui.js(footer HTML) változott — gameplay/economy/save/adat ÉRINTETLEN.
+- sw.js cache: **zk-v30**; `ZD.BUILD='v30'`.
+
 ## FULLSCREEN UI LOCKDOWN + GENERÁLT GOMB-ASSETEK 1:1 (2026-07-09)
 - **Cél**: UI-felület végleges lezárása — a ChatGPT-vel generált PNG gombok TÉNYLEGES
   beépítése (a PNG MAGA a gomb, nincs több CSS-turbózás), teljes képernyős mobile

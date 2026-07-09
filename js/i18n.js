@@ -20,7 +20,7 @@ ZD.i18n = (() => {
       'menu.labSub': 'Upgrades',
       'menu.settings': 'Settings',
       'menu.settingsSub': 'Sound · language · save',
-      'menu.note': 'Fan-made homage — personal use only.',
+      'menu.note': 'For personal use only.',
       'menu.saveOk': 'SAVE: OK',
       'menu.saveLast': 'Tap to manage backups',
       /* --- board / HUD --- */
@@ -143,7 +143,7 @@ ZD.i18n = (() => {
       'menu.labSub': 'Fejlesztések',
       'menu.settings': 'Beállítások',
       'menu.settingsSub': 'Hang · nyelv · mentés',
-      'menu.note': 'Saját készítésű hommage — kizárólag magáncélra.',
+      'menu.note': 'Kizárólag magáncélra.',
       'menu.saveOk': 'MENTÉS: OK',
       'menu.saveLast': 'Koppints a mentéskezeléshez',
       'board.shop': 'BOLT',

@@ -1,0 +1,37 @@
+{
+  "pack_name": "zombi_kronika_ui_handoff_pack",
+  "created_files": [
+    "01_GLOBAL_UI_RULES.md",
+    "README.md",
+    "asset_prompts/WEAPON_AND_BUTTON_ASSET_PROMPTS.md",
+    "data/button_asset_manifest.json",
+    "data/missions_day1.json",
+    "data/shop_items.json",
+    "data/ui_tokens.json",
+    "data/upgrades.json",
+    "data/weapons.json",
+    "implementation/CLAUDE_MASTER_PROMPT.md",
+    "implementation/COMPONENT_CONTRACTS.json",
+    "implementation/IMPLEMENTATION_TODO.md",
+    "screen_specs/ARMORY_SHOP.md",
+    "screen_specs/CAMPAIGN_MAP.md",
+    "screen_specs/LAB_UPGRADES.md",
+    "screen_specs/MAIN_MENU.md",
+    "screen_specs/MISSION_BRIEFING.md",
+    "screen_specs/PAUSE_MENU.md",
+    "screen_specs/WEAPON_ASSETS.md",
+    "styles/zombi_kronika_ui_starter.css",
+    "visual_references/armory_shop_reference.png",
+    "visual_references/campaign_map_reference.png",
+    "visual_references/lab_upgrades_reference.png",
+    "visual_references/main_menu_reference.png",
+    "visual_references/mission_briefing_reference.png",
+    "visual_references/pause_menu_reference.png",
+    "visual_references/weapon_asset_sheet_reference.png"
+  ],
+  "notes": [
+    "A visual_references mappa csak referencia; az implementációhoz a screen_specs, data és styles mappák a fontosak.",
+    "A footer bug fix kulcsa: FixedLegalFooter, position: fixed, ne legyen scrollozható konténerben.",
+    "A karikázott campaign nav gomboknál tilos a kör/halo alátét."
+  ]
+}

@@ -134,9 +134,10 @@ ZD.ui = (() => {
           <div class="menu" id="title-menu"></div>
           <button class="title-save" id="title-save" data-go="settings"></button>
         </div>
-        <!-- FIX alsó lábléc (nem a görgethető menü része): egyéni felhasználás + build -->
+        <!-- FIX alsó lábléc (nem a görgethető menü része): „For personal use only. | build vXX" -->
         <div class="app-footer">
           <span class="af-note" id="title-note"></span>
+          <span class="af-sep" aria-hidden="true">|</span>
           <span class="build-badge" id="build-badge"></span>
         </div>
       </div>`);

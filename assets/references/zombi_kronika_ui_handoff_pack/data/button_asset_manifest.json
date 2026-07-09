@@ -1,0 +1,97 @@
+{
+  "required_new_buttons": [
+    {
+      "id": "btn_fight_boss",
+      "label": "FIGHT BOSS",
+      "screen": "campaign_map",
+      "style": "large red cracked-metal boss CTA, skull plaque on left, no circular underlay",
+      "states": [
+        "default",
+        "hover_or_pressed",
+        "disabled_locked"
+      ]
+    },
+    {
+      "id": "btn_shop_top",
+      "label": "SHOP",
+      "screen": "campaign_map",
+      "style": "gold compact top-right shop button with crate icon, rectangular beveled frame",
+      "states": [
+        "default",
+        "hover_or_pressed"
+      ]
+    },
+    {
+      "id": "btn_resume",
+      "label": "RESUME",
+      "screen": "pause_menu",
+      "style": "large gold beveled metal button",
+      "states": [
+        "default",
+        "pressed"
+      ]
+    },
+    {
+      "id": "btn_quit",
+      "label": "QUIT",
+      "screen": "pause_menu",
+      "style": "large red beveled metal button",
+      "states": [
+        "default",
+        "pressed"
+      ]
+    },
+    {
+      "id": "btn_start",
+      "label": "START",
+      "screen": "mission_briefing",
+      "style": "large gold primary CTA, full width inside modal",
+      "states": [
+        "default",
+        "pressed",
+        "disabled"
+      ]
+    },
+    {
+      "id": "btn_back",
+      "label": "BACK",
+      "screen": "mission_briefing",
+      "style": "dark secondary button, subtle frame",
+      "states": [
+        "default",
+        "pressed"
+      ]
+    },
+    {
+      "id": "side_nav_campaign",
+      "label": "CAMPAIGN",
+      "screen": "campaign_map",
+      "style": "vertical rectangular metallic plaque, red selected glow, no round base",
+      "states": [
+        "selected",
+        "default"
+      ]
+    },
+    {
+      "id": "side_nav_scavenge",
+      "label": "SCAVENGE",
+      "screen": "campaign_map",
+      "style": "vertical rectangular metallic plaque, purple glow, no round base",
+      "states": [
+        "selected",
+        "default"
+      ]
+    },
+    {
+      "id": "side_nav_settings",
+      "label": "SETTINGS",
+      "screen": "campaign_map",
+      "style": "vertical rectangular metallic plaque, neutral metal",
+      "states": [
+        "selected",
+        "default"
+      ]
+    }
+  ],
+  "footer_rule": "For personal use only. | build v29 must be a fixed viewport footer, never inside a scrollable menu card."
+}

@@ -1,0 +1,96 @@
+{
+  "ScreenShell": {
+    "props": [
+      "backgroundImage",
+      "safeArea",
+      "children",
+      "footerFixed"
+    ],
+    "purpose": "Edge-to-edge full screen wrapper. Handles safe-area padding and background dim/blur layers."
+  },
+  "HudTopBar": {
+    "props": [
+      "playerName",
+      "level",
+      "xpCurrent",
+      "xpMax",
+      "coins",
+      "showMail",
+      "showSettings"
+    ],
+    "purpose": "Top profile/currency HUD. Fixed at top, dynamic-island safe."
+  },
+  "PremiumMenuCard": {
+    "props": [
+      "id",
+      "title",
+      "subtitle",
+      "accent",
+      "icon",
+      "backgroundImage",
+      "onClick"
+    ],
+    "purpose": "Main menu large horizontal cards."
+  },
+  "PremiumButton": {
+    "props": [
+      "label",
+      "variant",
+      "size",
+      "icon",
+      "disabled",
+      "onClick"
+    ],
+    "variants": [
+      "gold",
+      "red",
+      "green",
+      "blue",
+      "dark"
+    ],
+    "purpose": "Reusable bevel/glow buttons."
+  },
+  "SideNavPlaque": {
+    "props": [
+      "label",
+      "icon",
+      "accent",
+      "selected",
+      "onClick"
+    ],
+    "purpose": "Campaign map side navigation. Explicitly no circular underlay."
+  },
+  "WeaponCard": {
+    "props": [
+      "weapon",
+      "owned",
+      "equipped",
+      "ammo",
+      "onSelect",
+      "onBuy"
+    ],
+    "purpose": "Armory weapon cards."
+  },
+  "ShopItemCard": {
+    "props": [
+      "item",
+      "coins",
+      "onBuy"
+    ],
+    "purpose": "Shop list card."
+  },
+  "UpgradeCard": {
+    "props": [
+      "upgrade",
+      "resources",
+      "onUpgrade"
+    ],
+    "purpose": "Lab upgrade item card."
+  },
+  "FixedLegalFooter": {
+    "props": [
+      "build"
+    ],
+    "purpose": "Fixed bottom footer. This fixes the current bug where the text appears in the middle of the scroll area."
+  }
+}

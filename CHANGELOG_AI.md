@@ -18,6 +18,46 @@ Entry format:
 
 ---
 
+### 2026-07-09 — Finalize UI per handoff pack (fixed footer, premium cards, clamp robustness)
+- Goal: Finalize the Zombi Krónika UI against the owner-provided handoff pack
+  (assets/references/zombi_kronika_ui_handoff_pack/): true fixed legal footer, bigger premium
+  menu cards, unified components (pause/modal/armory/lab/briefing), and clamp()/safe-area
+  robustness. Do NOT swap game data (weapons/upgrades) — keep existing gameplay working.
+- Files changed: css/style.css, js/i18n.js (menu.note EN/HU), js/ui.js (footer HTML +
+  separator), js/const.js (v30), sw.js (zk-v30), docs/STATUS.md, CHANGELOG_AI.md. Handoff pack
+  added under assets/references/.
+- What changed:
+  - FOOTER BUG FIX (the pack's #1 required fix): "For personal use only. | build vXX" was
+    position:absolute inside the scrollable .title-screen → it drifted on scroll. Now
+    position:fixed; bottom:0; z-index:45 (viewport-relative since #screens is untransformed),
+    plain-mono with a "|" separator. Verified: footer bottom == viewport bottom (390==390) and
+    constant across scrollTop 0↔max (no drift). i18n menu.note → "For personal use only." /
+    "Kizárólag magáncélra.".
+  - Premium menu cards: .menu-btn min-height clamp(84px,12.5vh,116px) + clamp padding/icon/
+    title/subtitle/arrow → ~106px tall cards (spec ≥100px).
+  - Unified components + Pause: .screen.modal stronger dim/blur (blur 6px, rgba .8) + vertical
+    center; modal CTA buttons min-height clamp(58px,9vh,66px) (excluding inline list buttons/
+    arrows). Pause RESUME(gold)+QUIT(red) 58px centered; loadout START(gold) 55px + BACK(ghost).
+  - Robustness: clamp()/min()/max() on footer, menu cards, board nav (clamp(96,11vw,122)),
+    SHOP (clamp(42,7.5vh,54)), mission CTA (clamp(54,9vh,70)).
+  - Left campaign nav (no circular halo), SHOP + FIGHT BOSS premium CTAs already done in v29.
+- Tests run: node --check all changed JS (OK); browser DOM metrics @844×390: footer fixed at
+  bottom + scroll-independent, menu card 106px, pause buttons 58px, board nav/shop/CTA sized;
+  gameplay regression menu→scavenge→loadout(START 55px)→game running, fire reachable; armory
+  8 weapon cards + 2 tabs + coin + back 48px, lab 7 upgrade cards — existing functionality
+  intact. 0 console errors.
+- Visual QA: preview screenshot tool still compresses output to a small region (known
+  environmental issue) — verified via DOM metrics (authoritative); compressed shot still shows
+  the 6 accent menu cards + faint "For personal use only. | build v30" footer.
+- What was not changed: gameplay, economy, save, campaign logic, weapon/upgrade DATA (the
+  pack's data JSONs were treated as reference only — game keeps const.js data). No sprites.
+- Open questions: (1) Pack references portrait mockups; game is landscape-locked (rotate-note)
+  — the menu adapts as a scrollable landscape card stack, acceptable? (2) Pack proposes a
+  profile HUD (name/level/XP) + Events/Daily Reward dock — not added (would invent systems the
+  game doesn't have); keep coin+gear HUD?
+- Next recommended step: user confirms on the phone (build v30, fixed footer on scroll, big
+  cards, pause). Optional later: profile HUD / bottom dock if those systems are added.
+
 ### 2026-07-09 — Finalize fullscreen UI and integrate generated button assets
 - Goal: Lock down the UI surface — integrate the user's ChatGPT-generated PNG buttons 1:1
   (the PNG IS the button, no more CSS button styling), modern fullscreen mobile layout with

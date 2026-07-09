@@ -1,0 +1,57 @@
+[
+  {
+    "id": "1-1",
+    "day": 1,
+    "name": "Quarantine Checkpoint",
+    "type": "standard",
+    "completed": true,
+    "stars": 3,
+    "position": {
+      "x": 0.22,
+      "y": 0.35
+    }
+  },
+  {
+    "id": "1-2",
+    "day": 1,
+    "name": "Abandoned Shop",
+    "type": "standard",
+    "completed": true,
+    "stars": 3,
+    "position": {
+      "x": 0.48,
+      "y": 0.38
+    }
+  },
+  {
+    "id": "1-3",
+    "day": 1,
+    "name": "Barricaded Road",
+    "type": "standard",
+    "completed": true,
+    "stars": 3,
+    "position": {
+      "x": 0.28,
+      "y": 0.65
+    }
+  },
+  {
+    "id": "1-4",
+    "day": 1,
+    "name": "Infected Nest",
+    "type": "boss",
+    "completed": false,
+    "stars": 0,
+    "position": {
+      "x": 0.78,
+      "y": 0.32
+    },
+    "objective": "Destroy the source of the infection — the Boss.",
+    "danger": 1,
+    "suggested_weapon": "m4a1_assault",
+    "reward": {
+      "xp": 1108,
+      "coins": 166
+    }
+  }
+]

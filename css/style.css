@@ -247,7 +247,8 @@ html, body {
 .screen.anim > *:nth-child(3) { animation-delay: .1s; }
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
-.screen.modal { background: rgba(4, 8, 4, .7); backdrop-filter: blur(3px); }
+/* modal overlay: erős dim + blur, függőlegesen is középre (pause/loadout/result) */
+.screen.modal { background: rgba(3, 5, 8, .8); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); justify-content: center; }
 
 /* --- főmenü: valódi háttérkép (assets) + programozott prémium menü --- */
 .title-screen {
@@ -334,11 +335,13 @@ html, body {
 .sp-danger .sk.on { opacity: 1; filter: drop-shadow(0 0 4px rgba(255,110,60,.6)); }
 .sp-danger .sk .aic { width: 1.7em; height: 1.7em; }
 
-.menu { display: flex; flex-direction: column; gap: 11px; margin-top: 2.4vh; width: min(452px, 94vw); }
-/* főmenü gomb = SÖTÉT glossy fém-bár + THIN NEON accent-border (style sheet szerint) */
+.menu { display: flex; flex-direction: column; gap: clamp(9px, 1.5vh, 13px); margin-top: 2.2vh; width: min(468px, 94vw); }
+/* főmenü gomb = SÖTÉT glossy fém-bár + THIN NEON accent-border (style sheet szerint) —
+   nagy tap-target (spec: 100–150px mobilon), clamp() alapú robusztus méretezés. */
 .menu-btn {
-  position: relative; overflow: hidden; display: flex; align-items: center; gap: 15px; width: 100%; text-align: left; cursor: pointer; font-family: inherit;
-  padding: 13px 16px 13px 13px; border-radius: 15px; color: var(--ui-ink);
+  position: relative; overflow: hidden; display: flex; align-items: center; gap: clamp(12px, 3vw, 16px); width: 100%; text-align: left; cursor: pointer; font-family: inherit;
+  min-height: clamp(84px, 12.5vh, 116px);
+  padding: clamp(12px, 2.4vw, 18px) clamp(14px, 3.4vw, 20px); border-radius: clamp(14px, 3vw, 18px); color: var(--ui-ink);
   background: linear-gradient(180deg, rgba(26,28,33,.94), rgba(8,9,12,.96));
   border: 2px solid color-mix(in srgb, var(--accent, #7ddb4f) 62%, transparent);
   box-shadow:
@@ -355,16 +358,16 @@ html, body {
 .menu-btn::before { content: ''; position: absolute; top: 0; left: 12px; right: 12px; height: 42%; border-radius: 0 0 40% 40%; background: linear-gradient(180deg, rgba(255,255,255,.09), transparent); pointer-events: none; }
 /* ikon-badge: a prémium asset-octagon MAGA az ikon (saját házolással) */
 .menu-btn .mb-ic {
-  flex: none; width: 54px; height: 54px; display: grid; place-items: center; position: relative;
+  flex: none; width: clamp(52px, 13vw, 66px); height: clamp(52px, 13vw, 66px); display: grid; place-items: center; position: relative;
 }
 /* az asset MAGA a 3D gomb (saját keret+glow); CSS csak méretez + finom mélység-árnyék (NINCS dupla glow/keret) */
 .menu-btn .mb-ic .aic { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
 /* SVG fallback (ha nincs asset) — sötét korong accent glyph-fel */
 .menu-btn .mb-ic svg { position: relative; width: 27px; height: 27px; color: var(--accent, var(--ui-green)); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent, #7ddb4f) 60%, transparent)); }
 .menu-btn .mb-tx { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
-.menu-btn .mb-tx b { font-size: 19px; letter-spacing: 1.5px; text-shadow: 0 1px 2px rgba(0,0,0,.7); }
-.menu-btn .mb-tx small { font-size: 10px; letter-spacing: .5px; color: var(--ui-mute); font-weight: normal; margin-top: 2px; }
-.menu-btn .mb-arrow { flex: none; font-size: 17px; color: color-mix(in srgb, var(--accent, #7ddb4f) 75%, var(--ui-mute)); }
+.menu-btn .mb-tx b { font-size: clamp(18px, 4.6vw, 23px); letter-spacing: 1.5px; text-shadow: 0 1px 2px rgba(0,0,0,.7); }
+.menu-btn .mb-tx small { font-size: clamp(10px, 2.6vw, 12px); letter-spacing: .5px; color: var(--ui-mute); font-weight: normal; margin-top: 3px; }
+.menu-btn .mb-arrow { flex: none; font-size: clamp(16px, 4vw, 20px); color: color-mix(in srgb, var(--accent, #7ddb4f) 75%, var(--ui-mute)); }
 .menu-btn.m-continue { --accent: var(--ui-green); }
 .menu-btn.m-campaign { --accent: var(--ui-red); }
 .menu-btn.m-scavenge { --accent: var(--ui-purple); }
@@ -392,16 +395,18 @@ html, body {
 /* FIX alsó lábléc — a görgethető menütől FÜGGETLENÜL a képernyő alján ül (safe-area
    aware), NEM a menü-lista gyereke, NEM scrollozik. „Egyéni felhasználásra" + build. */
 .app-footer {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; pointer-events: none;
-  display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; pointer-events: none;
+  display: flex; align-items: baseline; justify-content: center; gap: clamp(6px, 1.6vw, 10px); flex-wrap: nowrap;
   padding: 6px calc(10px + var(--sar)) calc(6px + var(--sab)) calc(10px + var(--sal));
-  background: linear-gradient(0deg, rgba(4,6,9,.72), transparent);
+  font-family: "Courier New", ui-monospace, monospace;
+  background: linear-gradient(0deg, rgba(4,6,9,.78), transparent);
 }
-.app-footer .af-note { font-size: 10px; letter-spacing: .5px; color: var(--muted); text-shadow: 0 1px 0 #000; }
-/* verzió-jelző — látszik, tényleg a friss build töltött-e be (a láblécben) */
+.app-footer .af-note { font-size: clamp(9px, 2.4vw, 11px); letter-spacing: .5px; color: var(--muted); text-shadow: 0 1px 0 #000; white-space: nowrap; }
+.app-footer .af-sep { font-size: clamp(9px, 2.4vw, 11px); color: var(--muted); opacity: .55; }
+/* verzió-jelző — a láblécben, plain mono (a friss build ellenőrzéséhez) */
 .build-badge {
-  font-size: 9px; letter-spacing: 1px; font-weight: bold; color: var(--ui-mute); opacity: .7;
-  background: rgba(6,8,11,.5); padding: 2px 7px; border-radius: 8px; text-shadow: 0 1px 1px #000;
+  font-size: clamp(9px, 2.4vw, 11px); letter-spacing: .5px; color: var(--ui-mute); opacity: .8;
+  text-shadow: 0 1px 1px #000; white-space: nowrap;
 }
 
 /* --- általános programozott UI ikon-igazítás --- */
@@ -587,7 +592,7 @@ html, body {
   position: relative; padding: 0; border: none; background: none; box-shadow: none; cursor: pointer;
   display: inline-flex; align-items: center; transition: transform .08s, filter .12s;
 }
-.bhud-shop .btn-img { display: block; height: 50px; width: auto; object-fit: contain; filter: drop-shadow(0 3px 6px rgba(0,0,0,.55)); }
+.bhud-shop .btn-img { display: block; height: clamp(42px, 7.5vh, 54px); width: auto; object-fit: contain; filter: drop-shadow(0 3px 6px rgba(0,0,0,.55)); }
 .bhud-shop:active { transform: translateY(1px) scale(.97); }
 @media (hover: hover) { .bhud-back:hover, .bhud-shop:hover, .bhud-gear:hover { filter: brightness(1.1); } }
 
@@ -600,7 +605,7 @@ html, body {
   display: flex; flex-direction: column; gap: 12px;
 }
 .bnav-item {
-  position: relative; display: block; width: 118px; padding: 0;
+  position: relative; display: block; width: clamp(96px, 11vw, 122px); padding: 0;
   border: none; background: none; box-shadow: none; cursor: pointer;
   transition: transform .1s, filter .12s;
 }
@@ -791,7 +796,7 @@ html, body {
   transition: transform .08s, filter .12s;
 }
 .sp-start::before { content: none; }
-.sp-start .btn-img { display: block; height: 66px; width: auto; object-fit: contain; filter: drop-shadow(0 5px 11px rgba(0,0,0,.55)); }
+.sp-start .btn-img { display: block; height: clamp(54px, 9vh, 70px); width: auto; object-fit: contain; filter: drop-shadow(0 5px 11px rgba(0,0,0,.55)); }
 .sp-start.cta-boss .btn-img { filter: drop-shadow(0 5px 12px rgba(140,14,14,.6)); }
 .sp-start:active { transform: translateY(3px) scale(.98); }
 @media (hover: hover) { .sp-start:hover { filter: brightness(1.07); } }
@@ -900,7 +905,9 @@ html, body {
 .modalbox .big { font-size: 23px; letter-spacing: 2px; }
 .modalbox .sub { font-size: 12px; color: var(--muted); line-height: 1.6; }
 .statline { font-size: 10.5px; color: var(--text); opacity: .85; }
-.modalbox .btn { width: 100%; }
+/* modal fő CTA-gombok = nagy tap-target (spec: min 60px), a small inline-listagombok kivételével */
+.modalbox .btn { width: 100%; min-height: clamp(58px, 9vh, 66px); display: flex; align-items: center; justify-content: center; }
+.modalbox.loadout .lo-row .btn, .modalbox.loadout .lo-arrow { min-height: 0; }
 .result-icon { font-size: 44px; line-height: 1; animation: icon-pop .45s cubic-bezier(.2, 1.8, .4, 1) both; }
 @keyframes icon-pop { from { opacity: 0; transform: scale(.2) rotate(-14deg); } to { opacity: 1; transform: none; } }
 #result-box.win h2 { color: var(--green-hi); text-shadow: 0 0 14px rgba(125, 219, 79, .4); }

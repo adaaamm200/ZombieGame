@@ -1,0 +1,112 @@
+[
+  {
+    "id": "weapon_damage",
+    "name": "Weapon Damage",
+    "max_level": 15,
+    "current_level": 6,
+    "current_bonus": "+30%",
+    "next_bonus": "+35%",
+    "cost": 900,
+    "resource": "research",
+    "icon": "bullet_up"
+  },
+  {
+    "id": "fire_rate",
+    "name": "Fire Rate",
+    "max_level": 15,
+    "current_level": 5,
+    "current_bonus": "+20%",
+    "next_bonus": "+25%",
+    "cost": 750,
+    "resource": "research",
+    "icon": "reticle_speed"
+  },
+  {
+    "id": "magazine_size",
+    "name": "Magazine Size",
+    "max_level": 15,
+    "current_level": 4,
+    "current_bonus": "+8",
+    "next_bonus": "+10",
+    "cost": 600,
+    "resource": "research",
+    "icon": "magazine"
+  },
+  {
+    "id": "critical_chance",
+    "name": "Critical Chance",
+    "max_level": 15,
+    "current_level": 3,
+    "current_bonus": "+6%",
+    "next_bonus": "+8%",
+    "cost": 700,
+    "resource": "research",
+    "icon": "skull_reticle"
+  },
+  {
+    "id": "survivor_armor",
+    "name": "Survivor Armor",
+    "max_level": 15,
+    "current_level": 5,
+    "current_bonus": "+25%",
+    "next_bonus": "+30%",
+    "cost": 850,
+    "resource": "research",
+    "icon": "armor_vest"
+  },
+  {
+    "id": "max_hp",
+    "name": "Max HP",
+    "max_level": 15,
+    "current_level": 6,
+    "current_bonus": "+120 HP",
+    "next_bonus": "+140 HP",
+    "cost": 950,
+    "resource": "research",
+    "icon": "medical_cross"
+  },
+  {
+    "id": "grenade_capacity",
+    "name": "Grenade Capacity",
+    "max_level": 10,
+    "current_level": 3,
+    "current_bonus": "+1",
+    "next_bonus": "+2",
+    "cost": 500,
+    "resource": "research",
+    "icon": "grenade"
+  },
+  {
+    "id": "medkit_efficiency",
+    "name": "Medkit Efficiency",
+    "max_level": 10,
+    "current_level": 4,
+    "current_bonus": "+20%",
+    "next_bonus": "+25%",
+    "cost": 550,
+    "resource": "research",
+    "icon": "medkit"
+  },
+  {
+    "id": "scavenge_bonus",
+    "name": "Scavenge Bonus",
+    "max_level": 10,
+    "current_level": 4,
+    "current_bonus": "+20%",
+    "next_bonus": "+25%",
+    "cost": 600,
+    "resource": "research",
+    "icon": "crate_blue"
+  },
+  {
+    "id": "coin_gain",
+    "name": "Coin Gain",
+    "max_level": 10,
+    "current_level": 5,
+    "current_bonus": "+25%",
+    "next_bonus": "+30%",
+    "cost": 700,
+    "resource": "research",
+    "icon": "coin_skull"
+  }
+]
