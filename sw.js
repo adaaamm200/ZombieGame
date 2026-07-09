@@ -1,5 +1,5 @@
 /* Zombi Krónika — offline service worker (cache-first) */
-const VERSION = 'zk-v31';
+const VERSION = 'zk-v32';
 const ASSETS = [
   './',
   './index.html',
@@ -85,8 +85,10 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   const isShell = e.request.mode === 'navigate' || url.pathname === '/' || SHELL_RE.test(url.pathname);
   if (isShell) {
+    /* cache:'no-cache' → MINDIG revalidál a szerverrel (ETag), megkerülve a GitHub Pages
+       ~10 perces HTTP-cache-ét → egy friss deploy AZONNAL érvényesül (304 esetén gyors). */
     e.respondWith(
-      fetch(e.request)
+      fetch(new Request(e.request.url, { cache: 'no-cache' }))
         .then((res) => {
           const copy = res.clone();
           caches.open(VERSION).then((c) => c.put(e.request, copy));
