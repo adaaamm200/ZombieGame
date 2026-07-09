@@ -209,6 +209,10 @@ ZD.game = (() => {
       /* sprite-animáció + speciális állapotok */
       anim: null, moving: false, attackingAnim: 0, warnT: 0, bursting: false,
       bossState: null, bossStateT: 0,
+      /* per-egyed vizuális variáció (ne nézzenek ki ugyanolyan beillesztett képként) */
+      sizeVar: type === 'boss' ? 1 : rand(0.93, 1.07),
+      briVar: rand(0.9, 1.06),
+      animRate: rand(0.86, 1.14),
     });
   }
 

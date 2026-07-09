@@ -18,6 +18,41 @@ Entry format:
 
 ---
 
+### 2026-07-09 — Visual integration pass: HD player, shadows, grading, dark scene
+- Goal: The new HD enemy sprites looked "pasted on" next to the pixel-art player / flat
+  background, with debug rectangles showing. Make the in-game scene cohere as an HD painted
+  2D shooter. (No menu work.)
+- Files: js/enemy_sprites.js (soft radial shadows, scene color-grade, per-enemy size/brightness/
+  anim variation, + HD PLAYER load & render), js/sprites.js (drawBackground cinematic dim/haze/
+  ground-contact/vignette overlay; drawPlayer routes to HD soldier), js/game.js (per-enemy
+  visual variation fields), tools/prepare-player-sprite.js (new projection slicer), assets/
+  player/* (player_sheet.png + player_atlas.json), js/const.js + sw.js (v34/zk-v34 + precache).
+  Source in assets/references/CHARACTER/.
+- What changed:
+  - HD PLAYER (Option B): sliced the provided soldier sheet (projection: rows→columns) →
+    walk/run/shoot(+muzzle)/aim/hurt/death frames. New drawPlayer renders the HD soldier
+    feet-anchored, state-switched (idle=aim, move=walk cycle, fire=shoot, death=lying), with
+    shadow, grade and hit-flash. Existing player logic/hitbox/muzzle untouched; the game's
+    muzzle flash still fires at the gun tip. Falls back to the procedural player if unloaded.
+    (Tradeoff: the soldier's rifle is baked in, so per-weapon visuals are not shown — TODO.)
+  - Debug hitboxes are OFF by default (dbg.hitbox=false; toggle with H). No rectangles in
+    normal play (verified).
+  - Enemy shadows: soft radial (dark-blue core → transparent), per-type sizes.
+  - Scene integration: cinematic dim + atmospheric haze + ground-contact darkening + vignette
+    drawn on the BACKGROUND (before entities) so HD characters pop and embed in the scene.
+  - Enemy color grade: ctx.filter brightness/contrast/saturate per draw (subtle darken/
+    desaturate so cutouts stop looking pasted). Per-enemy size ±7%, brightness ±, anim-rate ±
+    so a row of the same type no longer looks like one frame copy-pasted.
+  - Feet anchoring reaffirmed (enemy.x/y = ground contact); sizes calibrated for ZOOM=1.75.
+- Tests run: node --check all JS (OK). Real-Chrome localhost free run: hasPlayer=true, enemy
+  ready=true, hitbox default false; captured the HD soldier firing (muzzle flash) on a dark
+  vignetted street with walker/brute/spitter grounded and no debug rectangles; 0 console errors.
+- What was NOT changed: gameplay/balance/economy/save; menu/UI (parked). Per-weapon player
+  visuals deferred (baked rifle for now). ctx.filter used for grading — watch mobile perf; can
+  swap to overlay-tint if needed.
+- Next: device play-test; optionally per-weapon overlay on the HD player, richer spitter/boss
+  VFX from the extracted atlas frames, and an HD gameplay background.
+
 ### 2026-07-09 — Integrate new enemy sprite sheets into gameplay (7 types)
 - Goal: Replace the procedurally-drawn in-game zombies with the new multi-pose sprite sheets,
   visible and playable, with per-type animation states, grounded feet, tuned hitboxes, and a

@@ -312,6 +312,10 @@ ZD.sprites = (() => {
 
   function drawPlayer(ctx, o) {
     /* o: {x,y,facing,moving,phase,idleT,fireAnim,reloadT,flash,weapon,deathT} */
+    /* ÚJ: HD katona-sprite, ha betöltött; különben a procedurális rajz (alább) */
+    if (ZD.enemySprites && ZD.enemySprites.hasPlayer()) {
+      if (ZD.enemySprites.drawPlayer(ctx, o)) return;
+    }
 
     /* halál: eldőlés + elhalványulás (fegyver nélkül) */
     if (o.deathT !== undefined && o.deathT > 0) {
@@ -1542,6 +1546,27 @@ ZD.sprites = (() => {
       ctx.drawImage(d.spr.c, r2(sx - d.spr.w / 2 / ART), GY - d.spr.h / ART + 1, d.spr.w / ART, d.spr.h / ART);
     });
     th.anim(ctx, cam, t || 0, items);
+
+    /* JELENET-INTEGRÁCIÓ (a HÁTTÉRRE, az entitások ELŐTT): cinematikus sötétítés + köd +
+       talaj-kontakt + vignetta → a HD karakterek kiemelkednek és beleolvadnak a jelenetbe. */
+    const VW = C.VIEW_W, VH = C.VIEW_H;
+    const dim = ctx.createLinearGradient(0, 0, 0, VH);
+    dim.addColorStop(0, 'rgba(6,10,18,.44)');
+    dim.addColorStop(0.55, 'rgba(6,8,12,.24)');
+    dim.addColorStop(1, 'rgba(12,7,4,.5)');
+    ctx.fillStyle = dim; ctx.fillRect(0, 0, VW, VH);
+    const haze = ctx.createLinearGradient(0, GY - 92, 0, GY + 8);
+    haze.addColorStop(0, 'rgba(42,52,60,0)');
+    haze.addColorStop(1, 'rgba(40,48,56,.2)');
+    ctx.fillStyle = haze; ctx.fillRect(0, GY - 92, VW, 100);
+    const gd = ctx.createLinearGradient(0, GY - 8, 0, VH);
+    gd.addColorStop(0, 'rgba(2,3,6,0)');
+    gd.addColorStop(1, 'rgba(2,3,6,.55)');
+    ctx.fillStyle = gd; ctx.fillRect(0, GY - 8, VW, VH - GY + 8);
+    const vg = ctx.createRadialGradient(VW / 2, VH * 0.54, VH * 0.26, VW / 2, VH * 0.54, VH * 0.92);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(1, 'rgba(0,0,0,.44)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, VW, VH);
   }
 
   /* menü-háttér: lassan pásztázó jelenet vonuló zombi-sziluettekkel */
