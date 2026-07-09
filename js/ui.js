@@ -129,6 +129,7 @@ ZD.ui = (() => {
           <button class="title-save" id="title-save" data-go="settings"></button>
           <p class="title-note" id="title-note"></p>
         </div>
+        <span class="build-badge" id="build-badge"></span>
       </div>`);
 
     /* Pályaválasztó — CLEAN board-artwork (assets/references/day1_board_target_clean.png)
@@ -930,6 +931,19 @@ ZD.ui = (() => {
       $('#title-coin').innerHTML = `${AIMG('coin', 'coin-ic')}<b>${fmt(s.coins)}</b>`;
       $('#title-gear').innerHTML = AIMG('settings', 'aic-btn');
       $('#title-note').textContent = T('menu.note');
+      const bb = $('#build-badge');
+      if (bb) {
+        bb.textContent = 'build ' + (ZD.BUILD || '?');
+        /* háttérben: az AKTÍV SW-cache verziója (a tényleges kiszolgáló); ha eltér a
+           betöltött buildtől, kiírjuk → a felhasználó látja, hogy régi cache ragadt be */
+        if (window.caches && caches.keys) {
+          caches.keys().then((ks) => {
+            const sw = (ks || []).find((k) => /^zk-v/.test(k));
+            const swv = sw ? sw.replace('zk-', '') : null;
+            if (swv && swv !== (ZD.BUILD || '')) bb.textContent = 'build ' + ZD.BUILD + ' · cache ' + swv;
+          }).catch(() => {});
+        }
+      }
       $('#title-save').innerHTML =
         `<span class="ts-ic">${IC('save')}</span>` +
         `<span class="ts-tx"><b>${T('menu.saveOk')}</b><small>${T('menu.saveLast')}</small></span>`;

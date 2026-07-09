@@ -11,6 +11,16 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## VERZIÓ-JELZŐ a főmenü sarkában (2026-07-09)
+- **Ok**: a felhasználó nehezen látja, tényleg a friss build töltött-e be (cache-beragadás).
+- **`ZD.BUILD` konstans** (`js/const.js`) = a betöltött kód verziója; a főmenü jobb-alsó
+  sarkában megjelenik („build v28"). Ha a telefonon régi számot lát → régi cache ragadt be.
+  Ha az AKTÍV SW-cache verziója eltér, a badge kiírja: „build v28 · cache vXX" (diagnosztika).
+- **FONTOS munkafolyamat-szabály**: `ZD.BUILD`-et az `sw.js` VERSION-nel EGYÜTT kell bumpolni
+  (most mindkettő **v28** / **zk-v28**).
+- Csak UI (const.js + ui.js badge + CSS) — gameplay ÉRINTETLEN. 0 konzolhiba. node --check OK.
+- sw.js cache: **zk-v28**.
+
 ## BOARD BAL NAV NAGYOBB + MISSION ACTION GOMBOK 3D-METALLIC (2026-07-09)
 - **Fókuszált UI-polish (csak CSS)**: a board bal nav gombok + a mission action gombok.
 - **Bal nav kártyák nagyobb + prémiumabb** (`css/style.css`): kártya 96→**110px**,

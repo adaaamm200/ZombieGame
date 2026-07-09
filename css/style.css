@@ -379,6 +379,12 @@ html, body {
 .title-save .ts-tx small { font-size: 8.5px; color: var(--muted); font-weight: normal; }
 @media (hover: hover) { .title-save:hover { filter: brightness(1.15); } }
 .title-note { margin-top: auto; padding-top: 14px; font-size: 10px; color: var(--muted); text-shadow: 0 1px 0 #000; text-align: center; }
+/* verzió-jelző a főmenü sarkában — látszik, tényleg a friss build töltött-e be */
+.build-badge {
+  position: absolute; right: calc(8px + var(--sar)); bottom: calc(6px + var(--sab)); z-index: 4;
+  font-size: 9px; letter-spacing: 1px; font-weight: bold; color: var(--ui-mute); opacity: .6;
+  background: rgba(6,8,11,.5); padding: 2px 7px; border-radius: 8px; pointer-events: none; text-shadow: 0 1px 1px #000;
+}
 
 /* --- általános programozott UI ikon-igazítás --- */
 .ui-ic, .mb-ic svg, .bhud-coin svg, .coin-ic, .title-coin svg { display: inline-block; vertical-align: -0.14em; }

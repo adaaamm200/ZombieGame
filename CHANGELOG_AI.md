@@ -18,6 +18,17 @@ Entry format:
 
 ---
 
+### 2026-07-09 — Add main-menu build version badge
+- Goal: Let the user confirm at a glance whether the fresh build actually loaded (cache issues).
+- Files changed: js/const.js (ZD.BUILD), js/ui.js (badge element + text), css/style.css
+  (.build-badge), sw.js (zk-v28), docs.
+- What changed: `ZD.BUILD` constant shown in the main-menu bottom-right corner ("build v28").
+  If the active SW cache version differs from the loaded build, the badge appends "· cache vXX"
+  so a stale cache is visible. NOTE: bump ZD.BUILD together with sw.js VERSION on every release.
+- Tests run: node --check (OK); DOM check (badge text "build v28", positioned corner); 0 console errors.
+- What was not changed: gameplay/assets/save/UI composition.
+- Next recommended step: user confirms the badge reads v28 on the phone (fresh version loaded).
+
 ### 2026-07-09 — Enlarge board nav buttons and make action buttons 3D-metallic
 - Goal (zombie-code-implementer, focused CSS-only pass): make the board left nav buttons
   bigger/clearer/more premium, and make the mission action buttons match the premium 3D
