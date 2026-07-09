@@ -1,5 +1,5 @@
 /* Zombi Krónika — offline service worker (cache-first) */
-const VERSION = 'zk-v30';
+const VERSION = 'zk-v31';
 const ASSETS = [
   './',
   './index.html',
@@ -76,8 +76,28 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+/* App-shell (HTML/CSS/JS + navigáció) = NETWORK-FIRST → egy friss deploy AZONNAL betölt,
+   nem ragad be a cache (ez volt a „nem frissül a játék" gyökér-oka). Offline → cache fallback.
+   Kép/egyéb statikus asset = CACHE-FIRST (ritkán változik, gyors + offline). */
+const SHELL_RE = /\.(?:html|css|js|webmanifest)(?:$|\?)/i;
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+  const isShell = e.request.mode === 'navigate' || url.pathname === '/' || SHELL_RE.test(url.pathname);
+  if (isShell) {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(VERSION).then((c) => c.put(e.request, copy));
+          return res;
+        })
+        .catch(() =>
+          caches.match(e.request, { ignoreSearch: true }).then((hit) => hit || caches.match('./index.html')),
+        ),
+    );
+    return;
+  }
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then(
       (hit) =>

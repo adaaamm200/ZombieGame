@@ -301,7 +301,7 @@ html, body {
 }
 @media (hover: hover) { .title-gear:hover { filter: brightness(1.25); } }
 /* alul plusz hely a FIX lábléc alá (a görgethető menü ne bújjon a footer mögé) */
-.title-inner { display: flex; flex-direction: column; align-items: center; width: 100%; min-height: 100%; padding: 48px 16px calc(36px + var(--sab)); }
+.title-inner { display: flex; flex-direction: column; align-items: center; width: 100%; min-height: 100%; padding: 48px 16px calc(52px + var(--sab)); }
 .brand-logo {
   /* átlátszó, vízszintes lockup (assets/ui/logo.png) — NINCS mix-blend, a PNG maga a látvány */
   width: min(460px, 84vw); max-height: 21vh; object-fit: contain; margin: 1.2vh 0 0.6vh;
@@ -396,10 +396,13 @@ html, body {
    aware), NEM a menü-lista gyereke, NEM scrollozik. „Egyéni felhasználásra" + build. */
 .app-footer {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; pointer-events: none;
-  display: flex; align-items: baseline; justify-content: center; gap: clamp(6px, 1.6vw, 10px); flex-wrap: nowrap;
+  display: flex; align-items: center; justify-content: center; gap: clamp(6px, 1.6vw, 10px); flex-wrap: nowrap;
   padding: 6px calc(10px + var(--sar)) calc(6px + var(--sab)) calc(10px + var(--sal));
   font-family: "Courier New", ui-monospace, monospace;
-  background: linear-gradient(0deg, rgba(4,6,9,.78), transparent);
+  /* TÖMÖR sáv (nem áttetsző) → nem úszik rá a menükártyára, tiszta lábléc-hatás */
+  background: #06090d;
+  border-top: 1px solid rgba(150,166,178,.14);
+  box-shadow: 0 -6px 16px rgba(0,0,0,.55);
 }
 .app-footer .af-note { font-size: clamp(9px, 2.4vw, 11px); letter-spacing: .5px; color: var(--muted); text-shadow: 0 1px 0 #000; white-space: nowrap; }
 .app-footer .af-sep { font-size: clamp(9px, 2.4vw, 11px); color: var(--muted); opacity: .55; }

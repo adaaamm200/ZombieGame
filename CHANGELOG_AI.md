@@ -18,6 +18,29 @@ Entry format:
 
 ---
 
+### 2026-07-09 — Fix footer overlap + network-first SW (stop stale cache)
+- Goal: Two real bugs confirmed via REAL Chrome on the live site: (1) the fixed footer
+  "For personal use only. | build vXX" had a near-transparent gradient bg → it visually
+  overlapped/blended into the last menu card (Lab). (2) The SW was cache-first for HTML/CSS/JS
+  → new deploys got stuck (user kept seeing an old cached build → "nothing changed", "fullscreen
+  broken again" — they were looking at pre-fullscreen cached code).
+- Files changed: sw.js (network-first shell + zk-v31), css/style.css (solid footer bar + more
+  bottom padding), js/const.js (v31), docs.
+- What changed:
+  - SW fetch: app-shell (navigation + .html/.css/.js/.webmanifest) is now NETWORK-FIRST
+    (fetch → update cache → fall back to cache offline); images/other assets stay cache-first.
+    This makes a fresh deploy load immediately and permanently fixes the stale-cache class of bug.
+  - Footer: solid opaque bar (#06090d) + top hairline + shadow instead of a transparent
+    gradient, so it reads as a real footer and never blends into a card. .title-inner
+    padding-bottom 36→52px so the last card clears the footer when scrolled to the bottom.
+- Tests run: node --check (OK). REAL Chrome on live site confirmed: board is fully fullscreen
+  (edge-to-edge bg, left nav plaques with no halos, SHOP CTA, START RUN) and menu is fullscreen
+  with premium cards — i.e. v30 already works live; the user's device is on stale cache (now
+  addressed by network-first). Footer fix verified post-deploy.
+- What was not changed: gameplay/economy/save/data; board/menu layout (already correct).
+- Next recommended step: user hard-reloads once on the phone to pick up v31; from then on
+  network-first keeps it current automatically.
+
 ### 2026-07-09 — Finalize UI per handoff pack (fixed footer, premium cards, clamp robustness)
 - Goal: Finalize the Zombi Krónika UI against the owner-provided handoff pack
   (assets/references/zombi_kronika_ui_handoff_pack/): true fixed legal footer, bigger premium
