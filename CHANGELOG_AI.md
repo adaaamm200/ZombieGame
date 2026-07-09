@@ -18,6 +18,28 @@ Entry format:
 
 ---
 
+### 2026-07-09 — Level 01 map build-out: HD props, effects, foreground (fuller scene)
+- Goal: The Level 01 slice was too bare ("chunky", missing parts). Add HD street props,
+  atmospheric effects and a foreground layer so the level reads as a full premium scene.
+- Files: tools/prepare-map-layers.js (props + fx + foreground processing), assets/maps/level_01/
+  {props/*, fx/*, fg.png}, js/sprites.js (prop placement + additive fx overlays + drawForeground),
+  js/game.js (drawForeground call after entities), js/const.js + sw.js (v37/zk-v37 + precache).
+- What changed:
+  - Tool: generalized dark-flood-fill (all-edge for props; low threshold so dark-on-dark
+    vehicles survive — NOT naive black cut, per README) + label crop for effect sheets +
+    downscale. Produced runtime props (bus/car/suv/police/barrier/barrel/xbarricade/trash),
+    fx (rain/fog/lightpool, labels cropped), and foreground debris (fg.png). ~1.9MB runtime.
+  - Runtime: HD prop placement list (deterministic street dressing) drawn behind entities with
+    soft shadows; additive overlays (streetlamp light pools on the ground, drifting fog);
+    new drawForeground (drifting rain + foreground debris strip, drawn in front of entities in
+    VIEW space). Procedural fallback preserved for non-HD themes.
+- Tests run: node --check all JS (OK). Real-Chrome localhost level 1: HD buildings (QUICK MART)
+  + wrecked car on the wet road + foreground debris + subtle rain, with HD zombies (spitter
+  spitting) + firing soldier — a full, cinematic premium scene; 0 console errors.
+- What was NOT changed: gameplay/movement/shooting/zombies. Source 97MB stays gitignored (local).
+- Next: fine-tune prop density/placement + fire glow at rubble; then levels 02–05 (process +
+  map campaign days → environments, Day 5 → infection nest arena).
+
 ### 2026-07-09 — Map asset audit + Level 01 HD parallax background (first vertical slice)
 - Goal: Audit the newly added map materials and report what's needed for a full playable level;
   then (per user decisions) start the Level 01 "Quarantine Street" vertical slice — HD parallax

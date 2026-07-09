@@ -3,7 +3,7 @@ window.ZD = window.ZD || {};
 
 /* Betöltött build-verzió (a főmenü sarkában látszik). BUMPOLD az sw.js VERSION-nel együtt!
    Ha a telefonon régi számot látsz → a régi cache ragadt be (töröld a webhelyadatot). */
-ZD.BUILD = 'v36';
+ZD.BUILD = 'v37';
 
 ZD.C = {
   VIEW_W: 480,

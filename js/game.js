@@ -1319,6 +1319,11 @@ ZD.game = (() => {
       ctx.globalAlpha = 1;
     });
 
+    /* HD előtér (sodródó eső + előtér-törmelék) — az entitások ELÉ, VIEW-térben
+       (a -cam eltolást visszavonjuk, hogy a drawForeground a saját parallaxával rajzoljon) */
+    ctx.translate(Math.round(st.cam), 0);
+    SP.drawForeground(ctx, st.cam, st.level, st.time);
+
     ctx.restore();
 
     /* ---- képernyő-terű rétegek ---- */

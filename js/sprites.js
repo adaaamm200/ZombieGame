@@ -1525,20 +1525,56 @@ ZD.sprites = (() => {
   }
 
   /* ---- HD MAP-RÉTEGEK (assets/maps/) — a procedurális háttér HELYETT, ha betöltött.
-     Egyelőre a level_01 „quarantine street" (theme 0 = utca). Fallback: procedurális. ---- */
-  const MAPS = {}; // theme -> { far, mid, near, ground, ready }
-  function loadMap(theme, base, layers) {
-    const m = { ready: false, n: 0, need: layers.length };
+     Egyelőre a level_01 „quarantine street" (theme 0 = utca). Fallback: procedurális.
+     Rétegek: far/mid/near/ground + propok (járművek/barikádok) + fx (rain/fog/lightpool)
+     + fg (előtér-törmelék). ---- */
+  const MAPS = {};
+  function img1(base, name) { const im = new Image(); im.src = base + name; return im; }
+  function loadMap(theme, base, cfg) {
+    const m = { ready: false, base, props: {}, fx: {}, place: cfg.place || [] };
     MAPS[theme] = m;
-    layers.forEach((name) => {
-      const im = new Image();
-      im.onload = () => { m[name] = im; if (++m.n >= m.need) m.ready = true; };
-      im.onerror = () => { if (++m.n >= m.need) m.ready = m.far && m.ground; };
-      im.src = base + name + '.png';
-    });
+    ['far', 'mid', 'near', 'ground', 'fg'].forEach((k) => { m[k] = img1(base, k + '.png'); });
+    (cfg.props || []).forEach((p) => { m.props[p] = img1(base, 'props/' + p + '.png'); });
+    ['rain', 'fog', 'lightpool'].forEach((k) => { m.fx[k] = img1(base + 'fx/', k + '.png'); });
+    /* ready, amint a fő rétegek betöltöttek (a propok/fx best-effort) */
+    let n = 0; const need = 4;
+    ['far', 'mid', 'near', 'ground'].forEach((k) => { m[k].onload = () => { if (++n >= need) m.ready = true; }; m[k].onerror = () => { if (++n >= need) m.ready = !!(m.far.naturalWidth); }; });
   }
   function loadMaps() {
-    loadMap(0, 'assets/maps/level_01/', ['far', 'mid', 'near', 'ground']);
+    loadMap(0, 'assets/maps/level_01/', {
+      props: ['bus', 'car', 'suv', 'police', 'barrier', 'barrel', 'xbarricade', 'trash'],
+      /* kézzel elhelyezett street-dressing (világ-x, prop) — determinisztikus, tud ismétlődni WORLD_W-vel */
+      place: [
+        [120, 'trash'], [180, 'bus'], [300, 'barrier'], [360, 'barrel'], [430, 'car'],
+        [520, 'xbarricade'], [600, 'barrel'], [700, 'suv'], [800, 'barrier'], [890, 'police'], [980, 'trash'],
+      ],
+    });
+  }
+  const rd2 = (v) => Math.round(v * ART) / ART;
+  /* additív, tilelő overlay (fény/köd/eső) — a fekete eltűnik, csak az izzás/csík marad */
+  function addLayer(ctx, im, cam, par, bottomY, alpha, drift) {
+    if (!im || !im.naturalWidth) return;
+    const w = im.width / ART, h = im.height / ART;
+    let off = -(((cam * par + (drift || 0)) % w));
+    if (off > 0) off -= w;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = alpha;
+    for (let x = off; x < C.VIEW_W; x += w) ctx.drawImage(im, rd2(x), bottomY - h, w, h);
+    ctx.restore();
+  }
+  /* HD propok kirajzolása (talp GY-en, lágy árnyék) — az entitások MÖGÖTT */
+  function drawMapProps(ctx, m, cam) {
+    for (const [wx, name] of m.place) {
+      const im = m.props[name]; if (!im || !im.naturalWidth) continue;
+      const sx = wx - cam;
+      if (sx < -140 || sx > C.VIEW_W + 140) continue;
+      const w = im.width / ART, h = im.height / ART;
+      // árnyék
+      ctx.save(); ctx.globalAlpha = 0.34; ctx.fillStyle = '#02040a';
+      ctx.beginPath(); ctx.ellipse(rd2(sx), GY + 1, w * 0.44, Math.max(2, w * 0.1), 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      ctx.drawImage(im, rd2(sx - w / 2), GY - h + 1, w, h);
+    }
   }
 
   function drawBackground(ctx, cam, level, t) {
@@ -1548,11 +1584,14 @@ ZD.sprites = (() => {
     const hd = MAPS[theme];
     if (hd && hd.ready) {
       /* HD parallax rétegek (a motor tileLayer-je logikai méreten rajzol) */
-      if (hd.far) tileLayer(ctx, hd.far, cam, 0.2, GY);
-      if (hd.mid) tileLayer(ctx, hd.mid, cam, 0.5, GY);
-      if (hd.near) tileLayer(ctx, hd.near, cam, 0.8, GY);
-      if (hd.ground) tileLayer(ctx, hd.ground, cam, 1, C.VIEW_H);
-      return drawBgOverlay(ctx);   // scene-grade + köd + vignetta (entitások ELŐTT)
+      if (hd.far.naturalWidth) tileLayer(ctx, hd.far, cam, 0.2, GY);
+      if (hd.mid.naturalWidth) tileLayer(ctx, hd.mid, cam, 0.5, GY);
+      if (hd.near.naturalWidth) tileLayer(ctx, hd.near, cam, 0.8, GY);
+      if (hd.ground.naturalWidth) tileLayer(ctx, hd.ground, cam, 1, C.VIEW_H);
+      addLayer(ctx, hd.fx.lightpool, cam, 1, GY + 8, 0.55, 0);   // utcalámpa fénypoolok a talajon
+      drawMapProps(ctx, hd, cam);                                // járművek/barikádok (entitások mögött)
+      addLayer(ctx, hd.fx.fog, cam, 0.6, GY - 8, 0.22, (t || 0) * 5); // sodródó köd
+      return drawBgOverlay(ctx);   // scene-grade + vignetta (entitások ELŐTT)
     }
     tileLayer(ctx, th.far, cam, 0.2, GY);
     tileLayer(ctx, th.mid, cam, 0.5, GY);
@@ -1597,6 +1636,16 @@ ZD.sprites = (() => {
     vg.addColorStop(0, 'rgba(0,0,0,0)');
     vg.addColorStop(1, 'rgba(0,0,0,.44)');
     ctx.fillStyle = vg; ctx.fillRect(0, 0, VW, VH);
+  }
+
+  /* HD ELŐTÉR (az entitások UTÁN rajzolva): sodródó eső + előtér-törmelék-sáv (5. mélység). */
+  function drawForeground(ctx, cam, level, t) {
+    const m = MAPS[C.themeFor(level)];
+    if (!m || !m.ready) return;
+    // eső: additív, a levegőben (GY fölött), gyors vízszintes sodródással (szél)
+    addLayer(ctx, m.fx.rain, cam, 1.1, GY, 0.34, (t || 0) * 34);
+    // előtér-törmelék a legelöl, alul (a játékos mögötte halad → mélység)
+    if (m.fg && m.fg.naturalWidth) tileLayer(ctx, m.fg, cam, 1.12, C.VIEW_H + 3);
   }
 
   /* menü-háttér: lassan pásztázó jelenet vonuló zombi-sziluettekkel */
@@ -1706,6 +1755,6 @@ ZD.sprites = (() => {
     drawBoom, drawCoin, drawMed, drawGrenade, drawShell,
     drawGenerator, drawAmmoBox,
     weaponIcon, upgIcon, px, pxCircle,
-    THEMES, ZDIM, loadMaps,
+    THEMES, ZDIM, loadMaps, drawForeground,
   };
 })();
