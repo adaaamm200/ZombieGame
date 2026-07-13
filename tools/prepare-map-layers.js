@@ -118,6 +118,15 @@ function segments(s, minW, minGap) {
   return segs;
 }
 function cropCols(s, x0, x1) { const { w, h, px } = s; const nw = x1 - x0 + 1; const out = Buffer.alloc(nw * h * 4); for (let y = 0; y < h; y++) px.copy(out, y * nw * 4, (y * w + x0) * 4, (y * w + x1 + 1) * 4); return { w: nw, h, ch: 4, px: out }; }
+/* frakcionális 2D téglalap-kivágás (a paletta-lapokból egy elem izolálása) */
+function cropRect(s, fx0, fy0, fx1, fy1) {
+  const { w, h, px } = s;
+  const x0 = Math.max(0, Math.round(fx0 * w)), x1 = Math.min(w - 1, Math.round(fx1 * w));
+  const y0 = Math.max(0, Math.round(fy0 * h)), y1 = Math.min(h - 1, Math.round(fy1 * h));
+  const nw = x1 - x0 + 1, nh = y1 - y0 + 1; const out = Buffer.alloc(nw * nh * 4);
+  for (let y = 0; y < nh; y++) px.copy(out, y * nw * 4, ((y + y0) * w + x0) * 4, ((y + y0) * w + x0 + nw) * 4);
+  return { w: nw, h: nh, ch: 4, px: out };
+}
 
 function scaleH(s, logicalH) { const dh = Math.max(1, Math.round(logicalH * ART)); const dw = Math.max(1, Math.round(s.w * dh / s.h)); return { w: dw, h: dh, px: resize(s.px, s.w, s.h, dw, dh) }; }
 function emit(out, s, logicalH) { const r = scaleH(s, logicalH); writePNG(out, r.w, r.h, r.px); return { file: path.basename(out), lw: Math.round(r.w / ART), lh: logicalH }; }
@@ -160,7 +169,31 @@ function doLevel02(OUT) {
   console.log('done -> ' + OUT);
 }
 
-/* CLI: node prepare-map-layers.js [1|2|all]  (alap: 1 — a level_01-et NEM írja felül 2-nél) */
+/* =================== LEVEL 03 — Zombie Alley =================== */
+function doLevel03(OUT) {
+  const L3 = 'assets/references/maps/levels/level_03_zombie_alley';
+  fs.mkdirSync(OUT, { recursive: true });
+  fs.mkdirSync(path.join(OUT, 'props'), { recursive: true });
+  console.log('level_03 zombie alley — CLEAN build →', OUT);
+  /* teljes-bleed: far romváros-skyline + nedves aszfalt talaj */
+  { const r = emitOpaque(path.join(L3, '01_layers/alley_far_background.png'), path.join(OUT, 'far.png'), 118); console.log('  far  ', r.lw + 'x' + r.lh); }
+  { const r = emitOpaque(path.join(L3, '03_ground/alley_wet_asphalt_long_no_line.png'), path.join(OUT, 'ground.png'), 46); console.log('  ground', r.lw + 'x' + r.lh); }
+  /* diszkrét struktúrák/propok a paletta-lapokból (2D crop → sziluett-tiszta) */
+  const near = toRGBA(readPNG(path.join(L3, '01_layers/alley_nearground_storefronts_signs_fences_strip.png')));
+  const mid = toRGBA(readPNG(path.join(L3, '01_layers/alley_midground_walls_cables_fences_strip.png')));
+  /* midground struktúrák: BAR saroképület (near, bal) + fal/épület (mid, bal) */
+  { const s = cleanObject(cropRect(near, 0.0, 0.02, 0.115, 0.80), 20, 8); const r = emit(path.join(OUT, 'bar_building.png'), s, 150); console.log('  bld bar_building', r.lw + 'x' + r.lh); }
+  { const s = cleanObject(cropRect(mid, 0.0, 0.02, 0.135, 0.98), 22, 8); const r = emit(path.join(OUT, 'wall_a.png'), s, 148); console.log('  bld wall_a', r.lw + 'x' + r.lh); }
+  /* propok: roncsautó + drótkerítés (cars-set) + zöld-fényű ajtó + konténer (near) */
+  const cars = toRGBA(readPNG(path.join(L3, '06_vehicles/alley_car_wrecks_set.png')));
+  { const s = cleanObject(cropRect(cars, 0.03, 0.58, 0.41, 1.0), 18, 10); const r = emit(path.join(OUT, 'props/car.png'), s, 28); console.log('  prop car', r.lw + 'x' + r.lh); }
+  { const s = cleanObject(cropRect(cars, 0.005, 0.04, 0.30, 0.57), 20, 6); const r = emit(path.join(OUT, 'props/fence.png'), s, 30); console.log('  prop fence', r.lw + 'x' + r.lh); }
+  { const s = cleanObject(cropRect(near, 0.82, 0.13, 0.955, 0.60), 20, 6); const r = emit(path.join(OUT, 'props/door.png'), s, 42); console.log('  prop door', r.lw + 'x' + r.lh); }
+  console.log('done -> ' + OUT);
+}
+
+/* CLI: node prepare-map-layers.js [1|2|3|all]  (alap: 1 — más szintet NEM ír felül) */
 const which = process.argv[2] || '1';
 if (which === '1' || which === 'all') doLevel01(process.env.MAP_OUT || 'assets/maps/level_01');
 if (which === '2' || which === 'all') doLevel02(process.env.MAP_OUT2 || 'assets/maps/level_02/_wip');
+if (which === '3' || which === 'all') doLevel03(process.env.MAP_OUT3 || 'assets/maps/level_03/_wip');

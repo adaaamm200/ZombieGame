@@ -18,6 +18,26 @@ Entry format:
 
 ---
 
+### 2026-07-13 — Level 03 "Zombie Alley" build (location 2 = mission 3 every day)
+- Goal: build Level 03 only, same clean pipeline. No Level 04; no gameplay/system changes.
+- Files: tools/prepare-map-layers.js (cropRect() fractional 2D crop + doLevel03() + CLI "3"),
+  js/const.js (LOCATIONS[2].map=2 → Zombie Alley now HD; BUILD v45), js/sprites.js
+  (loadMap(2, 'assets/maps/level_03/')), sw.js (zk-v45 + 7 precache). New runtime
+  assets/maps/level_03/. Reports: _asset_audit_reports/level_03_map_audit_report.md +
+  _rejected_assets/level_03/REJECTED_MANIFEST.md.
+- Assets: KEEP far (ruined-city skyline) + ground (wet asphalt) opaque; silhouette-clean (2D crop
+  from palette sheets) bar_building (BAR corner) + wall_a; props car + fence (chain-link) + door
+  (green-glow). This pack is mostly palette sheets, so discrete elements isolated via cropRect.
+  Rejected: 07_effects/* PNG fog/rain/neon/smoke overlays, 04_foreground/* + foreground strip
+  (noisy), concept boards, source sheets, animated frames, spare prop sets; dumpster/barrel
+  dropped (crops caught neighbours). No dark-bg removal, no tiled cutout strips, no PNG fog/rain.
+- Tests run: node --check all JS (OK). Real browser (level 3 = location 2): HD alley renders;
+  desktop 1280×720 VIEW_W 480 (94% non-black), mobile 812×375 VIEW_W 584 sideGap 0 (95%, ground
+  85.9%); 7/7 assets HTTP 200; 0 console errors. Dynamic VIEW_W + location binding intact.
+- What was NOT changed: gameplay/balance/other assets; Level 04 not started; nothing outside
+  PROJECT_ROOT touched.
+- Next: STOP — await approval before Level 04.
+
 ### 2026-07-13 — Location-based map binding: map = mission slot, not day (days have no name)
 - Goal (owner decision): days are just numbers (DAY 1/2…), the NAMING belongs to the LOCATION.
   Bind the map to the in-day mission slot (1..5), same 5 locations every day (rising difficulty)

@@ -3,7 +3,7 @@ window.ZD = window.ZD || {};
 
 /* Betöltött build-verzió (a főmenü sarkában látszik). BUMPOLD az sw.js VERSION-nel együtt!
    Ha a telefonon régi számot látsz → a régi cache ragadt be (töröld a webhelyadatot). */
-ZD.BUILD = 'v44';
+ZD.BUILD = 'v45';
 
 ZD.C = {
   VIEW_W: 480,       // DINAMIKUS: a main.js fit() a képernyő-arányhoz igazítja (clamp 1.6–2.6×VIEW_H)
@@ -47,7 +47,7 @@ ZD.C = {
   LOCATIONS: [
     { nameKey: 'loc.0', map: 0,  ptheme: 0 }, // 1. misszió — Quarantine Street (HD level_01)
     { nameKey: 'loc.1', map: 1,  ptheme: 0 }, // 2. misszió — Quick Mart (HD level_02)
-    { nameKey: 'loc.2', map: -1, ptheme: 2 }, // 3. misszió — Zombie Alley (procedurális, míg elkészül)
+    { nameKey: 'loc.2', map: 2,  ptheme: 2 }, // 3. misszió — Zombie Alley (HD level_03)
     { nameKey: 'loc.3', map: -1, ptheme: 0 }, // 4. misszió — Fortified Checkpoint (procedurális)
     { nameKey: 'loc.4', map: -1, ptheme: 1 }, // 5. misszió — Infection Nest / boss (procedurális)
   ],

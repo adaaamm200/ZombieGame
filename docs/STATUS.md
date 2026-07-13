@@ -11,6 +11,25 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## LEVEL 03 — ZOMBIE ALLEY build (map/location 2, minden nap 3. misszió) (2026-07-13)
+- **CSAK Level 03** (Level 04 NEM indult). Tiszta pipeline: far romváros-skyline + diszkrét
+  falak/épületek + nedves aszfalt + ritka propok + procedurális atmoszféra.
+- **Assetek** (`assets/maps/level_03/`): KEEP `far` + `ground` (átlátszatlan); SZILUETT-tiszta
+  (2D crop a paletta-lapokból) `bar_building` (BAR saroképület) + `wall_a` (fal/épület); propok
+  `car` + `fence` (drótkerítés) + `door` (zöld-fényű ajtó). A pack főleg PALETTA-lapokból áll →
+  a diszkrét elemeket `cropRect` frakcionális 2D-vágással izoláltam. ELUTASÍTVA
+  (`_rejected_assets/level_03/REJECTED_MANIFEST.md`): `07_effects/*` PNG köd/eső/neon/füst
+  overlayek, `04_foreground/*` + foreground-strip (zajos), koncept-boardok, source-sheetek,
+  animált frame-ek, extra prop-setek. A dumpster/barrel elhagyva (a crop szomszédot fogott).
+- **Integráció**: `tools/prepare-map-layers.js` → `cropRect()` + `doLevel03()` + CLI `3`;
+  `const.js` `LOCATIONS[2].map = 2`; `sprites.js` `loadMap(2, 'assets/maps/level_03/', {...})`.
+  A 3. misszió minden napon → Zombie Alley HD.
+- **TESZTELVE** (valós böngésző, level 3 = location 2): a HD sikátor renderel; desktop 1280×720
+  VIEW_W 480 (94% non-black), mobil 812×375 VIEW_W 584 oldalsáv 0 (95%, talaj 85.9%). 7/7 asset
+  200. **0 konzolhiba.** node --check OK. Dinamikus VIEW_W + helyszín-kötés ép.
+- Megjegyzés: a Level 03 art sötétebb/grittyebb (sikátor) — szándékosan; ha több kontraszt kell,
+  emelhető a sziluett-küszöb / fényesebb crop. sw.js: **zk-v45**; `ZD.BUILD='v45'`.
+
 ## HELYSZÍN-ALAPÚ PÁLYAKÖTÉS — a map a misszió-sorszámhoz, nem a naphoz (2026-07-13)
 - **Owner-döntés**: a napnak NINCS neve (csak „DAY 1/2…"); az elnevezés a HELYSZÍNÉ. A map a
   NAPON BELÜLI misszió-sorszámhoz (1..5) kötve, minden nap ugyanaz az 5 helyszín, növekvő
