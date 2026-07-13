@@ -122,34 +122,45 @@ function cropCols(s, x0, x1) { const { w, h, px } = s; const nw = x1 - x0 + 1; c
 function scaleH(s, logicalH) { const dh = Math.max(1, Math.round(logicalH * ART)); const dw = Math.max(1, Math.round(s.w * dh / s.h)); return { w: dw, h: dh, px: resize(s.px, s.w, s.h, dw, dh) }; }
 function emit(out, s, logicalH) { const r = scaleH(s, logicalH); writePNG(out, r.w, r.h, r.px); return { file: path.basename(out), lw: Math.round(r.w / ART), lh: logicalH }; }
 
-const L1 = 'assets/references/maps/levels/level_01_quarantine_street';
-const OUT = process.env.MAP_OUT || 'assets/maps/level_01';
-fs.mkdirSync(OUT, { recursive: true });
-fs.mkdirSync(path.join(OUT, 'props'), { recursive: true });
+/* teljes-bleed ATLÁTSZATLAN réteg (far/ground): csak leméretezés (nincs kulcsolás) */
+function emitOpaque(src, out, logicalH) { const s = emit(out, toRGBA(readPNG(src)), logicalH); return s; }
 
-console.log('level_01 quarantine street — CLEAN rebuild →', OUT);
-
-/* --- MIDGROUND ÉPÜLETEK: 2 diszkrét, TÖMÖR épület a stripből (a középső üreges rom
-   KIHAGYVA — az nem maszkolható tisztán, mert átlátszik rajta az ég). --- */
-{
+/* =================== LEVEL 01 — Quarantine Street =================== */
+function doLevel01(OUT) {
+  const L1 = 'assets/references/maps/levels/level_01_quarantine_street';
+  fs.mkdirSync(OUT, { recursive: true });
+  fs.mkdirSync(path.join(OUT, 'props'), { recursive: true });
+  console.log('level_01 quarantine street — CLEAN rebuild →', OUT);
   const strip = toRGBA(readPNG(path.join(L1, '01_layers/quarantine_midground_buildings_strip.png')));
-  [
-    ['bld_a.png', 16, 258],    // bal, tömör kétszintes (napellenzővel)
-    ['bld_b.png', 606, 1001],  // jobb, „QUICK MART" saroképület
-  ].forEach(([out, x0, x1]) => { const seg = cleanObject(cropCols(strip, x0, x1), 20, 6); const r = emit(path.join(OUT, out), seg, 156); console.log('  bld  ', out.padEnd(10), r.lw + 'x' + r.lh, '(src x' + x0 + '..' + x1 + ')'); });
+  [['bld_a.png', 16, 258], ['bld_b.png', 606, 1001]].forEach(([out, x0, x1]) => { const seg = cleanObject(cropCols(strip, x0, x1), 20, 6); const r = emit(path.join(OUT, out), seg, 156); console.log('  bld  ', out.padEnd(10), r.lw + 'x' + r.lh); });
+  { const s = cleanObject(toRGBA(readPNG(path.join(L1, '03_props/watchtower_large.png'))), 26, 0); const r = emit(path.join(OUT, 'watertower.png'), s, 150); console.log('  watertower', r.lw + 'x' + r.lh); }
+  [['03_props/bus_rusted.png', 'props/bus.png', 44], ['04_vehicles_street_props/car_wreck_01.png', 'props/car.png', 28], ['03_props/police_car_lightbar.png', 'props/police.png', 28]]
+    .forEach(([src, out, hh]) => { const s = cleanObject(toRGBA(readPNG(path.join(L1, src))), 18, 10); const r = emit(path.join(OUT, out), s, hh); console.log('  prop ', r.file.padEnd(12), r.lw + 'x' + r.lh); });
+  console.log('done -> ' + OUT);
 }
 
-/* --- WATCHTOWER: diszkrét midground silhouette (lattice rések megmaradnak) --- */
-{
-  const s = cleanObject(toRGBA(readPNG(path.join(L1, '03_props/watchtower_large.png'))), 26, 0);
-  const r = emit(path.join(OUT, 'watertower.png'), s, 150); console.log('  watertower', r.lw + 'x' + r.lh);
+/* =================== LEVEL 02 — Quick Mart =================== */
+function doLevel02(OUT) {
+  const L2 = 'assets/references/maps/levels/level_02_quick_mart';
+  fs.mkdirSync(OUT, { recursive: true });
+  fs.mkdirSync(path.join(OUT, 'props'), { recursive: true });
+  console.log('level_02 quick mart — CLEAN build →', OUT);
+  /* teljes-bleed: far skyline + nedves aszfalt talaj (átlátszatlan, leméretezve) */
+  { const r = emitOpaque(path.join(L2, '01_layers/quickmart_far_background.png'), path.join(OUT, 'far.png'), 118); console.log('  far  ', r.lw + 'x' + r.lh); }
+  { const r = emitOpaque(path.join(L2, '04_ground/wet_asphalt_long_no_line.png'), path.join(OUT, 'ground.png'), 46); console.log('  ground', r.lw + 'x' + r.lh); }
+  /* diszkrét midground struktúrák (sziluett-tiszta): Quick Mart bolt-homlokzat + oszlop */
+  { const s = cleanObject(toRGBA(readPNG(path.join(L2, '02_main_building/quickmart_store_facade_full.png'))), 22, 8); const r = emit(path.join(OUT, 'facade.png'), s, 140); console.log('  facade', r.lw + 'x' + r.lh); }
+  { const s = cleanObject(toRGBA(readPNG(path.join(L2, '03_props_vehicles/power_pole.png'))), 24, 0); const r = emit(path.join(OUT, 'power_pole.png'), s, 132); console.log('  pole  ', r.lw + 'x' + r.lh); }
+  /* ritka propok (tömör sziluett): furgon + benzinkút + konténer + ártábla */
+  [['03_props_vehicles/van_wreck.png', 'props/van.png', 30],
+   ['03_props_vehicles/gas_pump_red.png', 'props/gas_pump.png', 34],
+   ['03_props_vehicles/dumpster_green.png', 'props/dumpster.png', 26],
+   ['03_props_vehicles/gas_price_sign.png', 'props/gas_sign.png', 40]]
+    .forEach(([src, out, hh]) => { const s = cleanObject(toRGBA(readPNG(path.join(L2, src))), 18, 10); const r = emit(path.join(OUT, out), s, hh); console.log('  prop ', r.file.padEnd(14), r.lw + 'x' + r.lh); });
+  console.log('done -> ' + OUT);
 }
 
-/* --- PROPOK (ritka): bus + car + police (tömör jármű-sziluett) --- */
-[
-  ['03_props/bus_rusted.png', 'props/bus.png', 44],
-  ['04_vehicles_street_props/car_wreck_01.png', 'props/car.png', 28],
-  ['03_props/police_car_lightbar.png', 'props/police.png', 28],
-].forEach(([src, out, hh]) => { const s = cleanObject(toRGBA(readPNG(path.join(L1, src))), 18, 10); const r = emit(path.join(OUT, out), s, hh); console.log('  prop ', r.file.padEnd(12), r.lw + 'x' + r.lh); });
-
-console.log('done -> ' + OUT);
+/* CLI: node prepare-map-layers.js [1|2|all]  (alap: 1 — a level_01-et NEM írja felül 2-nél) */
+const which = process.argv[2] || '1';
+if (which === '1' || which === 'all') doLevel01(process.env.MAP_OUT || 'assets/maps/level_01');
+if (which === '2' || which === 'all') doLevel02(process.env.MAP_OUT2 || 'assets/maps/level_02/_wip');

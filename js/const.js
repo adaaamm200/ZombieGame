@@ -3,7 +3,7 @@ window.ZD = window.ZD || {};
 
 /* Betöltött build-verzió (a főmenü sarkában látszik). BUMPOLD az sw.js VERSION-nel együtt!
    Ha a telefonon régi számot látsz → a régi cache ragadt be (töröld a webhelyadatot). */
-ZD.BUILD = 'v41';
+ZD.BUILD = 'v42';
 
 ZD.C = {
   VIEW_W: 480,       // DINAMIKUS: a main.js fit() a képernyő-arányhoz igazítja (clamp 1.6–2.6×VIEW_H)

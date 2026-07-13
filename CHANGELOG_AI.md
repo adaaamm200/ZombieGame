@@ -18,6 +18,30 @@ Entry format:
 
 ---
 
+### 2026-07-13 — Level 02 "Quick Mart" build (theme 1), same clean pipeline
+- Goal: implement Level 02 ONLY, using the verified Level 01 pipeline. No Level 03; no weapon/
+  shop/character/zombie/HUD/gameplay changes.
+- Files: tools/prepare-map-layers.js (added doLevel02() + emitOpaque() + CLI dispatch `2`;
+  Level 01 path untouched), js/sprites.js (loadMaps → loadMap(1, 'assets/maps/level_02/')),
+  sw.js (zk-v42 + 8 precache entries), js/const.js (BUILD v42). New runtime assets under
+  assets/maps/level_02/. Reports: _asset_audit_reports/level_02_map_audit_report.md,
+  _rejected_assets/level_02/REJECTED_MANIFEST.md.
+- Assets: KEEP far (skyline) + ground (wet asphalt) opaque; silhouette-clean facade (Quick Mart
+  storefront, hero) + power_pole + props van/gas_pump/dumpster/gas_sign. Rejected: 06_effects/*
+  PNG fog/rain/effect overlays, 05_foreground/* noisy debris strips, concept boards, redundant
+  facade parts/sheets, extra props (kept sparse). No dark-bg removal, no tiled cutout strips, no
+  PNG fog/rain. Clean layer model + procedural atmosphere; v41 dynamic VIEW_W preserved.
+- Integration: drawBackground/drawStructures/drawFog*/camera are generic per-theme — unchanged;
+  Level 02 loads into theme 1 (campaign days 6–10).
+- Tests run: node --check all JS (OK). Real browser level 6 (theme 1): HD Quick Mart scene renders
+  (skyline + lit facade + ground + props; verified by deterministic frame render + pixel sampling
+  since the screenshot tool times out on the animated canvas). Viewports: 1280×720 VIEW_W 480,
+  1760×820 VIEW_W 580 (sideGap 0), 812×375 VIEW_W 584 (sideGap 0) — all 100% fill, ground 85.9%,
+  dynamic VIEW_W active; 8/8 assets HTTP 200; 0 console errors.
+- What was NOT changed: Level 01 assets/pipeline, atmosphere system, weapons/shop/character/
+  zombies/HUD/gameplay; no rejected Level 01 asset reintroduced; nothing outside PROJECT_ROOT.
+- Next: STOP — await approval before Level 03.
+
 ### 2026-07-09 — Gameplay fills the viewport: dynamic field-of-view width (no side bars)
 - Goal: user reported gameplay was NOT fullscreen (black bars left/right) while the menu was.
   Root cause: menus (#screens) fill the full viewport, but gameplay (#cv/#hud/#controls) lived

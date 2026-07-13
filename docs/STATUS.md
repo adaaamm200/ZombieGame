@@ -11,6 +11,28 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## LEVEL 02 — QUICK MART build (theme 1, kampány 6–10. nap) (2026-07-13)
+- **CSAK Level 02** (a jóváhagyott sorrend szerint; Level 03 NEM indult). A Level 01 tiszta
+  pipeline 1:1 alkalmazva: sziluett-cleanup, tiszta rétegmodell, procedurális atmoszféra.
+- **Assetek** (`assets/maps/level_02/`): KEEP `far` (skyline) + `ground` (nedves aszfalt,
+  átlátszatlan leméretezés); SZILUETT-tiszta `facade` (Quick Mart bolt-homlokzat, hero) +
+  `power_pole` (midground akcent) + propok `van/gas_pump/dumpster/gas_sign`. ELUTASÍTVA
+  (`_rejected_assets/level_02/REJECTED_MANIFEST.md`): `06_effects/*` PNG köd/eső overlayek,
+  `05_foreground/*` zajos törmelék-stripek, koncept-boardok, redundáns homlokzat-részek/sheetek,
+  extra propok. Nincs dark-bg removal, nincs tilelt cutout strip, nincs PNG fog/rain.
+- **Integráció**: `tools/prepare-map-layers.js` → `doLevel02()` + `emitOpaque()` + CLI
+  (`node tools/prepare-map-layers.js 2`, a Level 01 érintetlen); `js/sprites.js` `loadMaps()`
+  → `loadMap(1, 'assets/maps/level_02/', {...})`. A drawBackground/struktúra/atmoszféra
+  GENERIKUS per-téma path — nem kellett módosítani.
+- **TESZTELVE** (valós böngésző, level 6 = theme 1): a HD Quick Mart jelenet renderel
+  (skyline + világító homlokzat + talaj + propok; determinisztikus frame-render + pixel-minta,
+  mert a screenshot-tool az animált canvason time-outol). Viewport: 1280×720 VIEW_W 480,
+  1760×820 VIEW_W 580 (oldalsáv 0), 812×375 VIEW_W 584 (oldalsáv 0) — mind 100% kitöltés,
+  talaj 85.9%, dinamikus VIEW_W AKTÍV. 8/8 asset 200. **0 konzolhiba.** node --check OK.
+- Fegyver/bolt/karakter/zombi/HUD/gameplay ÉRINTETLEN; Level 01 asset nem tért vissza;
+  projekten kívül semmi. **Level 02 után STOP — jóváhagyásra vár a Level 03 előtt.**
+- sw.js cache: **zk-v42**; `ZD.BUILD='v42'`.
+
 ## PROJEKT-ÁLLAPOT KONSZOLIDÁCIÓ + v41 ELLENŐRZÉS (2026-07-13)
 - **Checkpoint**: nincs új feature/asset — a jelenlegi állapot dokumentálása + a v41
   teljes-képernyős viselkedés ellenőrzése, mielőtt a Level 02 jönne.

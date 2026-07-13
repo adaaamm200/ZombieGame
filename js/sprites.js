@@ -1544,6 +1544,7 @@ ZD.sprites = (() => {
     ['far', 'ground'].forEach((k) => { m[k].onload = () => { if (++n >= need) m.ready = true; }; m[k].onerror = () => { if (++n >= need) m.ready = !!(m.far.naturalWidth); }; });
   }
   function loadMaps() {
+    /* theme 0 = level_01 „Quarantine Street" (kampány 1–5. nap) */
     loadMap(0, 'assets/maps/level_01/', {
       struct: ['bld_a', 'bld_b', 'watertower'],
       /* diszkrét midground struktúra-minta (parallax 0.5), egy perióduson belüli x-eltolással
@@ -1553,6 +1554,15 @@ ZD.sprites = (() => {
       props: ['bus', 'car', 'police'],
       /* ritka, jól szeparált street-dressing (világ-x, prop) — kevés, de tiszta */
       place: [[190, 'bus'], [470, 'car'], [820, 'police']],
+    });
+    /* theme 1 = level_02 „Quick Mart" (kampány 6–10. nap) — ugyanaz a tiszta modell:
+       far skyline + diszkrét midground (bolt-homlokzat + oszlop) + talaj + ritka propok */
+    loadMap(1, 'assets/maps/level_02/', {
+      struct: ['facade', 'power_pole'],
+      structPattern: [[40, 'facade'], [400, 'power_pole']],
+      structPeriod: 640,
+      props: ['van', 'gas_pump', 'dumpster', 'gas_sign'],
+      place: [[150, 'gas_pump'], [360, 'van'], [630, 'dumpster'], [880, 'gas_sign']],
     });
   }
   const rd2 = (v) => Math.round(v * ART) / ART;
