@@ -1,5 +1,18 @@
 # LEVEL 03 — ZOMBIE ALLEY — MAP AUDIT & BUILD REPORT
 
+> **REVISED — TURBO (v46, 2026-07-13).** The first build (dark cropped silhouettes) was too
+> dark/lifeless. Rebuilt: the **full painted alley scene** `00_reference/full_original_map3.png`
+> (the clean painting, NOT the annotated concept board) is now the rich, **living** far backdrop
+> — neon (BAR/LIQUOR), green toxic glow, warm streetlamp, wet reflections, distant city, all
+> baked in — put through a new `brighten()` (gamma-lift + saturation). Cropped to the upper 64%
+> (walls/neon/distance, no baked floor). Kept: wet-asphalt ground (brightened) + 2 props
+> (car, fence, brightened). Dropped: the dark `bar_building`/`wall_a`/`door`/`dumpster` crops and
+> the low-res `alley_far_background`. Verified: avg on-screen brightness ~99–101 (was ~76),
+> 100% non-black, fills viewport, 0 console errors. The sections below describe the original
+> pass; the current runtime set is: `far.png` (painted scene), `ground.png`, `props/car.png`,
+> `props/fence.png`.
+
+
 - **Date:** 2026-07-13 · **Build:** `v45` / SW cache `zk-v45`
 - **Location slot:** map/location index 2 → **mission 3 of every day** (`loadMap(2, 'assets/maps/level_03/')`).
 - **Pipeline:** same as Level 01/02 (silhouette cleanup, clean layer model, procedural

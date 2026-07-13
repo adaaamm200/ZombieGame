@@ -18,6 +18,30 @@ Entry format:
 
 ---
 
+### 2026-07-13 — Level 03 TURBO: painted alley scene + brightness (alive, not dark)
+- Goal: the first Level 03 looked cheap/dark/lifeless ("gagyi, homályos, pixeles, nagyon sötét,
+  semmi élet"). Rebuild it with life and brightness.
+- Root cause: dark cropped silhouette buildings + low-res dark far layer, and all neon/glow
+  effects were rejected → no life.
+- Fix: use the FULL painted alley scene (00_reference/full_original_map3.png — the clean
+  painting, NOT the annotated concept board) as the rich, living far backdrop (neon BAR/LIQUOR,
+  green toxic glow, warm streetlamp, wet reflections, distant city — all baked in), run through a
+  new brighten() (gamma-lift + saturation), cropped to the upper 64% (walls/neon/distance, no
+  baked floor). Plus a brightened wet-asphalt ground + 2 brightened props (car, fence). Dropped
+  the dark bar_building/wall_a/door/dumpster crops and the low-res far_background.
+- Files: tools/prepare-map-layers.js (brighten() + rewritten doLevel03()), js/sprites.js
+  (loadMap(2, {struct:[], props:['car','fence']})), sw.js (zk-v46, precache trimmed to
+  far/ground/car/fence), js/const.js (BUILD v46). Location binding (location 2 = mission 3)
+  unchanged.
+- Tests run: node --check all JS (OK). Real browser (level 3): avg on-screen brightness ~99–101
+  (was ~76), 100% non-black; desktop 1280×720 VIEW_W 480, mobile 812×375 VIEW_W 584 sideGap 0,
+  100% fill; 0 console errors. far.png visually verified: rich lit alley (neon/glow/steam/
+  reflections).
+- Note: full_original_map3 is the clean painted scene (legit environment art), distinct from the
+  annotated concept_asset_board (still reference-only).
+- What was NOT changed: gameplay/balance/other maps; Level 04 not started; nothing outside
+  PROJECT_ROOT touched.
+
 ### 2026-07-13 — Level 03 "Zombie Alley" build (location 2 = mission 3 every day)
 - Goal: build Level 03 only, same clean pipeline. No Level 04; no gameplay/system changes.
 - Files: tools/prepare-map-layers.js (cropRect() fractional 2D crop + doLevel03() + CLI "3"),

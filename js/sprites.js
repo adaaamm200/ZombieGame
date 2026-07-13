@@ -1564,14 +1564,13 @@ ZD.sprites = (() => {
       props: ['van', 'gas_pump', 'dumpster', 'gas_sign'],
       place: [[150, 'gas_pump'], [360, 'van'], [630, 'dumpster'], [880, 'gas_sign']],
     });
-    /* theme/map 2 = level_03 „Zombie Alley" (3. misszió minden napon) — sötét sikátor:
-       far romváros-skyline + diszkrét falak/épületek + nedves aszfalt + ritka propok */
+    /* theme/map 2 = level_03 „Zombie Alley" (3. misszió minden napon) — TURBO:
+       a teljes festett alley-jelenet (neon/glow/nedves tükröződés) a gazdag ÉLŐ far-háttér,
+       + nedves aszfalt talaj + ritka propok. Nincs külön midground struktúra (a jelenet gazdag). */
     loadMap(2, 'assets/maps/level_03/', {
-      struct: ['bar_building', 'wall_a'],
-      structPattern: [[30, 'bar_building'], [300, 'wall_a']],
-      structPeriod: 520,
-      props: ['car', 'fence', 'door'],
-      place: [[160, 'car'], [430, 'fence'], [700, 'door'], [950, 'fence']],
+      struct: [],
+      props: ['car', 'fence'],
+      place: [[180, 'car'], [520, 'fence'], [860, 'car']],
     });
   }
   const rd2 = (v) => Math.round(v * ART) / ART;

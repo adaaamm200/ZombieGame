@@ -11,6 +11,26 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## LEVEL 03 TURBO — festett alley-jelenet + brightness (élő, nem sötét) (2026-07-13)
+- **Panasz**: a Level 03 „gagyi, homályos, pixeles, nagyon sötét, semmi élet". **Ok**: a sötét
+  cropped sziluett-épületek + a rétegre bontott sötét far, ÉS az összes neon/glow effekt
+  elutasítva → kiveszett az élet.
+- **TURBO fix**: a **teljes festett alley-jelenet** (`00_reference/full_original_map3.png` — a
+  TISZTA festmény, nem az annotált board) a gazdag, ÉLŐ far-háttér (neon BAR/LIQUOR, zöld toxikus
+  glow, meleg utcalámpa, nedves tükröződés, távoli város — mind baked-in), új `brighten()`-nel
+  (gamma-lift + telítettség) felturbózva; a felső 64%-ára vágva (falak+neon, baked-floor nélkül).
+  + felvilágosított nedves-aszfalt talaj + 2 prop (car, fence). Eldobva a sötét
+  bar_building/wall_a/door/dumpster crop és a kis felbontású far_background.
+- **Integráció**: `tools/prepare-map-layers.js` `brighten()` + átírt `doLevel03()`;
+  `sprites.js` `loadMap(2,{struct:[], props:['car','fence']})` (nincs külön midground struktúra —
+  a jelenet gazdag). A helyszín-kötés (location 2 = 3. misszió) változatlan.
+- **TESZTELVE** (valós böngésző, level 3): átlag képernyő-fényerő **~99–101** (előtte ~76),
+  100% non-black; desktop 1280×720 VIEW_W 480, mobil 812×375 VIEW_W 584 oldalsáv 0, 100%
+  kitöltés. **0 konzolhiba.** node --check OK. A far.png vizuálisan igazolt: gazdag, világító
+  sikátor (neon/glow/steam/tükröződés).
+- sw.js: **zk-v46**; `ZD.BUILD='v46'`. (A `full_original_map3` a tiszta festmény — engedélyezett
+  környezet-art, NEM az annotált koncepció-board.)
+
 ## LEVEL 03 — ZOMBIE ALLEY build (map/location 2, minden nap 3. misszió) (2026-07-13)
 - **CSAK Level 03** (Level 04 NEM indult). Tiszta pipeline: far romváros-skyline + diszkrét
   falak/épületek + nedves aszfalt + ritka propok + procedurális atmoszféra.

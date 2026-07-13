@@ -82,6 +82,21 @@ function featherAlpha(s, passes) {
   }
   return s;
 }
+/* fényerő/kontraszt/telítettség emelés — a túl sötét (sikátor) art felturbózása:
+   gamma>1 kiemeli az árnyékokat, gain szoroz, sat a színeket (neon pop). Alfa érintetlen. */
+function brighten(s, gain, gamma, sat) {
+  const { w, h, px } = s; gain = gain == null ? 1.15 : gain; gamma = gamma == null ? 1.35 : gamma; sat = sat == null ? 1.12 : sat;
+  const ig = 1 / gamma;
+  for (let i = 0; i < w * h; i++) {
+    const o = i * 4;
+    let r = 255 * Math.pow(px[o] / 255, ig) * gain, g = 255 * Math.pow(px[o + 1] / 255, ig) * gain, b = 255 * Math.pow(px[o + 2] / 255, ig) * gain;
+    const l = 0.299 * r + 0.587 * g + 0.114 * b;
+    r = l + (r - l) * sat; g = l + (g - l) * sat; b = l + (b - l) * sat;
+    px[o] = Math.max(0, Math.min(255, Math.round(r))); px[o + 1] = Math.max(0, Math.min(255, Math.round(g))); px[o + 2] = Math.max(0, Math.min(255, Math.round(b)));
+  }
+  return s;
+}
+
 /* diszkrét struktúra/prop tisztítása: sziluett + feather + trim */
 function cleanObject(s, delta, gapClose) {
   const bg = sampleBg(s); const bgMax = Math.max(bg[0], bg[1], bg[2]);
@@ -169,26 +184,28 @@ function doLevel02(OUT) {
   console.log('done -> ' + OUT);
 }
 
-/* =================== LEVEL 03 — Zombie Alley =================== */
+/* =================== LEVEL 03 — Zombie Alley (TURBO) ===================
+   A rétegre bontott forrás túl sötét/életlen volt. Helyette a TELJES festett alley-jelenet
+   (`full_original_map3.png` — a tiszta festmény, NEM az annotált koncepció-board) a gazdag,
+   ÉLŐ háttér (neon/glow/nedves tükröződés baked-in), FELTURBÓZVA (gamma-lift + telítettség).
+   Ehhez jön a nedves aszfalt talaj + pár prop. */
 function doLevel03(OUT) {
   const L3 = 'assets/references/maps/levels/level_03_zombie_alley';
   fs.mkdirSync(OUT, { recursive: true });
   fs.mkdirSync(path.join(OUT, 'props'), { recursive: true });
-  console.log('level_03 zombie alley — CLEAN build →', OUT);
-  /* teljes-bleed: far romváros-skyline + nedves aszfalt talaj */
-  { const r = emitOpaque(path.join(L3, '01_layers/alley_far_background.png'), path.join(OUT, 'far.png'), 118); console.log('  far  ', r.lw + 'x' + r.lh); }
-  { const r = emitOpaque(path.join(L3, '03_ground/alley_wet_asphalt_long_no_line.png'), path.join(OUT, 'ground.png'), 46); console.log('  ground', r.lw + 'x' + r.lh); }
-  /* diszkrét struktúrák/propok a paletta-lapokból (2D crop → sziluett-tiszta) */
-  const near = toRGBA(readPNG(path.join(L3, '01_layers/alley_nearground_storefronts_signs_fences_strip.png')));
-  const mid = toRGBA(readPNG(path.join(L3, '01_layers/alley_midground_walls_cables_fences_strip.png')));
-  /* midground struktúrák: BAR saroképület (near, bal) + fal/épület (mid, bal) */
-  { const s = cleanObject(cropRect(near, 0.0, 0.02, 0.115, 0.80), 20, 8); const r = emit(path.join(OUT, 'bar_building.png'), s, 150); console.log('  bld bar_building', r.lw + 'x' + r.lh); }
-  { const s = cleanObject(cropRect(mid, 0.0, 0.02, 0.135, 0.98), 22, 8); const r = emit(path.join(OUT, 'wall_a.png'), s, 148); console.log('  bld wall_a', r.lw + 'x' + r.lh); }
-  /* propok: roncsautó + drótkerítés (cars-set) + zöld-fényű ajtó + konténer (near) */
+  console.log('level_03 zombie alley — TURBO build →', OUT);
+  const B = (s) => brighten(s, 1.22, 1.5, 1.22);   // erős árnyék-lift + neon-telítettség
+  /* FAR = a festett alley-jelenet FELSŐ ~64%-a (falak + neon + távoli város, baked ground nélkül),
+     felturbózva → gazdag, világító háttér a talaj fölé (a motor far-rétegeként, GY-hez rögzítve) */
+  { const scene = toRGBA(readPNG(path.join(L3, '00_reference/full_original_map3.png')));
+    const r = emit(path.join(OUT, 'far.png'), B(cropRect(scene, 0.0, 0.0, 1.0, 0.64)), 132); console.log('  far(scene)', r.lw + 'x' + r.lh); }
+  /* GROUND = nedves aszfalt, enyhén világosítva (nedves tükröződés megmarad) */
+  { const g = brighten(toRGBA(readPNG(path.join(L3, '03_ground/alley_wet_asphalt_long_no_line.png'))), 1.15, 1.35, 1.12);
+    const r = emit(path.join(OUT, 'ground.png'), g, 46); console.log('  ground', r.lw + 'x' + r.lh); }
+  /* propok (felturbózva, tömör sziluett): roncsautó + drótkerítés */
   const cars = toRGBA(readPNG(path.join(L3, '06_vehicles/alley_car_wrecks_set.png')));
-  { const s = cleanObject(cropRect(cars, 0.03, 0.58, 0.41, 1.0), 18, 10); const r = emit(path.join(OUT, 'props/car.png'), s, 28); console.log('  prop car', r.lw + 'x' + r.lh); }
-  { const s = cleanObject(cropRect(cars, 0.005, 0.04, 0.30, 0.57), 20, 6); const r = emit(path.join(OUT, 'props/fence.png'), s, 30); console.log('  prop fence', r.lw + 'x' + r.lh); }
-  { const s = cleanObject(cropRect(near, 0.82, 0.13, 0.955, 0.60), 20, 6); const r = emit(path.join(OUT, 'props/door.png'), s, 42); console.log('  prop door', r.lw + 'x' + r.lh); }
+  { const s = cleanObject(B(cropRect(cars, 0.03, 0.58, 0.41, 1.0)), 18, 10); const r = emit(path.join(OUT, 'props/car.png'), s, 28); console.log('  prop car', r.lw + 'x' + r.lh); }
+  { const s = cleanObject(B(cropRect(cars, 0.005, 0.04, 0.30, 0.57)), 20, 6); const r = emit(path.join(OUT, 'props/fence.png'), s, 30); console.log('  prop fence', r.lw + 'x' + r.lh); }
   console.log('done -> ' + OUT);
 }
 
