@@ -18,6 +18,28 @@ Entry format:
 
 ---
 
+### 2026-07-13 — Day board fix: reflects progress + day navigation (Quick Mart reachable)
+- Goal: the campaign board was hardcoded to Day 1 (renderBoard() set curDay=1; HUD showed "DAY 1")
+  so it never advanced, progress wasn't reflected, and the new Quick Mart map (theme 1 = Day 2)
+  couldn't be reached from the menu. User chose to keep the day-based board.
+- Files: js/ui.js (board logic), css/style.css (nav arrows), js/const.js + sw.js (v43/zk-v43).
+- What changed: renderBoard() now draws the VIEWED curDay (not fixed 1); refresh_stages() sets
+  curDay=currentDay() on entry (real current day from save). Added prev/next day navigation
+  (‹ › metal buttons flanking the DAY plaque) to browse any UNLOCKED day (1..currentDay), with
+  disabled edge states. Hotspots map to that day's 5 missions (C.levelOf(curDay,slot)); states
+  (done/current/locked/boss) come from real progress. Shared generic board artwork (no per-day
+  image) — labels/states change per day.
+- Tests run: node --check all JS (OK). Real browser (simulated unlocked=6): board opens on
+  DAY 2 — ELHAGYOTT LABOR (level 6 current, 7–10 locked); ‹ → DAY 1 — QUARANTINE STREET (all
+  done); launching Day 2 level 6 → theme 1 → Quick Mart renders (99% non-black, lit facade);
+  0 console errors.
+- Known (consequence of the day-based model, NOT fixed — that's the "option C" restructure):
+  theme cycles per day (0,1,2,…) so a day's NAME may not match its rendered environment
+  (Day 2 is named "Elhagyott Labor" but shows Quick Mart). Can be aligned on request.
+- What was NOT changed: maps/assets/atmosphere/gameplay/weapons/shop/character/zombies; only the
+  board UI. Nothing outside PROJECT_ROOT touched.
+- Next: user verifies board + Quick Mart in normal play; optional day-name↔map alignment.
+
 ### 2026-07-13 — Level 02 "Quick Mart" build (theme 1), same clean pipeline
 - Goal: implement Level 02 ONLY, using the verified Level 01 pipeline. No Level 03; no weapon/
   shop/character/zombie/HUD/gameplay changes.

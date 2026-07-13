@@ -157,7 +157,11 @@ ZD.ui = (() => {
         <!-- HUD / nav / briefing: a KÉPERNYŐ (safe-area) széleihez rögzítve, NEM a board-frame-hez -->
         <div class="bhud">
           <button class="bhud-back" data-go="title" aria-label="Menu"></button>
-          <div class="bhud-day"><span class="bd-num" id="bd-num">DAY 1</span><span class="bd-name" id="bd-name"></span></div>
+          <div class="bhud-day">
+            <button class="bday-nav" id="bday-prev" aria-label="Previous day">&#8249;</button>
+            <span class="bd-num" id="bd-num">DAY 1</span><span class="bd-name" id="bd-name"></span>
+            <button class="bday-nav" id="bday-next" aria-label="Next day">&#8250;</button>
+          </div>
           <div class="bhud-right">
             <span class="bhud-coin" id="bhud-coin"></span>
             <button class="bhud-shop" data-go="armory" id="bhud-shop" aria-label="Shop"></button>
@@ -383,6 +387,9 @@ ZD.ui = (() => {
     $('#btn-resume').addEventListener('click', () => ZD.game.resume());
     $('#btn-quit').addEventListener('click', () => { hidePause(); ZD.game.quit(); });
 
+    /* nap-navigáció: előző / következő feloldott nap böngészése */
+    $('#bday-prev').addEventListener('click', () => { ZD.audio.play('click'); setBoardDay(curDay - 1); });
+    $('#bday-next').addEventListener('click', () => { ZD.audio.play('click'); setBoardDay(curDay + 1); });
     /* Scavenge / Free Mode — bal nav gomb → briefing */
     $('#bn-scavenge').addEventListener('click', () => {
       ZD.audio.play('click');
@@ -586,8 +593,12 @@ ZD.ui = (() => {
     const scr = screens.stages;
     scr.querySelector('.bhud-back').innerHTML = BIMG('btn_back', 'Back', 'bhud-back-img');
     scr.querySelector('.bhud-gear').innerHTML = AIMG('settings', 'aic-btn');
-    $('#bd-num').textContent = T('day.label') + ' 1';
-    $('#bd-name').textContent = boardDayName(1).toUpperCase();
+    $('#bd-num').textContent = T('day.label') + ' ' + curDay;
+    $('#bd-name').textContent = boardDayName(curDay).toUpperCase();
+    const cd = currentDay();
+    const bp = $('#bday-prev'), bn = $('#bday-next');
+    if (bp) bp.classList.toggle('is-off', curDay <= 1);
+    if (bn) bn.classList.toggle('is-off', curDay >= cd);
     $('#bhud-coin').innerHTML = AIMG('coin', 'coin-ic') + `<b>${fmt(S().coins)}</b>`;
     /* SHOP + board nav = GENERÁLT GOMB-ASSETEK (a PNG maga a gomb) */
     $('#bhud-shop').innerHTML = BIMG('btn_shop_cta', T('board.shop'));
@@ -597,16 +608,26 @@ ZD.ui = (() => {
     $('#sp-close').innerHTML = BIMG('btn_close', 'Close', 'sp-close-img');
   }
 
-  /* A jelenlegi board-artwork Day 1 — a hotspotok a Day 1 misszióira mutatnak. */
+  /* a megjelenített napra vált (1 .. aktuális feloldott nap), és újrarajzol */
+  function setBoardDay(d) {
+    curDay = Math.max(1, Math.min(d, currentDay()));
+    renderBoard();
+  }
+  /* A board a MEGJELENÍTETT napot (curDay) rajzolja — a hotspotok az adott nap misszióira
+     mutatnak, az állapotuk (done/current/locked) a valós haladásból jön. A nyilakkal
+     bármelyik feloldott nap böngészhető (a háttér-artwork közös, generikus jelenet). */
   function renderBoard() {
-    curDay = 1;
+    const cd = currentDay();
+    curDay = Math.max(1, Math.min(curDay, cd));
     fillBoardChrome();
     const host = $('#board-hotspots');
     host.innerHTML = '';
-    HOTSPOTS.forEach((h) => host.appendChild(makeHotspot({ level: C.levelOf(1, h.slot), x: h.x, y: h.y, slot: h.slot })));
+    HOTSPOTS.forEach((h) => host.appendChild(makeHotspot({ level: C.levelOf(curDay, h.slot), x: h.x, y: h.y, slot: h.slot })));
     host.appendChild(makeHotspot({ level: 'free', x: SCAV_POS.x, y: SCAV_POS.y }));
-    /* belépéskor a jelenlegi (vagy utolsó elérhető) Day-1 misszió briefingjét mutatjuk */
-    const curLevel = Math.max(1, Math.min(S().stages.unlocked, C.levelOf(1, C.CAMPAIGN.MISSIONS_PER_DAY)));
+    /* belépéskor: az aktuális napon a jelenlegi misszió, korábbi napon az első misszió */
+    const un = S().stages.unlocked;
+    const dayFirst = C.levelOf(curDay, 1), dayFinale = C.levelOf(curDay, C.CAMPAIGN.MISSIONS_PER_DAY);
+    const curLevel = curDay === cd ? Math.max(dayFirst, Math.min(un, dayFinale)) : dayFirst;
     const curEl = host.querySelector(`.hotspot[data-level="${curLevel}"]`);
     if (curEl) { selectHotspot(curEl); showBriefing(curLevel); }
   }
@@ -716,6 +737,7 @@ ZD.ui = (() => {
   const api = {
     refresh_stages() {
       refreshCoins(screens.stages);
+      curDay = currentDay();   // belépéskor mindig az aktuális napra ugrik
       renderBoard();
     },
 

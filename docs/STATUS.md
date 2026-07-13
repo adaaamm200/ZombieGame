@@ -11,6 +11,28 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## DAY BOARD JAVÍTÁS — valós haladás + nap-navigáció (a Quick Mart elérhető) (2026-07-13)
+- **Panasz**: a board mindig ugyanaz (Day 1), a nap-haladás nem frissül, az új Quick Mart pálya
+  a menüből nem elérhető. **Gyökér-ok**: a `renderBoard()` fixen `curDay = 1`-re volt drótozva,
+  a HUD is „DAY 1"-et írt → a board SOHA nem lépett tovább, csak az 1–5. pályát (Day 1) kínálta.
+- **Fix (a user választása: nap-alapú board marad)** (`js/ui.js` + `css/style.css`):
+  - `renderBoard()` a MEGJELENÍTETT `curDay`-t rajzolja (nem fix 1); a `refresh_stages()`
+    belépéskor `curDay = currentDay()` (a valós aktuális napra ugrik a mentésből).
+  - Új **nap-navigáció**: `‹`/`›` fém-gombok a DAY plakett két oldalán → bármelyik FELOLDOTT
+    nap böngészhető (1 .. aktuális nap); a nyilak letiltódnak a széleken (`is-off`).
+  - A hotspotok az adott nap 5 misszióját mutatják (`C.levelOf(curDay, slot)`), állapotuk
+    (done/current/locked/boss) a valós haladásból (`missionStateOf`). A háttér-artwork közös
+    generikus jelenet (nincs per-nap board-kép — a nevek/állapotok változnak).
+- **TESZTELVE** (valós böngésző, unlocked=6 szimulálva): a board **DAY 2 — ELHAGYOTT LABOR**-ral
+  nyílik (level 6 current, 7–10 locked), `‹` → **DAY 1 — QUARANTINE STREET** (mind done);
+  a Day 2 level 6 indítása → theme 1 → **Quick Mart renderel** (99% non-black, világító
+  homlokzat). **0 konzolhiba.** node --check OK.
+- **Ismert (a nap-alapú modell következménye, NEM javítva — az „option C" restrukturálás volna)**:
+  a téma naponta ciklikus (0,1,2,0…), így a nap NEVE nem mindig egyezik a megjelenített
+  helyszínnel (Day 2 neve „Elhagyott Labor", de Quick Mart art). Külön jóváhagyással rendezhető.
+- Csak `js/ui.js` (board-logika) + `css/style.css` (nyíl-gombok) + build/cache bump. Map/asset/
+  gameplay/atmoszféra ÉRINTETLEN. sw.js cache: **zk-v43**; `ZD.BUILD='v43'`.
+
 ## LEVEL 02 — QUICK MART build (theme 1, kampány 6–10. nap) (2026-07-13)
 - **CSAK Level 02** (a jóváhagyott sorrend szerint; Level 03 NEM indult). A Level 01 tiszta
   pipeline 1:1 alkalmazva: sziluett-cleanup, tiszta rétegmodell, procedurális atmoszféra.
