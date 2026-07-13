@@ -83,12 +83,17 @@ def slice_sprite(input_path, output_dir, hip_y, hip_x, shoulder_x, shoulder_y):
         },
         "animations": {
             "idle": {"type": "bob", "amplitude": 3, "speed": 1.6},
+            # Alapertelmezes: "lurch" (merev zombi-vonszolas). A regi "cutoutWalk"
+            # ket, egymassal ellentetesen forgatott teljes-alsotest kivagast rajzolt,
+            # ami setanal duplazodo/szellemkep labat okozott (a leg.png nem izolalt
+            # egy-lab, hanem a teljes alsotest). A lurch az egesz testet egyben
+            # ringatja -> nincs duplazodas.
             "walk": {
-                "type": "cutoutWalk",
-                "legAmplitudeDeg": 26,
-                "armAmplitudeDeg": 0,
-                "speed": 6,
+                "type": "lurch",
+                "speed": 3.2,
+                "rockDeg": 4,
                 "bobAmplitude": 5,
+                "swayX": 3,
             },
             "hurt": {
                 "type": "knockback",

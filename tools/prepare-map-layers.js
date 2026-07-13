@@ -159,7 +159,7 @@ function doLevel01(OUT) {
   [['bld_a.png', 16, 258], ['bld_b.png', 606, 1001]].forEach(([out, x0, x1]) => { const seg = cleanObject(cropCols(strip, x0, x1), 20, 6); const r = emit(path.join(OUT, out), seg, 156); console.log('  bld  ', out.padEnd(10), r.lw + 'x' + r.lh); });
   { const s = cleanObject(toRGBA(readPNG(path.join(L1, '03_props/watchtower_large.png'))), 26, 0); const r = emit(path.join(OUT, 'watertower.png'), s, 150); console.log('  watertower', r.lw + 'x' + r.lh); }
   [['03_props/bus_rusted.png', 'props/bus.png', 44], ['04_vehicles_street_props/car_wreck_01.png', 'props/car.png', 28], ['03_props/police_car_lightbar.png', 'props/police.png', 28]]
-    .forEach(([src, out, hh]) => { const s = cleanObject(toRGBA(readPNG(path.join(L1, src))), 18, 10); const r = emit(path.join(OUT, out), s, hh); console.log('  prop ', r.file.padEnd(12), r.lw + 'x' + r.lh); });
+    .forEach(([src, out, hh]) => { const s = cleanObject(toRGBA(readPNG(path.join(L1, src))), 7, 12); const r = emit(path.join(OUT, out), s, hh); console.log('  prop ', r.file.padEnd(12), r.lw + 'x' + r.lh); }); // alacsony delta → a sötét alsó test (kerekek) is bekerül
   console.log('done -> ' + OUT);
 }
 
@@ -176,11 +176,11 @@ function doLevel02(OUT) {
   { const s = cleanObject(toRGBA(readPNG(path.join(L2, '02_main_building/quickmart_store_facade_full.png'))), 22, 8); const r = emit(path.join(OUT, 'facade.png'), s, 140); console.log('  facade', r.lw + 'x' + r.lh); }
   { const s = cleanObject(toRGBA(readPNG(path.join(L2, '03_props_vehicles/power_pole.png'))), 24, 0); const r = emit(path.join(OUT, 'power_pole.png'), s, 132); console.log('  pole  ', r.lw + 'x' + r.lh); }
   /* ritka propok (tömör sziluett): furgon + benzinkút + konténer + ártábla */
-  [['03_props_vehicles/van_wreck.png', 'props/van.png', 30],
+  [['03_props_vehicles/car_sedan_wreck.png', 'props/car.png', 30],
    ['03_props_vehicles/gas_pump_red.png', 'props/gas_pump.png', 34],
    ['03_props_vehicles/dumpster_green.png', 'props/dumpster.png', 26],
    ['03_props_vehicles/gas_price_sign.png', 'props/gas_sign.png', 40]]
-    .forEach(([src, out, hh]) => { const s = cleanObject(toRGBA(readPNG(path.join(L2, src))), 18, 10); const r = emit(path.join(OUT, out), s, hh); console.log('  prop ', r.file.padEnd(14), r.lw + 'x' + r.lh); });
+    .forEach(([src, out, hh]) => { const s = cleanObject(toRGBA(readPNG(path.join(L2, src))), 7, 12); const r = emit(path.join(OUT, out), s, hh); console.log('  prop ', r.file.padEnd(14), r.lw + 'x' + r.lh); }); // alacsony delta → teljes jármű
   console.log('done -> ' + OUT);
 }
 

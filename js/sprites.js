@@ -1570,8 +1570,8 @@ ZD.sprites = (() => {
       struct: ['facade', 'power_pole'],
       structPattern: [[40, 'facade'], [400, 'power_pole']],
       structPeriod: 640,
-      props: ['van', 'gas_pump', 'dumpster', 'gas_sign'],
-      place: [[150, 'gas_pump'], [360, 'van'], [630, 'dumpster'], [880, 'gas_sign']],
+      props: ['car', 'gas_pump', 'dumpster', 'gas_sign'],
+      place: [[150, 'gas_pump'], [360, 'car'], [630, 'dumpster'], [880, 'gas_sign']],
     });
     /* theme/map 2 = level_03 „Zombie Alley" (3. misszió minden napon) — TURBO:
        a teljes festett alley-jelenet (neon/glow/nedves tükröződés) a gazdag ÉLŐ far-háttér,

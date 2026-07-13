@@ -11,6 +11,19 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## PROP-FIX L1/L2 — fél-jármű (levágott alsó test) + gagyi furgon csere (2026-07-13)
+- **Panasz**: L1 rendőrautó „csak félig látszik"; L2 „autó" gagyi, fél autó, rossz méret, nem illik.
+- **Ok**: a sziluett-küszöb (confLo = bgMax+18) túl magas volt a SÖTÉT alsó testű járműveknél
+  → a kerekek/alsó ajtók (a küszöb alatt) LEVÁGÓDTAK → „fél autó". (A `car`/`bus` világosabb
+  aljú, ezért teljes maradt.)
+- **Fix (v49)**: a jármű-propok **delta 18 → 7** (confLo alacsonyabb) → a sötét alsó test is
+  bekerül a sziluettbe = TELJES jármű. L2: a murky `van_wreck` lecserélve a tisztább
+  `car_sedan_wreck`-re (`props/car.png`). L1: police/car/bus újragenerálva teljes sziluettel.
+- **VIZUÁLISAN IGAZOLVA** (canvas-export): L1 rendőrautó = teljes kocsi (villogó + kerekek) a
+  talp-vonalon; L2 = teljes sedan a talajon. node --check OK, 0 konzolhiba.
+- `sprites.js` L2 props `van`→`car`; `sw.js` precache `van.png`→`car.png`. sw: **zk-v49**;
+  `ZD.BUILD='v49'`.
+
 ## LEVEL 03 „autó a földben" FIX — dark-trench + redundáns propok eltávolítása (2026-07-13)
 - **Panasz**: v47 után „még mindig nem jók" — az autók a földben. **Canvas-export diagnózissal**
   (a screenshot-tool time-outol, ezért a canvas egy régióját PNG-be exportáltam és úgy néztem meg):

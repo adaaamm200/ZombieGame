@@ -17,10 +17,10 @@
     <button onclick="rig && rig.setState('hurt')">Találat</button>
     <button onclick="rig && rig.setState('death')">Halál</button>
   </div>
-  <canvas id="game" width="400" height="300"></canvas>
+  <canvas id="game" width="420" height="380"></canvas>
   <p id="status">Betöltés...</p>
 
-  <script src="sprite-rig.js"></script>
+  <script src="sprite-rig.js?v=2"></script>
   <script>
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
@@ -31,12 +31,12 @@
     async function init() {
       try {
         rig = new SpriteRig(ctx, './kobor_parts/');
-        await rig.load('kobor_rig.json');
+        await rig.load('kobor_raw_rig.json');
         rig.setState('idle');
         statusEl.textContent = 'Betöltve. Kattints a gombokra.';
         requestAnimationFrame(loop);
       } catch (err) {
-        statusEl.textContent = 'Hiba: nem találom a ./kobor_parts/kobor_rig.json fájlt. Futtasd le a slice_sprite.py-t, és tedd ide a kimeneti mappát.';
+        statusEl.textContent = 'Hiba: nem találom a ./kobor_parts/kobor_raw_rig.json fájlt. Futtasd le a slice_sprite.py-t, és tedd ide a kimeneti mappát.';
         console.error(err);
       }
     }
@@ -45,14 +45,21 @@
       const dt = lastTime ? (now - lastTime) / 1000 : 0;
       lastTime = now;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const groundY = 260;
+      const groundY = 340;
       ctx.strokeStyle = '#333';
       ctx.beginPath();
       ctx.moveTo(0, groundY);
       ctx.lineTo(canvas.width, groundY);
       ctx.stroke();
+      // A forras sprite ~1024px magas (nativ meret). A tesztnezethez
+      // leskalazzuk, hogy a teljes zombi belefirjen a canvasba; a jatekban
+      // a rajzolasi meretet a jatek-kamera/scale hatarozza majd meg.
+      const FIT = 0.34;
       rig.update(dt);
-      rig.draw(200, groundY, 1);
+      ctx.save();
+      ctx.scale(FIT, FIT);
+      rig.draw((canvas.width / 2) / FIT, groundY / FIT, 1);
+      ctx.restore();
       requestAnimationFrame(loop);
     }
 

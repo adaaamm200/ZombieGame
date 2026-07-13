@@ -18,6 +18,21 @@ Entry format:
 
 ---
 
+### 2026-07-13 — Prop fix L1/L2: half-vehicle (clipped lower body) + swap cheap van
+- Goal: user reported L1 police car "only half visible" and L2 vehicle "cheap, half a car, wrong
+  size, doesn't fit".
+- Root cause: the silhouette confidence threshold (confLo = bgMax+18) was too high for vehicles
+  with a DARK lower body → the wheels/lower doors (below threshold) were clipped → "half a car".
+  (car/bus have brighter bottoms, so they stayed whole.)
+- Fix (v49): vehicle-prop delta 18 → 7 (lower confLo) so the dark lower body is included = full
+  vehicle. L2: swapped the murky van_wreck for the cleaner car_sedan_wreck (props/car.png). L1:
+  police/car/bus regenerated with full silhouettes.
+- Files: tools/prepare-map-layers.js (delta 7 for L1/L2 vehicle props; L2 van→sedan), js/sprites.js
+  (L2 props van→car), sw.js (zk-v49, van→car precache), js/const.js (v49). Removed level_02/props/
+  van.png.
+- Verified (canvas export): L1 police = full car (lightbar + wheels) on the ground line; L2 = full
+  sedan on the ground. node --check OK; 0 console errors.
+
 ### 2026-07-13 — Level 03 "car in the ground" fix: dark trench + redundant props removed
 - Goal: after v47 the user said "still not good — cars in the ground". Diagnosed via canvas
   export (the screenshot tool times out on the animated canvas, so I exported a canvas region to

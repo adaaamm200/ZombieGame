@@ -90,6 +90,18 @@ class SpriteRig {
       this._setLimb('backLeg', -legA);
       this._setLimb('frontArm', -Math.sin(t * anim.speed) * armA);
       this._setLimb('backArm', Math.sin(t * anim.speed) * armA);
+    } else if (anim.type === 'lurch') {
+      // Merev "zombi-vonszolas": az egesz test egyben ring/dol a csipo korul
+      // (nagy kar a fejnel -> eros sway) + fuggoleges bob es enyhe oldalmozgas.
+      // A labakat NEM forgatja szet, ezert nincs duplazodo/szellemkep lab
+      // (a leg.png a teljes alsotest, nem egyetlen izolalt lab).
+      const speed = anim.speed || 3;
+      const rock = Math.sin(t * speed) * (anim.rockDeg || 4);
+      const bob = Math.abs(Math.sin(t * speed)) * -(anim.bobAmplitude || 4);
+      const sway = Math.sin(t * speed) * (anim.swayX || 2);
+      this.stageOffset = { x: sway, y: bob, rotation: rock };
+      this._setLimb('frontLeg', 0);
+      this._setLimb('backLeg', 0);
     } else if (anim.type === 'knockback') {
       const dur = anim.duration || 0.45;
       if (t < dur) {
