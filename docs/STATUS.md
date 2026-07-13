@@ -11,6 +11,21 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## PROJEKT-ÁLLAPOT KONSZOLIDÁCIÓ + v41 ELLENŐRZÉS (2026-07-13)
+- **Checkpoint**: nincs új feature/asset — a jelenlegi állapot dokumentálása + a v41
+  teljes-képernyős viselkedés ellenőrzése, mielőtt a Level 02 jönne.
+- **Új dokumentumok** (repo gyökér): `PROJECT_STATUS.md`, `CURRENT_ROADMAP.md`,
+  `ART_PIPELINE.md`, `DO_NOT_DO.md`, `ACCEPTANCE_TESTS.md`; +
+  `_asset_audit_reports/level_01_final_status.md`. Rögzítik: irány, kötő-megkötések
+  (1 valuta, nincs perk/ground-loot/COD), a silhouette map-pipeline, a procedurális
+  atmoszféra, a v41 dinamikus VIEW_W szabály, a DO-NOT lista, az acceptance-checklist.
+- **v41 ELLENŐRIZVE** (valós böngésző, Level 01, mérve): build `v41`/`zk-v41`; `VIEW_H`
+  fix 270; `VIEW_W` DINAMIKUS: 1280×720→480, 1760×820→580, 812×375→584, 2400×800→702
+  (clamp 2.6). Oldalsáv **0** a normál tartományban, 100% kitöltés, talaj 85.9%, player a
+  talajvonalon, HUD képernyő-fix. **0 konzolhiba.** node --check OK.
+- **Következő**: Level 02 CSAK (jóváhagyás után), a Level 01 pipeline + szabályok szerint.
+- Csak dokumentáció változott — kód/asset/build ÉRINTETLEN (nincs cache-bump).
+
 ## GAMEPLAY TELJES-KÉPERNYŐS KITÖLTÉS — dinamikus látótér-szélesség (2026-07-09)
 - **Valós ok a „gameplay nem tölti ki, oldalt fekete sávok"-ra**: a menü (`#screens`) a
   `#stage`-en KÍVÜL, teljes viewportot tölt; a gameplay (`#cv`+`#hud`+`#controls`) a `#stage`
