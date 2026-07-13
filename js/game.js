@@ -76,6 +76,7 @@ ZD.game = (() => {
 
   /* ---------- indítás ---------- */
   function start(level, opts = {}) {
+    if (ZD.partRig) ZD.partRig.reset();   // leszakadt testrészek törlése új pályánál
     const stats = calcStats();
     const owned = ownedWeapons();
     let wi = owned.findIndex((w) => w.id === S().weapons.equipped);
@@ -494,6 +495,12 @@ ZD.game = (() => {
     st.stats.kills++;
     /* hit-stop: az ölés "üt" — nagyobb ellenfélnél hosszabb */
     st.hitstop = Math.max(st.hitstop, z.type === 'brute' ? 0.07 : z.elite ? 0.08 : 0.045);
+
+    /* ÚJ: part-rig testszakadás — a valódi testrészek leszakadnak és szétrepülnek */
+    if (ZD.partRig && ZD.partRig.has(z.type)) {
+      ZD.partRig.spawnGibs({ type: z.type, x: z.x, facing: z.facing, elite: z.elite });
+      st.shake = Math.max(st.shake, 5);
+    }
 
     if (z.type === 'boss') {
       st.bossRef = null;
@@ -1006,6 +1013,7 @@ ZD.game = (() => {
       if (q.y > C.GROUND_Y + 10) return false;
       return q.life > 0;
     });
+    if (ZD.partRig) ZD.partRig.update(dt);   // leszakadt testrészek fizikája
     st.nums = st.nums.filter((n) => {
       n.life -= dt;
       n.x += (n.vx || 0) * dt;
@@ -1302,6 +1310,9 @@ ZD.game = (() => {
       SP.px(ctx, q.x, q.y, q.size, q.size, q.color);
       ctx.globalAlpha = 1;
     });
+
+    /* leszakadt testrészek (part-rig gibek) — kamera-téren belül, világ-koordináta */
+    if (ZD.partRig) ZD.partRig.drawGibs(ctx);
 
     /* sebzésszámok, feliratok */
     ctx.textAlign = 'center';

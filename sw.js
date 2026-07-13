@@ -1,5 +1,5 @@
 /* Zombi Krónika — offline service worker (cache-first) */
-const VERSION = 'zk-v49';
+const VERSION = 'zk-v50';
 const ASSETS = [
   './',
   './index.html',
@@ -51,6 +51,12 @@ const ASSETS = [
   './assets/ui/buttons/btn_back.png',
   './assets/ui/buttons/btn_close.png',
   './js/enemy_sprites.js',
+  './js/part_rig.js',
+  './assets/sprites/zombies/kobor/parts_rig/head.png',
+  './assets/sprites/zombies/kobor/parts_rig/torso.png',
+  './assets/sprites/zombies/kobor/parts_rig/arm_front.png',
+  './assets/sprites/zombies/kobor/parts_rig/leg_left.png',
+  './assets/sprites/zombies/kobor/parts_rig/leg_right.png',
   './assets/enemies/enemy_atlas.json',
   './assets/enemies/enemy_walker_sheet.png',
   './assets/enemies/enemy_runner_sheet.png',

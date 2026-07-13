@@ -88,6 +88,7 @@ window.ZD = window.ZD || {};
   ZD.save.load();
   ZD.save.requestPersistent(); // kérjük a böngészőt: ne törölje magától a mentést
   if (ZD.enemySprites) ZD.enemySprites.load(); // kép-alapú ellenség-sprite-ok betöltése
+  if (ZD.partRig) ZD.partRig.load();           // part-rig (Kóbor): járás + testszakadás
   if (ZD.sprites.loadMaps) ZD.sprites.loadMaps(); // HD parallax map-rétegek betöltése
   ZD.ui.build();
   ZD.input.setup();

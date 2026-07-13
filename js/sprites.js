@@ -647,6 +647,13 @@ ZD.sprites = (() => {
   function drawZombie(ctx, z) {
     /* z: {type, variant, x, y, facing, phase, attacking, atkT, flash, dead, deathT, hpRatio,
           anim, moving, attackingAnim, warnT, bossState, elite, enrage} */
+    /* ÚJ: part-rig (Kóbor) — járás + testszakadás. Ha van rig a típushoz, azt
+       használjuk; halottnál nincs holttest-rajz, a leszakadt testrészek (gibek)
+       kezelik a game.js render-jében. */
+    if (ZD.partRig && ZD.partRig.has(z.type)) {
+      if (z.dead) return;
+      if (ZD.partRig.draw(ctx, z)) return;
+    }
     /* ÚJ: kép-alapú sprite, ha betöltött; különben a procedurális rajz (alább) */
     if (ZD.enemySprites && ZD.enemySprites.has(z.type)) {
       if (ZD.enemySprites.draw(ctx, z, z.y)) return;
