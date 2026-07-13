@@ -11,6 +11,20 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## PROP-SÜLLYEDÉS FIX — a talaj felszíne = GROUND_Y (minden pálya) (2026-07-13)
+- **Panasz**: „a díszek (autók) benne vannak a földben" — és nézzem át MINDEN pályán.
+- **Ok**: a talaj-strip (`ground.png`) a felső élével a logikai **224**-nél kezdődött
+  (`tileLayer bottomY=VIEW_H`, magasság 46 → tető 224), a propok/épületek/játékos viszont a
+  **GROUND_Y=234** talp-vonalon állnak. A látható talaj-felszín így **10px-el a talp-vonal
+  FÖLÖTT** volt → a széles, lapos propok (autók) belesüppedtek. (A keskeny játékosnál kevésbé
+  látszott, de ez rendszerszintű hiba volt mindhárom pályán.)
+- **Fix** (`js/sprites.js`): új `drawGround()` — a talaj **felső éle = GROUND_Y**-ra kerül
+  (természetes magasság, a képernyő aljáig/alá lóg, clippel). Bekötve a HD ág és a procedurális
+  ág talajához is → a propok/épületek/játékos a talaj LÁTHATÓ felszínén állnak, nem beledugva.
+- **TESZTELVE**: node --check OK, 0 konzolhiba, mindhárom pálya renderel. A talaj-tető most a
+  464-es buffer-sornál (GROUND_Y), nem a 429-esnél. Vizuális megerősítés a felhasználónál.
+- Csak `js/sprites.js` + build/cache bump. sw.js: **zk-v47**; `ZD.BUILD='v47'`.
+
 ## LEVEL 03 TURBO — festett alley-jelenet + brightness (élő, nem sötét) (2026-07-13)
 - **Panasz**: a Level 03 „gagyi, homályos, pixeles, nagyon sötét, semmi élet". **Ok**: a sötét
   cropped sziluett-épületek + a rétegre bontott sötét far, ÉS az összes neon/glow effekt

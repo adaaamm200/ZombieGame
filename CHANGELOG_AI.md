@@ -18,6 +18,21 @@ Entry format:
 
 ---
 
+### 2026-07-13 — Prop-sinking fix: ground surface = GROUND_Y (all maps)
+- Goal: user reported props (cars) "in the ground" and asked to check all maps.
+- Root cause: the ground strip was drawn with its TOP edge at logical 224 (tileLayer bottomY=
+  VIEW_H, height 46 → top 224), but props/structures/player stand on the GROUND_Y=234 contact
+  line. So the visible floor surface sat 10px ABOVE the contact line → wide flat props (cars)
+  looked embedded. Narrow player hid it, but it was systemic across all three maps.
+- Fix (js/sprites.js): new drawGround() anchors the ground's TOP edge at GROUND_Y (natural
+  height, extends to/below screen bottom, clipped). Wired into both the HD branch and the
+  procedural branch → props/structures/player now stand on the visible ground surface.
+- Tests run: node --check OK; 0 console errors; all three maps render; ground top now at buffer
+  row 464 (GROUND_Y) instead of 429. Visual confirmation left to the user (screenshot tool times
+  out on the animated canvas in this env).
+- What was NOT changed: gameplay/GROUND_Y/collision/assets; only the ground draw position.
+  BUILD v46→v47.
+
 ### 2026-07-13 — Level 03 TURBO: painted alley scene + brightness (alive, not dark)
 - Goal: the first Level 03 looked cheap/dark/lifeless ("gagyi, homályos, pixeles, nagyon sötét,
   semmi élet"). Rebuild it with life and brightness.

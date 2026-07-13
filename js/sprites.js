@@ -1523,6 +1523,15 @@ ZD.sprites = (() => {
       ctx.drawImage(tile, r2(x), bottomY - h, w, h);
     }
   }
+  /* TALAJ: a felső éle = GROUND_Y (a talp-vonal), így a propok/épületek/játékos a talaj
+     LÁTHATÓ FELSZÍNÉN állnak, nem 10px-el belesüppedve. Természetes magasság (a képernyő
+     aljáig, esetleg alá lóg — clippel). Parallax 1 (a kamerával mozog). */
+  function drawGround(ctx, tile, cam) {
+    if (!tile || !tile.width) return;   // Image (naturalWidth→.width) VAGY canvas is OK
+    const w = tile.width / ART, h = tile.height / ART;
+    let off = -(cam % w); if (off > 0) off -= w;
+    for (let x = off; x < C.VIEW_W; x += w) ctx.drawImage(tile, r2(x), GY, w, h);
+  }
 
   /* ---- HD MAP-RÉTEGEK (assets/maps/) — a procedurális háttér HELYETT, ha betöltött.
      Egyelőre a level_01 „quarantine street" (theme 0 = utca). Fallback: procedurális.
@@ -1690,7 +1699,7 @@ ZD.sprites = (() => {
       drawFogBand(ctx, cam, t || 0, 'far', GY - 60, 30);        // horizont/far mist (erősebb, de halvány)
       drawStructures(ctx, hd, cam);                              // épületek + víztorony (par 0.5)
       drawFogBand(ctx, cam, t || 0, 'mid', GY - 16, 18);        // midground/struktúra-tő (nagyon halvány)
-      if (hd.ground.naturalWidth) tileLayer(ctx, hd.ground, cam, 1, C.VIEW_H);
+      drawGround(ctx, hd.ground, cam);   // talaj felszíne = GROUND_Y (propok nem süppednek bele)
       if (atmoOn() && atmoCfg().lightPools !== false) addLayer(ctx, hd.fx.lightpool, cam, 1, GY + 8, 0.3, 0); // utcalámpa-fény a talajon (lokális, meleg)
       drawMapProps(ctx, hd, cam);                                // ritka járművek (entitások mögött)
       return drawBgOverlay(ctx);   // scene-grade + vignetta (entitások ELŐTT)
@@ -1704,8 +1713,8 @@ ZD.sprites = (() => {
     ctx.fillStyle = fog;
     ctx.fillRect(0, GY - 60, C.VIEW_W, 60);
     tileLayer(ctx, th.near, cam, 0.8, GY);
-    // talaj
-    tileLayer(ctx, th.ground, cam, 1, C.VIEW_H);
+    // talaj — felszíne = GROUND_Y (a talp-vonal), nem 10px-el feljebb
+    drawGround(ctx, th.ground, cam);
     // dekorok világtérben
     const items = decorFor(level);
     items.forEach((d) => {
