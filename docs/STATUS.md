@@ -11,6 +11,24 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## LEVEL 03 „autó a földben" FIX — dark-trench + redundáns propok eltávolítása (2026-07-13)
+- **Panasz**: v47 után „még mindig nem jók" — az autók a földben. **Canvas-export diagnózissal**
+  (a screenshot-tool time-outol, ezért a canvas egy régióját PNG-be exportáltam és úgy néztem meg):
+  a Level 03-on a festett far-jelenet felső 64%-a **baked-in sötét alley-padlót** hozott le a
+  talp-vonalig → sötét „árok"-sáv a GY-nél, amibe a cropped autó-propok alsó fele beleveszett.
+- **Fix (v48)**: (1) a far-jelenet crop **0.64 → 0.57** — csak SKY+FALAK+NEON a fal-talp vonalig,
+  a baked padló KIMARAD → nincs sötét árok; a fal-talp GY-ra esik, alatta a világosított
+  nedves-aszfalt a tiszta játék-padló. (2) A Level 03 **cropped propok (car, fence) ELTÁVOLÍTVA** —
+  a festett jelenet MÁR tartalmaz parkoló autókat/konténereket; a sötét-sötét cropped propok
+  csak „belesüppedtek". Talaj világosítás erősítve.
+- **VIZUÁLISAN IGAZOLVA** (canvas-export): a katona TISZTÁN a nedves aszfalton áll, nincs árok,
+  nincs süllyedő/lebegő prop, a sikátor-háttér (neon/falak) gazdag. node --check OK, 0 konzolhiba.
+- **Diagnózis a többi pályára**: a v47 talaj-fix után a propok/épületek GEOMETRIAILAG a GY-n
+  ülnek (mért: a prop-képek tartalma eléri a kép alját, GY+1-re rajzolva). A maradék „lebeg/
+  süpped" érzet a KONTRASZT hiánya (a sötét prop a sötét háttér/talaj előtt nem válik el) —
+  ez polish-kérdés, nem geometriai hiba.
+- sw.js: **zk-v48**; `ZD.BUILD='v48'`.
+
 ## PROP-SÜLLYEDÉS FIX — a talaj felszíne = GROUND_Y (minden pálya) (2026-07-13)
 - **Panasz**: „a díszek (autók) benne vannak a földben" — és nézzem át MINDEN pályán.
 - **Ok**: a talaj-strip (`ground.png`) a felső élével a logikai **224**-nél kezdődött

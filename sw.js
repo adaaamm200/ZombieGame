@@ -1,5 +1,5 @@
 /* Zombi Krónika — offline service worker (cache-first) */
-const VERSION = 'zk-v47';
+const VERSION = 'zk-v48';
 const ASSETS = [
   './',
   './index.html',
@@ -80,8 +80,6 @@ const ASSETS = [
   './assets/maps/level_02/props/gas_sign.png',
   './assets/maps/level_03/far.png',
   './assets/maps/level_03/ground.png',
-  './assets/maps/level_03/props/car.png',
-  './assets/maps/level_03/props/fence.png',
 ];
 
 self.addEventListener('install', (e) => {

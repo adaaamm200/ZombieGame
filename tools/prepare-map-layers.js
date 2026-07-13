@@ -195,17 +195,16 @@ function doLevel03(OUT) {
   fs.mkdirSync(path.join(OUT, 'props'), { recursive: true });
   console.log('level_03 zombie alley — TURBO build →', OUT);
   const B = (s) => brighten(s, 1.22, 1.5, 1.22);   // erős árnyék-lift + neon-telítettség
-  /* FAR = a festett alley-jelenet FELSŐ ~64%-a (falak + neon + távoli város, baked ground nélkül),
-     felturbózva → gazdag, világító háttér a talaj fölé (a motor far-rétegeként, GY-hez rögzítve) */
+  /* FAR = a festett alley-jelenet FELSŐ ~57%-a: SKY + FALAK + NEON, a fal-talp vonalig
+     (a baked-in nedves aszfalt padló KIMARAD → nincs sötét „árok"-sáv a talp-vonalnál).
+     A fal-talp így GROUND_Y-ra esik, alatta a valódi (világosított) nedves-aszfalt talaj. */
   { const scene = toRGBA(readPNG(path.join(L3, '00_reference/full_original_map3.png')));
-    const r = emit(path.join(OUT, 'far.png'), B(cropRect(scene, 0.0, 0.0, 1.0, 0.64)), 132); console.log('  far(scene)', r.lw + 'x' + r.lh); }
-  /* GROUND = nedves aszfalt, enyhén világosítva (nedves tükröződés megmarad) */
-  { const g = brighten(toRGBA(readPNG(path.join(L3, '03_ground/alley_wet_asphalt_long_no_line.png'))), 1.15, 1.35, 1.12);
+    const r = emit(path.join(OUT, 'far.png'), B(cropRect(scene, 0.0, 0.0, 1.0, 0.57)), 118); console.log('  far(scene)', r.lw + 'x' + r.lh); }
+  /* GROUND = nedves aszfalt, világosítva (nedves tükröződés + tisztább kontaktfelszín) */
+  { const g = brighten(toRGBA(readPNG(path.join(L3, '03_ground/alley_wet_asphalt_long_no_line.png'))), 1.22, 1.4, 1.12);
     const r = emit(path.join(OUT, 'ground.png'), g, 46); console.log('  ground', r.lw + 'x' + r.lh); }
-  /* propok (felturbózva, tömör sziluett): roncsautó + drótkerítés */
-  const cars = toRGBA(readPNG(path.join(L3, '06_vehicles/alley_car_wrecks_set.png')));
-  { const s = cleanObject(B(cropRect(cars, 0.03, 0.58, 0.41, 1.0)), 18, 10); const r = emit(path.join(OUT, 'props/car.png'), s, 28); console.log('  prop car', r.lw + 'x' + r.lh); }
-  { const s = cleanObject(B(cropRect(cars, 0.005, 0.04, 0.30, 0.57)), 20, 6); const r = emit(path.join(OUT, 'props/fence.png'), s, 30); console.log('  prop fence', r.lw + 'x' + r.lh); }
+  /* NINCS külön prop: a festett jelenet MÁR tartalmaz parkoló autókat/konténereket baked-in —
+     a rájuk rakott sötét cropped propok „a földbe süppedtek" (dark-on-dark). Tisztább nélkülük. */
   console.log('done -> ' + OUT);
 }
 

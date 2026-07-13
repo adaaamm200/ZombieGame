@@ -18,6 +18,26 @@ Entry format:
 
 ---
 
+### 2026-07-13 — Level 03 "car in the ground" fix: dark trench + redundant props removed
+- Goal: after v47 the user said "still not good — cars in the ground". Diagnosed via canvas
+  export (the screenshot tool times out on the animated canvas, so I exported a canvas region to
+  PNG and inspected it). On Level 03 the painted far scene, cropped to the upper 64%, brought its
+  baked-in dark alley floor down to the contact line → a dark "trench" band at GROUND_Y that the
+  cropped car props' lower half sank into.
+- Fix (v48): (1) far-scene crop 0.64 → 0.57 — only sky+walls+neon down to the wall-floor line,
+  no baked floor → no dark trench; the wall base sits at GROUND_Y and the brightened wet asphalt
+  is the clean play floor. (2) Removed Level 03 cropped props (car, fence) — the painted scene
+  already has parked cars/dumpsters baked in; the dark-on-dark cropped props just sank. Stronger
+  ground brightening.
+- Files: tools/prepare-map-layers.js (doLevel03 crop + no props), js/sprites.js (loadMap(2)
+  props:[]), sw.js (zk-v48, L3 precache trimmed), js/const.js (v48).
+- Verified (canvas export): soldier stands cleanly on the wet asphalt, no trench, no sinking/
+  floating props, rich alley backdrop. node --check OK; 0 console errors.
+- Diagnosis for other maps: after the v47 ground fix, props/structures are GEOMETRICALLY on
+  GROUND_Y (measured: each prop image's content reaches its bottom, drawn at GY+1). Any residual
+  "float/sink" feel is contrast (dark prop vs dark ground/background), a polish item, not a
+  geometry bug.
+
 ### 2026-07-13 — Prop-sinking fix: ground surface = GROUND_Y (all maps)
 - Goal: user reported props (cars) "in the ground" and asked to check all maps.
 - Root cause: the ground strip was drawn with its TOP edge at logical 224 (tileLayer bottomY=

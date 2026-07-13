@@ -1578,8 +1578,8 @@ ZD.sprites = (() => {
        + nedves aszfalt talaj + ritka propok. Nincs külön midground struktúra (a jelenet gazdag). */
     loadMap(2, 'assets/maps/level_03/', {
       struct: [],
-      props: ['car', 'fence'],
-      place: [[180, 'car'], [520, 'fence'], [860, 'car']],
+      props: [],   // a festett jelenet baked-in propokat tartalmaz — nincs külön cropped prop
+      place: [],
     });
   }
   const rd2 = (v) => Math.round(v * ART) / ART;
