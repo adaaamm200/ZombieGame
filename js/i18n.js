@@ -64,7 +64,13 @@ ZD.i18n = (() => {
       'mode.elite': 'Elite', 'mode.boss': 'Boss', 'mode.free': 'Supply Run',
       /* --- difficulty --- */
       'diff.1': 'Low', 'diff.2': 'Moderate', 'diff.3': 'High', 'diff.4': 'Severe', 'diff.5': 'Critical', 'diff.inf': 'scaling',
-      /* --- Day 1 names --- */
+      /* --- Location names (mission slots 1..5, same every day) --- */
+      'loc.0': 'Quarantine Street',
+      'loc.1': 'Quick Mart',
+      'loc.2': 'Zombie Alley',
+      'loc.3': 'Fortified Checkpoint',
+      'loc.4': 'Infection Nest',
+      /* --- Day 1 names (legacy) --- */
       'day1.name': 'Quarantine Street',
       'day1.m1': 'Quarantine Checkpoint',
       'day1.m2': 'Abandoned Shop',
@@ -181,6 +187,12 @@ ZD.i18n = (() => {
       'mode.survival': 'Irtás', 'mode.defense': 'Védelem', 'mode.survive': 'Túlélés',
       'mode.elite': 'Elit', 'mode.boss': 'Vezér', 'mode.free': 'Szabad farm',
       'diff.1': 'Alacsony', 'diff.2': 'Mérsékelt', 'diff.3': 'Magas', 'diff.4': 'Súlyos', 'diff.5': 'Kritikus', 'diff.inf': 'skálázódó',
+      /* --- Helyszín-nevek (1..5. misszió, minden nap ugyanaz) --- */
+      'loc.0': 'Karantén Utca',
+      'loc.1': 'Quick Mart',
+      'loc.2': 'Zombi Sikátor',
+      'loc.3': 'Megerősített Ellenőrzőpont',
+      'loc.4': 'Fertőzési Fészek',
       'day1.name': 'Karantén Utca',
       'day1.m1': 'Karantén Ellenőrzőpont',
       'day1.m2': 'Elhagyott Bolt',

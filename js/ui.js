@@ -512,10 +512,8 @@ ZD.ui = (() => {
   function modeLabel(mode) { return T('mode.' + mode); }
   function modeThumb(mode) { return mode === 'boss' ? AIMG('boss', 'aic-thumb') : (mode === 'free' || mode === 'scavenge') ? AIMG('loot', 'aic-thumb') : AIMG('current', 'aic-thumb'); }
   function boardDayName(day) { return day === 1 ? T('day1.name') : C.dayName(day); }
-  function boardMissionName(level) {
-    const day = C.dayOf(level), m = C.missionInDay(level);
-    return day === 1 ? T('day1.m' + m) : C.missionTitle(level);
-  }
+  /* a misszió neve = a HELYSZÍN neve (misszió-sorszámhoz kötve, minden nap ugyanaz) */
+  function boardMissionName(level) { return C.locationName(level); }
 
   function currentDay() { return C.dayOf(Math.min(S().stages.unlocked, C.STAGES)); }
 
@@ -594,7 +592,7 @@ ZD.ui = (() => {
     scr.querySelector('.bhud-back').innerHTML = BIMG('btn_back', 'Back', 'bhud-back-img');
     scr.querySelector('.bhud-gear').innerHTML = AIMG('settings', 'aic-btn');
     $('#bd-num').textContent = T('day.label') + ' ' + curDay;
-    $('#bd-name').textContent = boardDayName(curDay).toUpperCase();
+    $('#bd-name').style.display = 'none';   // a napnak NINCS neve — az elnevezés a helyszíneké
     const cd = currentDay();
     const bp = $('#bday-prev'), bn = $('#bday-next');
     if (bp) bp.classList.toggle('is-off', curDay <= 1);
@@ -685,8 +683,8 @@ ZD.ui = (() => {
     } else {
       const day = C.dayOf(level);
       const m = C.missionInDay(level);
-      $('#sp-day').textContent = `${T('day.label')} ${day} — ${boardDayName(day).toUpperCase()} · ${d.boss ? T('brief.finale') : `${T('brief.mission')} ${m}/${C.CAMPAIGN.MISSIONS_PER_DAY}`}`;
-      $('#sp-title').textContent = `${m}. ${boardMissionName(level)}`;
+      $('#sp-day').textContent = `${T('day.label')} ${day} · ${d.boss ? T('brief.finale') : `${T('brief.mission')} ${m}/${C.CAMPAIGN.MISSIONS_PER_DAY}`}`;
+      $('#sp-title').textContent = boardMissionName(level);   // = a helyszín neve
       $('#sp-mode').textContent = `${modeLabel(d.mode)}${d.mod ? ` · ${C.MODS[d.mod].name}` : ''}`;
     }
 

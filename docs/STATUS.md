@@ -11,6 +11,28 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## HELYSZÍN-ALAPÚ PÁLYAKÖTÉS — a map a misszió-sorszámhoz, nem a naphoz (2026-07-13)
+- **Owner-döntés**: a napnak NINCS neve (csak „DAY 1/2…"); az elnevezés a HELYSZÍNÉ. A map a
+  NAPON BELÜLI misszió-sorszámhoz (1..5) kötve, minden nap ugyanaz az 5 helyszín, növekvő
+  nehézséggel. Így a Quick Mart már a **Day 1 / 2. misszió** = azonnal tesztelhető.
+- **`const.js`**: új `LOCATIONS[5]` (nameKey + map-kulcs + procedurális ptheme); `locationFor`
+  (=missionInDay-1), `mapKeyFor` (HD map kulcs vagy -1), `locationName` (i18n). A `themeFor`
+  mostantól a helyszín procedurális THEMES-fallback indexét adja (0..2), NEM a map-kulcsot.
+- **`sprites.js`**: `drawBackground`/`drawForeground` a HD mapot `MAPS[C.mapKeyFor(level)]`-lel
+  tölti (helyszínhez kötve); a procedurális fallback a `THEMES[themeFor]`.
+- **`ui.js`**: a board plakett „DAY N" NÉV NÉLKÜL (`bd-name` elrejtve); a hotspotok + a briefing
+  a HELYSZÍN nevét mutatják (`locationName`); a briefing alcím „DAY x · Mission m/5".
+- **`i18n.js`**: `loc.0..4` EN+HU (Quarantine Street / Quick Mart / Zombie Alley /
+  Fortified Checkpoint / Infection Nest).
+- **Helyszín→map**: 1=Quarantine Street (HD level_01), 2=Quick Mart (HD level_02),
+  3=Zombie Alley, 4=Fortified Checkpoint, 5=Infection Nest (3–5 procedurális, míg elkészül).
+- **TESZTELVE** (valós böngésző): Day 1 misszió 1→Quarantine (mapKey0), 2→**Quick Mart (mapKey1,
+  renderel, világító homlokzat)**, 3→Zombie Alley (procedurális); board „DAY 1" név nélkül,
+  hotspot-feliratok = helyszínnevek; briefing helyszín-cím + „DAY 1 · Mission 1/5". **0 konzolhiba.**
+  node --check OK.
+- Gameplay/balansz/asset ÉRINTETLEN; csak a téma/map-kiválasztás + nevezéktan. sw.js: **zk-v44**;
+  `ZD.BUILD='v44'`.
+
 ## DAY BOARD JAVÍTÁS — valós haladás + nap-navigáció (a Quick Mart elérhető) (2026-07-13)
 - **Panasz**: a board mindig ugyanaz (Day 1), a nap-haladás nem frissül, az új Quick Mart pálya
   a menüből nem elérhető. **Gyökér-ok**: a `renderBoard()` fixen `curDay = 1`-re volt drótozva,

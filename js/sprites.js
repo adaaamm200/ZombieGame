@@ -1673,7 +1673,7 @@ ZD.sprites = (() => {
     const theme = C.themeFor(level);
     const th = THEMES[theme];
     th.sky(ctx, t || 0);
-    const hd = MAPS[theme];
+    const hd = MAPS[C.mapKeyFor(level)];   // a HD map a HELYSZÍNHEZ (misszió-sorszám) kötve
     if (hd && hd.ready) {
       /* TISZTA RÉTEG-MODELL + FINOM MÉLYSÉG-SÁVOS ATMOSZFÉRA (nem full-screen szűrő):
          far → FAR mist → struktúrák → MID mist (halvány) → talaj → fénypool → propok.
@@ -1736,7 +1736,7 @@ ZD.sprites = (() => {
      ritka, procedurális eső-csíkok. NINCS PNG-felhő és NINCS teljes-képernyős haze —
      az artwork éles és olvasható marad. */
   function drawForeground(ctx, cam, level, t) {
-    const m = MAPS[C.themeFor(level)];
+    const m = MAPS[C.mapKeyFor(level)];   // a HD map a HELYSZÍNHEZ kötve (mint drawBackground)
     if (!m || !m.ready) return;
     drawFogBand(ctx, cam, t || 0, 'fg', C.VIEW_H - 6, 14);   // előtér-köd — szinte láthatatlan
     drawAtmoRain(ctx, cam, t || 0);                          // vékony eső a legelöl

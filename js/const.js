@@ -3,7 +3,7 @@ window.ZD = window.ZD || {};
 
 /* Betöltött build-verzió (a főmenü sarkában látszik). BUMPOLD az sw.js VERSION-nel együtt!
    Ha a telefonon régi számot látsz → a régi cache ragadt be (töröld a webhelyadatot). */
-ZD.BUILD = 'v43';
+ZD.BUILD = 'v44';
 
 ZD.C = {
   VIEW_W: 480,       // DINAMIKUS: a main.js fit() a képernyő-arányhoz igazítja (clamp 1.6–2.6×VIEW_H)
@@ -40,8 +40,22 @@ ZD.C = {
     lightPools: true,       // utcalámpa-fény a talajon (meleg, lokális — nem wash)
   },
 
-  /* pályatéma: 5 pályánként váltakozik (utca → labor → romváros) */
-  themeFor(level) { return Math.floor((level - 1) / 5) % 3; },
+  /* HELYSZÍN-alapú pályakötés: a map a NAPON BELÜLI misszió-sorszámhoz (1..5) kötve, NEM a
+     naphoz. Minden nap UGYANAZ az 5 helyszín, növekvő nehézséggel. A napnak nincs neve —
+     az elnevezés a HELYSZÍNÉ (a misszióé). map = HD map kulcs (MAPS[]) vagy -1 (procedurális).
+     ptheme = a procedurális fallback THEMES-index (0..2) a HD nélküli helyszínekhez. */
+  LOCATIONS: [
+    { nameKey: 'loc.0', map: 0,  ptheme: 0 }, // 1. misszió — Quarantine Street (HD level_01)
+    { nameKey: 'loc.1', map: 1,  ptheme: 0 }, // 2. misszió — Quick Mart (HD level_02)
+    { nameKey: 'loc.2', map: -1, ptheme: 2 }, // 3. misszió — Zombie Alley (procedurális, míg elkészül)
+    { nameKey: 'loc.3', map: -1, ptheme: 0 }, // 4. misszió — Fortified Checkpoint (procedurális)
+    { nameKey: 'loc.4', map: -1, ptheme: 1 }, // 5. misszió — Infection Nest / boss (procedurális)
+  ],
+  locationFor(level) { return this.missionInDay(level) - 1; },              // 0..4
+  mapKeyFor(level) { const L = this.LOCATIONS[this.locationFor(level)]; return L ? L.map : -1; },
+  locationName(level) { const L = this.LOCATIONS[this.locationFor(level)]; return (L && window.ZD && ZD.i18n && ZD.i18n.t) ? ZD.i18n.t(L.nameKey) : 'Zone'; },
+  /* a HD nélküli helyszínek procedurális témája (THEMES 0..2) */
+  themeFor(level) { const L = this.LOCATIONS[this.locationFor(level)]; return L ? L.ptheme : 0; },
 
   /* pályamódok — determinisztikus kiosztás */
   MODES: {

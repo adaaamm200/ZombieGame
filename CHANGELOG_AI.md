@@ -18,6 +18,24 @@ Entry format:
 
 ---
 
+### 2026-07-13 — Location-based map binding: map = mission slot, not day (days have no name)
+- Goal (owner decision): days are just numbers (DAY 1/2…), the NAMING belongs to the LOCATION.
+  Bind the map to the in-day mission slot (1..5), same 5 locations every day (rising difficulty)
+  → Quick Mart is Day 1 mission 2, reachable/testable immediately.
+- Files: js/const.js (LOCATIONS[5] + locationFor/mapKeyFor/locationName; themeFor now returns the
+  location's procedural THEMES fallback index, not the map key), js/sprites.js (drawBackground/
+  drawForeground use MAPS[C.mapKeyFor(level)]), js/ui.js (board plaque shows "DAY N" with the name
+  hidden; hotspots + briefing show the location name; briefing subtitle "DAY x · Mission m/5"),
+  js/i18n.js (loc.0..4 EN+HU), js/const.js + sw.js (v44/zk-v44).
+- Location→map: 1=Quarantine Street (HD level_01), 2=Quick Mart (HD level_02), 3=Zombie Alley,
+  4=Fortified Checkpoint, 5=Infection Nest (3–5 procedural fallback until built).
+- Tests run: node --check all JS (OK). Real browser: Day 1 mission 1→Quarantine (mapKey0),
+  2→Quick Mart (mapKey1, renders, lit facade), 3→Zombie Alley (procedural); board "DAY 1" no
+  name; hotspot labels = location names; briefing shows location title + "DAY 1 · Mission 1/5";
+  0 console errors.
+- What was NOT changed: gameplay/balance/assets; only theme/map selection + naming. Level 03
+  not started. Nothing outside PROJECT_ROOT touched.
+
 ### 2026-07-13 — Day board fix: reflects progress + day navigation (Quick Mart reachable)
 - Goal: the campaign board was hardcoded to Day 1 (renderBoard() set curDay=1; HUD showed "DAY 1")
   so it never advanced, progress wasn't reflected, and the new Quick Mart map (theme 1 = Day 2)
