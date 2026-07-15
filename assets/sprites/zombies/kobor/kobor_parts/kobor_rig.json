@@ -1,0 +1,78 @@
+{
+  "id": "kobor",
+  "anchor": {
+    "x": 512.0,
+    "y": 1024
+  },
+  "pivots": {
+    "hip": {
+      "x": 500,
+      "y": 600
+    },
+    "shoulder": {
+      "x": 535,
+      "y": 270
+    }
+  },
+  "parts": {
+    "body": {
+      "src": "body.png",
+      "x": 0,
+      "y": 0,
+      "width": 1024,
+      "height": 600,
+      "pivotRef": null
+    },
+    "frontLeg": {
+      "src": "leg.png",
+      "x": 0,
+      "y": 600,
+      "width": 1024,
+      "height": 424,
+      "pivotRef": "hip"
+    },
+    "backLeg": {
+      "src": "leg.png",
+      "x": 0,
+      "y": 600,
+      "width": 1024,
+      "height": 424,
+      "pivotRef": "hip"
+    }
+  },
+  "animations": {
+    "idle": {
+      "type": "bob",
+      "amplitude": 3,
+      "speed": 1.6
+    },
+    "walk": {
+      "type": "lurch",
+      "speed": 3.2,
+      "rockDeg": 4,
+      "bobAmplitude": 5,
+      "swayX": 3
+    },
+    "hurt": {
+      "type": "knockback",
+      "duration": 0.45,
+      "shakeAmplitude": 6,
+      "next": "idle"
+    },
+    "death": {
+      "type": "dismember",
+      "gravity": 320,
+      "popUp": 90,
+      "flingSpeedMin": 40,
+      "flingSpeedRange": 30,
+      "spinSpeedMin": 110,
+      "spinSpeedRange": 90,
+      "bounceDamping": 0.32,
+      "maxBounces": 2,
+      "groundY": 46,
+      "frontLegCollapseDeg": 70,
+      "backLegCollapseDeg": 45,
+      "legCollapseDuration": 0.45
+    }
+  }
+}

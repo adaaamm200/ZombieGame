@@ -21,3 +21,14 @@ assets/references/maps/
 # Map-audit karantén (lokális visszaállítás/rollback — régi hibás PNG-k, NEM deploy).
 # A szöveges audit-riportok (_asset_audit_reports/, _deleted_asset_logs/) VERSIONözve maradnak.
 _rejected_assets/
+
+# Python cache (a tools/ scriptekhez)
+__pycache__/
+*.pyc
+
+# Ideiglenes QA-kontaktlapok — a tools/ scriptekkel bármikor újragenerálhatók
+assets/sprites/_rig_contact_sheet.png
+assets/sprites/_v2_test.png
+assets/sprites/_ai_cutout_qa.png
+assets/sprites/_chars_qa_magenta.png
+assets/sprites/_weapons_qa_magenta.png

@@ -263,43 +263,45 @@ Mivel a festői stílus megmarad és side-scroller a kamera, **nincs szükség t
 
 ---
 
-## 13. Javasolt következő lépés
-
-A roster és a zombi-lista most már véglegesítve van (4–5. pont), zóna-alapú accent-színekkel a feltöltött HADMŰVELETI TÉRKÉP alapján.
-
-**✅ Mérföldkő elérve (2026.07.13.):** a Kóbor etalon side-view képe legenerálva és jóváhagyva Higgsfield-del (nano_banana_pro, Elements-referencia nélkül egyelőre — ezt a következő karaktereknél érdemes bevezetni a konzisztenciáért).
-
----
-
 ## 14. Implementációs csomag — konkrét, kódba illeszthető megoldás
 
-Ez a fejezet írja le a ténylegesen leszállított, működő implementációt. A csomag 4 fájlból áll (mind elérhető letöltésként):
+Ez a fejezet írja le a ténylegesen leszállított, működő implementációt. A csomag 6 fájlból áll (mind elérhető letöltésként):
 
 | Fájl | Szerepe |
 |---|---|
-| `sprite-rig.js` | Újrafelhasználható canvas animációs motor. Bármelyik karakterre/zombira működik, csak a JSON config és a képek cserélődnek. |
+| `sprite-rig.js` (v1.1) | Újrafelhasználható canvas animációs motor. Bármelyik karakterre/zombira működik, csak a JSON config és a képek cserélődnek. Tartalmazza a `dismember` szétváló halál-fizikát és az `onEvent` hook-ot. |
+| `blood-fx.js` | VFX-modul: vér-részecskék, sebek, becsapódás-szikra, képernyőrázás, villanás. Univerzális, minden entitás ugyanazt használja. |
 | `slice_sprite.py` | Python segédszkript: egy állókép gyors feldarabolása törzs + láb részre, és a hozzá tartozó rig JSON automatikus generálása. |
-| `integration-example.js` | Minta `Entity` osztály, ami megmutatja, hogyan illeszd a rig motort a game loop-odba (mozgás, sebzés, halál állapotkezelés). |
-| `test-harness.html` | Önálló, böngészőben futtatható teszt oldal — ide másolod a `slice_sprite.py` kimenetét, és azonnal látod animálva, kódolás nélkül. |
+| `slice_vfx_sheet.py` | Python segédszkript: egy rács-elrendezésű VFX-lap (pl. vérfoltok) egyedi darabokra vágása + manifest generálás. |
+| `integration-example.js` | Minta `Entity` osztály, ami összeköti a rig-et és a blood-fx-et, és megmutatja a game loop-ba illesztést. |
+| `test-harness.html` | Önálló, böngészőben futtatható teszt oldal, HP-számlálóval — ide másolod a kimeneteket, és azonnal látod animálva, kódolás nélkül. |
 
 ### 14.1 — A workflow lépésről lépésre (Kóborral, példaként)
 
 1. **Töltsd le a jóváhagyott Kóbor képet** a Higgsfield generálásból (jobb klikk → mentés), pl. `kobor_raw.png` néven.
-2. **Távolítsd el a hátteret** — ezt még nem tettük meg (emlékeztető a 7.2 pontból: Higgsfield `remove_background` eszköze, vagy bármilyen más háttér-eltávolító). Enélkül a sprite fekete dobozban fog megjelenni a játékban.
-3. **Becsüld meg a csípő Y-koordinátáját** a képen (pixelben, felülről számolva) — ez az a vonal, ahol a lábak elválnak a törzstől. Ha nem vagy biztos benne, küldd el a képet, és megbecsüljük együtt.
+2. **Távolítsd el a hátteret** — Higgsfield `remove_background` eszköze, vagy bármilyen más háttér-eltávolító.
+3. **Becsüld meg a csípő/váll koordinátáit** a képen (pixelben) — ha nem vagy biztos benne, küldd el a képet, és megbecsüljük együtt (ahogy Kóbornál is tettük: pixel-elemzéssel, nem tippeléssel).
 4. **Futtasd le a szeletelő scriptet:**
    ```bash
    python3 slice_sprite.py --input kobor_raw.png --output-dir ./kobor_parts \
-     --hip-y 300 --hip-x 100 --shoulder-x 100 --shoulder-y 120
+     --hip-y 600 --hip-x 500 --shoulder-x 535 --shoulder-y 270
    ```
    Ez létrehozza: `kobor_parts/body.png`, `kobor_parts/leg.png`, `kobor_parts/kobor_rig.json`.
-5. **Teszteld böngészőben** — másold a `test-harness.html`-t és a `sprite-rig.js`-t a `kobor_parts` mappa mellé, nyisd meg a HTML-t böngészőben, kattints a Séta/Találat/Halál gombokra.
-6. **Ha jó, illeszd be a tényleges game loop-ba** az `integration-example.js` mintája szerint.
+5. **Vágd szét a VFX-lapot is** (egyszer, univerzálisan, nem entitásonként):
+   ```bash
+   python3 slice_vfx_sheet.py --input blood_splatter_sheet.png \
+     --output-dir ./assets/fx --cols 3 --rows 2 --prefix splat
+   ```
+   Majd tedd a `wound_stump.png` és `impact_spark.png` fájlokat is az `assets/fx/` mappába.
+6. **Teszteld böngészőben** — másold a `test-harness.html`-t, `sprite-rig.js`-t, `blood-fx.js`-t és `integration-example.js`-t egy mappába, mellé a `kobor_parts/` és `fx/` almappákat, indíts helyi szervert, nyisd meg böngészőben.
+7. **Ha jó, illeszd be a tényleges game loop-ba** az `integration-example.js` mintája szerint.
 
-### 14.2 — Opció A vs Opció B (minőségi döntés)
+### 14.2 — Opció A vs Opció B (minőségi döntés a testrészeknél)
 
 - **Opció B (amit a `slice_sprite.py` csinál):** gyors, ingyenes, a már meglévő egyetlen képből dolgozik. Korlát: a kar nem leng külön (a törzshöz rögzítve marad), és mindkét láb ugyanazt a kivágott képet használja (ez a legtöbb kis/közepes méretű sprite-nál észrevehetetlen a gyakorlatban).
-- **Opció A (production-quality, ha van rá kredit):** a törzset, mindkét kart és mindkét lábat **külön AI-generálással** kéred (ugyanazzal a stílus-referenciával/Elements-szel a konzisztenciáért), tiszta vágásokkal, saját pivot-ponttal mindegyiknél. Ez adja a végleges, teljes értékű kar+láb animációt. Erre akkor érdemes áttérni, ha a Opció B-s prototípus már bizonyította, hogy a rendszer működik, és készen álltok a végleges minőségre.
+- **Opció A (production-quality, ha van rá kredit):** a törzset, mindkét kart és mindkét lábat **külön AI-generálással** kéred (ugyanazzal a stílus-referenciával/Elements-szel a konzisztenciáért), tiszta vágásokkal, saját pivot-ponttal mindegyiknél. Erre akkor érdemes áttérni, ha a Opció B-s prototípus már bizonyította, hogy a rendszer működik.
+
+**A VFX-eknél (vér, seb, szikra) viszont mindig megéri AI-generálást használni** — ezek univerzálisak (egyszer legenerálva, minden entitásra újrahasznált), tehát a kredit-befektetés nagyon alacsony a nyereséghez képest (lásd 14.4).
 
 ### 14.3 — JSON rig séma (referencia)
 
@@ -320,9 +322,63 @@ Ez a fejezet írja le a ténylegesen leszállított, működő implementációt.
     "idle": {"type": "bob", "amplitude": 3, "speed": 1.6},
     "walk": {"type": "cutoutWalk", "legAmplitudeDeg": 26, "speed": 6, "bobAmplitude": 5},
     "hurt": {"type": "knockback", "duration": 0.45, "shakeAmplitude": 6, "next": "idle"},
-    "death": {"type": "fall", "duration": 0.8, "rotationDeg": 82}
+    "death": {
+      "type": "dismember",
+      "gravity": 320, "popUp": 90,
+      "flingSpeedMin": 40, "flingSpeedRange": 30,
+      "spinSpeedMin": 110, "spinSpeedRange": 90,
+      "bounceDamping": 0.32, "maxBounces": 2, "groundY": 46,
+      "frontLegCollapseDeg": 70, "backLegCollapseDeg": 45,
+      "legCollapseDuration": 0.45
+    }
   }
 }
 ```
 
-Ez a séma **entitásonként külön fájl** — a 4–5. pont mind az 5 karakterének és mind a 8 zombitípusnak lesz saját ilyen JSON-ja, saját `body.png`/`leg.png` (és ha Opció A-ra álltok, `frontArm.png`/`backArm.png`) képekkel, ugyanabban a mappastruktúrában, ahogy a 3. pont leírja.
+Ez a séma **entitásonként külön fájl** — a 4–5. pont mind az 5 karakterének és mind a 8 zombitípusnak lesz saját ilyen JSON-ja, saját `body.png`/`leg.png` képekkel, ugyanabban a mappastruktúrában, ahogy a 3. pont leírja. A `death` blokk paraméterei (fling-sebesség, pattanás, forgás) entitásonként egyedileg hangolhatók — egy nehéz Tank-zombinál pl. lassabb, tompább esés illik, egy vékony Sikoltónál dinamikusabb.
+
+### 14.4 — VFX rendszer: vér, sebek, szétváló halál (2026.07.13. bővítés)
+
+A "gagyi" halál-animáció (egyszerű eldőlés) helyett valódi "juice"-t kapott a rendszer, **anélkül hogy minden entitáshoz külön VFX-et kellene generálni** — az alábbi 3 asset **univerzális**, egyszer legenerálva, minden karakterre/zombira újrahasznált:
+
+| Asset | Prompt-sablon | Felhasználás |
+|---|---|---|
+| `blood_splatter_sheet.png` | 4-6 szabálytalan vérfolt, toxikus-zöld izzású alálárnyalattal | Vér-részecskék és földi tócsa-decal-ok |
+| `wound_stump.png` | Szakadt, izzó zöld csont/gerinc-textúra a vágásvonalra | A halálnál a felsőtest-alsótest szétválás vizuális "sebe" |
+| `impact_spark.png` | Kompakt szikra+füst becsapódás-effekt | Minden nem-halálos találatnál |
+
+**Feldolgozási lépés:** a `blood_splatter_sheet.png`-t a `slice_vfx_sheet.py` szeleteli szét egyedi darabokra (`splat_01.png`, `splat_02.png`, ...) + `splat_manifest.json`-t generál, amit a `blood-fx.js` tölt be futásidőben.
+
+**Mit ad hozzá a rendszer:**
+- **Fokozódó sebek** — minden nem-halálos találatnál egy véletlenszerű vérfolt-decal jelenik meg a testen, felhalmozódva.
+- **Vér-részecske robbanás** — fizikailag repülő, gravitációval eső, elhalványuló, valódi festett textúrájú vércseppek (nem egyszerű körök).
+- **Becsapódás-szikra** minden találatnál.
+- **Képernyőrázás + piros villanás** találatnál (kicsi) és halálnál (nagyobb).
+- **Valódi szétváló halál** — a felsőtest fizikailag leválik a csípőtől (gravitáció, pattanás, forgás), a `wound_stump.png` textúra jelöli a vágásvonalat, a lábak összecsuklanak, és a landolás helyén állandó vér-tócsa marad.
+
+**Mappastruktúra-kiegészítés:**
+```
+assets/
+  fx/
+    blood_splatter_sheet.png   ← eredeti, meg nem vágott generálás (referenciaként megtartva)
+    splat_01.png ... splat_0N.png
+    splat_manifest.json
+    wound_stump.png
+    impact_spark.png
+```
+
+---
+
+## 15. Javasolt következő lépés
+
+A roster és a zombi-lista véglegesítve van (4–5. pont), zóna-alapú accent-színekkel a HADMŰVELETI TÉRKÉP alapján.
+
+**✅ Mérföldkövek eddig (2026.07.13.):**
+- Kóbor etalon side-view képe legenerálva és jóváhagyva.
+- Sprite rig motor (mozgás, sebzés, halál) implementálva és leszállítva.
+- VFX rendszer (vér, sebek, szétváló halál) implementálva és leszállítva.
+
+**Következő lépések:**
+1. Teszteld végig a teljes Kóbor pipeline-t a saját gépeden (14.1 workflow), és jelezz vissza, ha bármi elcsúszik.
+2. Ha jó, menjünk tovább a következő entitásra — javaslat: **Farkas** (a csapat "arca") vagy **A Vérmag** (a leglátványosabb, mivel már van rá vizuális referencia a térképről).
+3. A többi 11 entitásnál ugyanezt a workflow-t ismételjük — a VFX-eket (blood-fx) nem kell újragenerálni, azok univerzálisak.

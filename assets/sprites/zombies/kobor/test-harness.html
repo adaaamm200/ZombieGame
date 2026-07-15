@@ -2,63 +2,99 @@
 <html lang="hu">
 <head>
 <meta charset="UTF-8">
-<title>Zombi Kronika - Sprite Rig teszt</title>
+<title>Zombi Kronika - Sprite Rig + Blood FX teszt</title>
 <style>
   body { background: #0d1117; color: #e6e6e6; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 24px; }
   canvas { background: #1a1f2b; border: 1px solid #333; }
   button { padding: 8px 16px; margin: 0 4px; cursor: pointer; }
+  #hp { font-size: 14px; color: #9fbf9f; }
 </style>
 </head>
 <body>
-  <h2>Sprite Rig teszt - helyezd ide a kobor_parts mappát a slice_sprite.py futtatása után</h2>
+  <h2>Sprite Rig + Blood FX teszt</h2>
+  <p style="max-width:480px;font-size:13px;color:#999;">
+    Mappastruktura ehhez a teszthez: tedd a kobor_parts kimenetet a
+    <code>./kobor_parts/</code> ala, a VFX-eket (splat_*.png, splat_manifest.json,
+    wound_stump.png, impact_spark.png) a <code>./fx/</code> ala.
+  </p>
   <div>
-    <button onclick="rig && rig.setState('idle')">Idle</button>
-    <button onclick="rig && rig.setState('walk')">Séta</button>
-    <button onclick="rig && rig.setState('hurt')">Találat</button>
-    <button onclick="rig && rig.setState('death')">Halál</button>
+    <button onclick="resetEntity()">Reset</button>
+    <button onclick="entity && entity.moveTowards(entity.x + 40, 0.016)">Séta</button>
+    <button onclick="entity && entity.takeDamage(25)">Találat (-25 HP)</button>
+    <button onclick="entity && entity.takeDamage(200)">Halálos találat</button>
   </div>
+  <div id="hp">HP: 100</div>
   <canvas id="game" width="420" height="380"></canvas>
   <p id="status">Betöltés...</p>
 
-  <script src="sprite-rig.js?v=2"></script>
+  <script src="sprite-rig.js?v=vfx1"></script>
+  <script src="blood-fx.js?v=vfx1"></script>
+  <script src="integration-example.js?v=vfx1"></script>
   <script>
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
     const statusEl = document.getElementById('status');
-    let rig = null;
+    const hpEl = document.getElementById('hp');
+    let bloodFx = null;
+    let entity = null;
     let lastTime = 0;
+
+    // A kobor sprite/VFX 1024px NATIV meretben keszult. A tesztnezethez a
+    // talp-pont (FOOT_X, FOOT_Y) korul leskalazzuk, igy a teljes zombi ES a
+    // szetvalo halal + ver egy koordinatarendszerben, aranyosan lataszodik.
+    const FIT = 0.30;
+    const FOOT_X = 210;
+    const FOOT_Y = 332;
 
     async function init() {
       try {
-        rig = new SpriteRig(ctx, './kobor_parts/');
-        await rig.load('kobor_raw_rig.json');
-        rig.setState('idle');
+        bloodFx = new BloodFX(ctx, './fx/');
+        await bloodFx.load();
+
+        entity = new Entity(ctx, './kobor_parts/', 'kobor_rig.json', bloodFx, FOOT_X, FOOT_Y);
+        await entity.init();
+
         statusEl.textContent = 'Betöltve. Kattints a gombokra.';
         requestAnimationFrame(loop);
       } catch (err) {
-        statusEl.textContent = 'Hiba: nem találom a ./kobor_parts/kobor_raw_rig.json fájlt. Futtasd le a slice_sprite.py-t, és tedd ide a kimeneti mappát.';
+        statusEl.textContent = 'Hiba: ellenőrizd, hogy a kobor_parts/ és fx/ mappák a megfelelő helyen vannak-e a megfelelő fájlokkal.';
         console.error(err);
       }
     }
 
+    function resetEntity() {
+      init();
+    }
+
     function loop(now) {
-      const dt = lastTime ? (now - lastTime) / 1000 : 0;
+      const dt = lastTime ? Math.min(0.05, (now - lastTime) / 1000) : 0;
       lastTime = now;
+
+      entity.update(dt);
+      bloodFx.update(dt);
+      hpEl.textContent = 'HP: ' + Math.max(0, entity.hp);
+
+      const shakeOffset = bloodFx.getShakeOffset();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const groundY = 340;
+      ctx.save();
+      ctx.translate(shakeOffset.x, shakeOffset.y);
+
+      const groundY = 300;
       ctx.strokeStyle = '#333';
       ctx.beginPath();
       ctx.moveTo(0, groundY);
       ctx.lineTo(canvas.width, groundY);
       ctx.stroke();
-      // A forras sprite ~1024px magas (nativ meret). A tesztnezethez
-      // leskalazzuk, hogy a teljes zombi belefirjen a canvasba; a jatekban
-      // a rajzolasi meretet a jatek-kamera/scale hatarozza majd meg.
-      const FIT = 0.34;
-      rig.update(dt);
+
+      // Fit-skalazas a talp-pont korul (lasd FIT/FOOT_X/FOOT_Y fent).
       ctx.save();
+      ctx.translate(FOOT_X, FOOT_Y);
       ctx.scale(FIT, FIT);
-      rig.draw((canvas.width / 2) / FIT, groundY / FIT, 1);
+      ctx.translate(-FOOT_X, -FOOT_Y);
+      entity.draw();
+      bloodFx.draw();
+      ctx.restore();
+
       ctx.restore();
       requestAnimationFrame(loop);
     }

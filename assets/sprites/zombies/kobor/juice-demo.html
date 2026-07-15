@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<title>Zombi Kronika - Juice Demo (procedduralis game feel)</title>
+<style>
+  html,body { margin:0; }
+  body { background:#0b0f16; color:#e6e6e6; font-family:system-ui,sans-serif;
+         display:flex; flex-direction:column; align-items:center; gap:14px; padding:20px; }
+  h2 { margin:4px 0 0; font-weight:600; letter-spacing:.3px; }
+  .sub { font-size:13px; color:#7f8894; max-width:520px; text-align:center; margin:0; }
+  canvas { background:#141a24; border:1px solid #263041; border-radius:10px; touch-action:none; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  button { padding:9px 16px; border:1px solid #2c3646; border-radius:8px;
+           background:#1b2330; color:#dfe6ef; font-size:14px; cursor:pointer; }
+  button:hover { background:#243044; }
+  button.kill { border-color:#5a1f1f; background:#2a1414; color:#ffb3b3; }
+  #hp { font-size:13px; color:#8fb98f; font-variant-numeric:tabular-nums; }
+</style>
+</head>
+<body>
+  <h2>Juice Demo — procedurális game feel</h2>
+  <p class="sub">Egyetlen tiszta sprite + procedurális vér, testszétválás, halál és
+     „juice". Nincs textúra-pakolás. Kattints a gombokra (vagy magára a zombira).</p>
+  <div class="row">
+    <button onclick="game.reset()">Reset</button>
+    <button onclick="game.hop()">Mozgás</button>
+    <button onclick="game.hit(25)">Találat (-25 HP)</button>
+    <button class="kill" onclick="game.hit(200)">Halálos találat</button>
+  </div>
+  <div id="hp">HP: 100</div>
+  <canvas id="c" width="480" height="360"></canvas>
+  <p id="status" class="sub">Betöltés…</p>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const statusEl = document.getElementById('status');
+const hpEl = document.getElementById('hp');
+
+// ---- Szinvilag (toxikus zombi tema) ----
+const COL = {
+  bloodDark:  '#5a0808',
+  blood:      '#8a0f0f',
+  bloodHot:   '#c81414',
+  toxic:      '#6ee335',
+  gib:        '#701015',
+  gibEdge:    '#3a0a0d',
+  shadow:     'rgba(0,0,0,0.35)',
+};
+
+// ---- Sprite + eloszamolt flash-maszkok ----
+const sprite = new Image();
+let ready = false, WHITE_MASK = null, RED_MASK = null;
+// A kobor_raw.png tartalma (kimert): fej-teto ~y110, labfej ~y918, kozep-x ~507.
+const SRC = { feetX: 507, feetY: 918, headY: 110 };
+const DISPLAY_H = 200;                 // a zombi kirajzolt magassaga px-ben
+let S = 0.2;                           // sprite skala (betoltesnel szamoljuk)
+
+function makeMask(img, color){
+  const m = document.createElement('canvas');
+  m.width = img.naturalWidth; m.height = img.naturalHeight;
+  const mx = m.getContext('2d');
+  mx.drawImage(img, 0, 0);
+  mx.globalCompositeOperation = 'source-in';
+  mx.fillStyle = color;
+  mx.fillRect(0, 0, m.width, m.height);
+  return m;
+}
+
+sprite.onload = () => {
+  S = DISPLAY_H / (SRC.feetY - SRC.headY);
+  WHITE_MASK = makeMask(sprite, '#ffffff');
+  RED_MASK   = makeMask(sprite, '#ff2a2a');
+  ready = true;
+  statusEl.textContent = 'Kész. Kattints a gombokra (Találat / Halálos találat).';
+};
+sprite.onerror = () => { statusEl.textContent = 'Hiba: nem találom a kobor_raw.png-t.'; };
+sprite.src = './kobor_raw.png';
+
+// ---- Vilag ----
+const GROUND_Y = 300, FEET_X = 240;
+
+// ---- Segedek ----
+const rnd  = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const damp = (cur, target, rate, dt) => cur + (target - cur) * (1 - Math.exp(-rate * dt));
+
+// ---- Globalis juice allapot ----
+let hitstop = 0;                 // masodperc: minden mozgas befagy
+let shakeMag = 0, shakeT = 0, shakeDur = 0;
+let flash = 0, flashMask = null; // 0..1 sziluett-felvillanas
+let vignette = 0;                // piros keret-villanas halalnal
+
+// ---- Reszecske-rendszerek ----
+let particles = [];   // vercseppek
+let decals = [];       // talaj-foltok (maradando)
+let gibs = [];         // levalo testdarabok
+let dust = [];         // por landolaskor
+let dmgNums = [];      // uszo sebzes-szamok
+
+// ---- Entitas (egyetlen zombi) ----
+const z = {
+  hp: 100, alive: true, dying: false, deathT: 0, alpha: 1,
+  facing: 1,
+  sx: 1, sy: 1,           // squash & stretch
+  rot: 0,
+  kbx: 0, kbvx: 0,        // knockback (rugo)
+  jumpY: 0, jumpVy: 0,    // ugras
+  breathe: 0,
+};
+
+function torsoPoint(){
+  // a torzo kozepe vilag-koordinataban (kb. csipo folott)
+  return { x: FEET_X + z.kbx, y: GROUND_Y + z.jumpY - DISPLAY_H * 0.55 };
+}
+
+// ---- Spawnerek ----
+function spawnBlood(x, y, dirX, count, power){
+  for (let i = 0; i < count; i++){
+    const ang = Math.atan2(-0.6, dirX) + rnd(-0.9, 0.9);
+    const spd = rnd(60, 60 + power);
+    const toxic = Math.random() < 0.12;
+    particles.push({
+      x, y,
+      vx: Math.cos(ang) * spd + dirX * rnd(10, 40),
+      vy: Math.sin(ang) * spd - rnd(20, 90),
+      life: rnd(0.5, 1.0), max: 1,
+      r: rnd(2, 5.5),
+      col: toxic ? COL.toxic : (Math.random() < 0.5 ? COL.blood : COL.bloodHot),
+      grav: rnd(760, 980),
+    });
+  }
+}
+function spawnGibs(x, y, count){
+  for (let i = 0; i < count; i++){
+    const ang = rnd(-Math.PI * 0.85, -Math.PI * 0.15);
+    const spd = rnd(120, 300);
+    gibs.push({
+      x, y,
+      vx: Math.cos(ang) * spd + z.facing * rnd(20, 80),
+      vy: Math.sin(ang) * spd,
+      rot: rnd(0, Math.PI * 2), vrot: rnd(-12, 12),
+      r: rnd(6, 13), life: rnd(1.4, 2.4),
+      grav: rnd(700, 900), bounced: 0,
+    });
+  }
+}
+function spawnDust(x, y){
+  for (let i = 0; i < 8; i++){
+    dust.push({ x, y, vx: rnd(-70, 70), vy: rnd(-20, -70),
+      life: rnd(0.25, 0.5), max: 0.5, r: rnd(3, 7) });
+  }
+}
+function addDecal(x, y, r, col){
+  decals.push({ x, y, r, col, a: 0.85 });
+  if (decals.length > 26) decals.shift();
+}
+function addDmg(x, y, val, big){
+  dmgNums.push({ x, y, val, life: 0.9, max: 0.9, big: !!big,
+    vx: rnd(-14, 14), vy: -46 });
+}
+
+// ---- Juice trigger-ek ----
+function shake(mag, dur){ shakeMag = Math.max(shakeMag, mag); shakeT = dur; shakeDur = dur; }
+function doFlash(mask, amt){ flash = amt; flashMask = mask; }
+
+function hit(dmg){
+  if (!ready || !z.alive) return;
+  z.hp -= dmg;
+  const dir = z.facing;                 // ide "csapódik" a talalat
+  const t = torsoPoint();
+
+  addDmg(t.x + rnd(-8, 8), t.y - 10, dmg, dmg >= 100);
+
+  if (z.hp > 0){
+    doFlash(WHITE_MASK, 0.9);
+    hitstop = Math.max(hitstop, 0.05);
+    shake(6, 0.22);
+    z.kbvx += dir * 150;
+    z.sx = 1.22; z.sy = 0.8;             // osszelapul
+    spawnBlood(t.x, t.y, dir, 16, 130);
+  } else {
+    die(t, dir);
+  }
+  updateHp();
+}
+
+function die(t, dir){
+  z.alive = false; z.dying = true; z.deathT = 0;
+  doFlash(RED_MASK, 1);
+  vignette = 1;
+  hitstop = Math.max(hitstop, 0.12);     // eros hitstop = "sulyos" halal
+  shake(15, 0.5);
+  z.kbvx += dir * 260;
+  spawnBlood(t.x, t.y, dir, 40, 240);
+  spawnGibs(t.x, t.y, 8);
+  addDecal(FEET_X + z.kbx, GROUND_Y, 30, COL.bloodDark);  // maradando ver-tocsa
+}
+
+function hop(){
+  if (!ready || !z.alive) return;
+  z.jumpVy = -330; z.sx = 0.85; z.sy = 1.2;   // rugaszkodas: megnyulik
+}
+
+function reset(){
+  z.hp = 100; z.alive = true; z.dying = false; z.deathT = 0; z.alpha = 1;
+  z.sx = z.sy = 1; z.rot = 0; z.kbx = z.kbvx = 0; z.jumpY = z.jumpVy = 0;
+  particles = []; gibs = []; dust = []; dmgNums = [];
+  decals = decals.slice(-4);              // par regi folt maradhat
+  flash = 0; vignette = 0; shakeMag = 0; hitstop = 0;
+  updateHp();
+}
+function updateHp(){ hpEl.textContent = 'HP: ' + Math.max(0, Math.round(z.hp)); }
+
+// kattintas a vasznon = talalat
+canvas.addEventListener('pointerdown', () => hit(25));
+
+// ---- Update ----
+function update(dt){
+  // hitstop: minden vilagmozgas befagy (a felvillanas/rezges is ettol lesz utos)
+  if (hitstop > 0){ hitstop -= dt; return; }
+
+  // squash rugozas vissza 1-re (halalkor kulon kezeljuk)
+  if (!z.dying){
+    z.breathe = Math.sin(performance.now() / 500) * 0.03;
+    z.sx = damp(z.sx, 1, 14, dt);
+    z.sy = damp(z.sy, 1 + z.breathe, 14, dt);
+  }
+
+  // knockback rugo -> 0
+  z.kbvx += (-z.kbx * 90 - z.kbvx * 12) * dt;
+  z.kbx  += z.kbvx * dt;
+
+  // ugras
+  if (z.jumpY < 0 || z.jumpVy < 0){
+    z.jumpVy += 1400 * dt;
+    z.jumpY  += z.jumpVy * dt;
+    if (z.jumpY >= 0){ z.jumpY = 0; z.jumpVy = 0; z.sx = 1.25; z.sy = 0.78;
+      spawnDust(FEET_X + z.kbx, GROUND_Y); }
+  }
+
+  // halal-animacio: osszecsuklik, eldol, elhalvanyul
+  if (z.dying){
+    z.deathT += dt;
+    z.sy = damp(z.sy, 0.35, 8, dt);
+    z.sx = damp(z.sx, 1.15, 8, dt);
+    z.rot = damp(z.rot, z.facing * 0.35, 6, dt);
+    z.alpha = 1 - clamp((z.deathT - 0.35) / 0.9, 0, 1);
+  }
+
+  // rezges lecsenges
+  if (shakeT > 0){ shakeT -= dt; shakeMag = shakeMag * (shakeT / shakeDur); if (shakeT <= 0) shakeMag = 0; }
+  // flash / vignette lecsenges
+  flash = Math.max(0, flash - dt * 7);
+  vignette = Math.max(0, vignette - dt * 2.2);
+
+  // vercseppek
+  for (let i = particles.length - 1; i >= 0; i--){
+    const p = particles[i];
+    p.vy += p.grav * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+    if (p.y >= GROUND_Y){                 // foldet er -> kis folt marad
+      addDecal(p.x, GROUND_Y, p.r * rnd(1.1, 1.8), Math.random() < 0.12 ? COL.toxic : COL.blood);
+      particles.splice(i, 1); continue;
+    }
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+  // gibek (pattannak)
+  for (let i = gibs.length - 1; i >= 0; i--){
+    const g = gibs[i];
+    g.vy += g.grav * dt; g.x += g.vx * dt; g.y += g.vy * dt;
+    g.rot += g.vrot * dt; g.life -= dt;
+    if (g.y >= GROUND_Y){
+      g.y = GROUND_Y;
+      if (g.bounced < 2 && Math.abs(g.vy) > 40){ g.vy *= -0.4; g.vx *= 0.6; g.vrot *= 0.5; g.bounced++;
+        addDecal(g.x, GROUND_Y, g.r * 1.4, COL.bloodDark); }
+      else { g.vy = 0; g.vx *= 0.8; }
+    }
+    if (g.life <= 0) gibs.splice(i, 1);
+  }
+  // por
+  for (let i = dust.length - 1; i >= 0; i--){
+    const d = dust[i]; d.vy += 200 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.life -= dt;
+    if (d.life <= 0) dust.splice(i, 1);
+  }
+  // sebzes-szamok
+  for (let i = dmgNums.length - 1; i >= 0; i--){
+    const n = dmgNums[i]; n.vy += 40 * dt; n.x += n.vx * dt; n.y += n.vy * dt; n.life -= dt;
+    if (n.life <= 0) dmgNums.splice(i, 1);
+  }
+}
+
+// ---- Rajz ----
+function drawZombie(){
+  if (z.alpha <= 0) return;
+  const px = FEET_X + z.kbx, py = GROUND_Y + z.jumpY;
+  ctx.save();
+  ctx.globalAlpha = z.alpha;
+  ctx.translate(px, py);
+  ctx.scale(z.facing * z.sx, z.sy);
+  ctx.rotate(z.rot);
+  const dw = 1024 * S, dh = 1024 * S;
+  const ox = -SRC.feetX * S, oy = -SRC.feetY * S;
+  ctx.drawImage(sprite, ox, oy, dw, dh);
+  if (flash > 0 && flashMask){
+    ctx.globalAlpha = z.alpha * flash;
+    ctx.drawImage(flashMask, ox, oy, dw, dh);
+  }
+  ctx.restore();
+}
+
+function draw(){
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // kameramozgas (screenshake)
+  const shx = shakeMag ? rnd(-shakeMag, shakeMag) : 0;
+  const shy = shakeMag ? rnd(-shakeMag, shakeMag) : 0;
+  ctx.save();
+  ctx.translate(shx, shy);
+
+  // talaj
+  ctx.strokeStyle = '#243040'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, GROUND_Y + 0.5); ctx.lineTo(canvas.width, GROUND_Y + 0.5); ctx.stroke();
+
+  // maradando ver-foltok (talajon, a zombi alatt)
+  for (const d of decals){
+    ctx.globalAlpha = d.a; ctx.fillStyle = d.col;
+    ctx.beginPath(); ctx.ellipse(d.x, d.y, d.r, d.r * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // arnyek (a squash-sal egyutt zsugorodik -> "sulya" van)
+  const shadowW = 46 * (0.7 + z.sx * 0.3) * (1 - clamp(-z.jumpY / 260, 0, 0.6));
+  ctx.fillStyle = COL.shadow;
+  ctx.beginPath(); ctx.ellipse(FEET_X + z.kbx, GROUND_Y, shadowW, 9, 0, 0, Math.PI * 2); ctx.fill();
+
+  // por
+  for (const d of dust){ ctx.globalAlpha = clamp(d.life / d.max, 0, 1) * 0.5;
+    ctx.fillStyle = '#6b7280'; ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2); ctx.fill(); }
+  ctx.globalAlpha = 1;
+
+  if (ready) drawZombie();
+
+  // gibek
+  for (const g of gibs){
+    ctx.save(); ctx.translate(g.x, g.y); ctx.rotate(g.rot);
+    ctx.fillStyle = COL.gib; ctx.strokeStyle = COL.gibEdge; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-g.r, -g.r * 0.6); ctx.lineTo(g.r * 0.8, -g.r);
+    ctx.lineTo(g.r, g.r * 0.7); ctx.lineTo(-g.r * 0.7, g.r); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+
+  // vercseppek (a levegoben)
+  for (const p of particles){
+    ctx.globalAlpha = clamp(p.life / p.max, 0, 1);
+    ctx.fillStyle = p.col;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // sebzes-szamok
+  for (const n of dmgNums){
+    const a = clamp(n.life / n.max, 0, 1);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = n.big ? '#ff5252' : '#ffd24a';
+    ctx.font = (n.big ? 700 : 600) + ' ' + (n.big ? 26 : 18) + 'px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('-' + n.val, n.x, n.y);
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.restore(); // screenshake vege
+
+  // piros keret-villanas (halal) — a rezges FELETT, fix
+  if (vignette > 0){
+    const g = ctx.createRadialGradient(canvas.width/2, canvas.height/2, canvas.height*0.3,
+                                       canvas.width/2, canvas.height/2, canvas.height*0.75);
+    g.addColorStop(0, 'rgba(200,20,20,0)');
+    g.addColorStop(1, 'rgba(150,0,0,' + (0.45 * vignette).toFixed(3) + ')');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+// ---- Loop ----
+let last = 0;
+function loop(now){
+  const dt = last ? Math.min(0.033, (now - last) / 1000) : 0;
+  last = now;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// globalis a gombokhoz
+window.game = { reset, hop, hit };
+</script>
+</body>
+</html>
