@@ -199,6 +199,24 @@ ZD.partRig = (() => {
       bob = Math.sin(_t * 1.6) * rig.height * 0.006;
     }
 
+    /* TALÁLAT-REAKCIÓ: a game.js z.flash-t 0.12s-re állítja találatkor.
+       Eddig csak a fehér villanás jött -> az ütés nem "ért be". Most a test is
+       reagál: hátrahőköl (dőlés a csípő körül), a fej hátracsapódik, és a
+       sziluett összelapul. A hátralökést (z.kb -> z.x) a game.js adja. */
+    const hit = Math.max(0, Math.min(1, (z.flash || 0) / 0.12));
+    let lean = 0, sqX = 1, sqY = 1;
+    if (hit > 0) {
+      /* Erős értékek szándékosan: a reakció csak ~0.12s (kb. 7 frame), és a
+         zombi a képernyőn csak ~46px -> a finom mozgás egyszerűen nem látszik.
+         (9 fokos dőlés a fejet mindössze 3px-et mozdította.) */
+      lean = -hit * 16;                          // fok: hátra dől
+      sqX = 1 + hit * 0.14;
+      sqY = 1 - hit * 0.10;
+      pose.head = (pose.head || 0) - hit * 22;   // fej hátracsapódik
+      pose.armF = (pose.armF || 0) - hit * 14;
+      pose.legB = (pose.legB || 0) - hit * 6;    // a hátsó láb megveti magát
+    }
+
     /* lágy talaj-árnyék (a rig megkerüli az enemySprites árnyékát) */
     const sw2 = rig.height * 0.62;
     ctx.save();
@@ -207,10 +225,19 @@ ZD.partRig = (() => {
     ctx.restore();
 
     const A = rig.anchor;
+    const hipMid = {
+      x: (rig.pivots.hipB.x + rig.pivots.hipF.x) / 2,
+      y: (rig.pivots.hipB.y + rig.pivots.hipF.y) / 2,
+    };
     ctx.save();
     ctx.translate(z.x, z.y + bob);
-    ctx.scale(fac * S, S);
+    ctx.scale(fac * S * sqX, S * sqY);      // squash a talp korul
     ctx.translate(-A.x, -A.y);
+    if (lean) {                              // hatrahokoles a csipo korul
+      ctx.translate(hipMid.x, hipMid.y);
+      ctx.rotate(lean * Math.PI / 180);
+      ctx.translate(-hipMid.x, -hipMid.y);
+    }
     drawPartSet(ctx, rig, pose, false);
     if (z.flash > 0) { ctx.globalAlpha = Math.min(0.85, z.flash * 6); drawPartSet(ctx, rig, pose, true); ctx.globalAlpha = 1; }
     ctx.restore();
