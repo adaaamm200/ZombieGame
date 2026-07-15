@@ -157,12 +157,12 @@ ZD.C = {
   /* w/h = ütköződoboz (a látvány-sprite-hoz hangolva, hogy a találat a testre essen).
      A hp/dmg/speed BALANSZ VÁLTOZATLAN — csak a doboz-méret követi az új, nagyobb sprite-okat. */
   ZOMBIES: {
-    walker:  { hp: 42,   dmg: 9,  speed: [24, 34], coin: 6,   w: 24, h: 44, reach: 20, atkCd: 1.0 },
-    runner:  { hp: 24,   dmg: 7,  speed: [70, 92], coin: 7,   w: 22, h: 42, reach: 18, atkCd: 0.8 },
-    crawler: { hp: 34,   dmg: 8,  speed: [42, 58], coin: 8,   w: 34, h: 24, reach: 19, atkCd: 0.9 },
-    spitter: { hp: 48,   dmg: 11, speed: [20, 28], coin: 12,  w: 24, h: 46, reach: 20, atkCd: 2.2, range: 250 },
-    bloater: { hp: 90,   dmg: 10, speed: [16, 26], coin: 16,  w: 40, h: 52, reach: 22, atkCd: 1.2, burstR: 78, burstDmg: 30 },
-    brute:   { hp: 260,  dmg: 24, speed: [16, 22], coin: 35,  w: 42, h: 60, reach: 28, atkCd: 1.4 },
+    walker:  { hp: 32,   dmg: 9,  speed: [24, 34], coin: 6,   w: 24, h: 44, reach: 20, atkCd: 1.0 },
+    runner:  { hp: 18,   dmg: 7,  speed: [70, 92], coin: 7,   w: 22, h: 42, reach: 18, atkCd: 0.8 },
+    crawler: { hp: 26,   dmg: 8,  speed: [42, 58], coin: 8,   w: 34, h: 24, reach: 19, atkCd: 0.9 },
+    spitter: { hp: 36,   dmg: 11, speed: [20, 28], coin: 12,  w: 24, h: 46, reach: 20, atkCd: 2.2, range: 250 },
+    bloater: { hp: 68,   dmg: 10, speed: [16, 26], coin: 16,  w: 40, h: 52, reach: 22, atkCd: 1.2, burstR: 78, burstDmg: 30 },
+    brute:   { hp: 195,  dmg: 24, speed: [16, 22], coin: 35,  w: 42, h: 60, reach: 28, atkCd: 1.4 },
     /* boss hp/dmg futásidőben a bossHp()/bossDmg() szerint (fair, tanulható); az itteni
        hp/dmg csak fallback-referencia. coin/méret/atkCd innen jön. */
     boss:    { hp: 2050, dmg: 26, speed: [20, 26], coin: 300, w: 64, h: 84, reach: 44, atkCd: 2.0 },
@@ -180,7 +180,7 @@ ZD.C = {
   },
 
   /* Szint-skálázás — érezhető, de tanulható nehézségi ív */
-  hpMul(level) { return 1 + 0.16 * (level - 1); },
+  hpMul(level) { return 1 + 0.12 * (level - 1); },  /* 0.16 -> 0.12: a kesoi "szivacs-zombi" ellen */
   /* dmg/quota/bossDmg: az 1–40 tartomány VÁLTOZATLAN (verifikált balansz);
      40 fölött lágyabb (soft-cap), hogy a magas napok kemények, de ne lehetetlenek legyenek */
   dmgMul(level) {
