@@ -1,0 +1,103 @@
+{
+  "name": "szikra",
+  "facing": "right",
+  "image_size": [
+    1024,
+    1024
+  ],
+  "measured": {
+    "head_top_y": 91,
+    "feet_bottom_y": 943,
+    "neck_y": 193,
+    "head_cut_y": 201,
+    "shoulder_y": 337,
+    "hip_y": 612,
+    "hip_x": 514,
+    "content_h": 852
+  },
+  "cut_rules": {
+    "head": {
+      "type": "above",
+      "y": 201
+    },
+    "arm_front": {
+      "type": "diagonal",
+      "y0": 347,
+      "y1": 592,
+      "edge_x": 634,
+      "slope": 0.2,
+      "side": "right"
+    },
+    "torso": {
+      "type": "band",
+      "y0": 186,
+      "y1": 637
+    },
+    "leg_back": {
+      "type": "below_side",
+      "y": 612,
+      "x": 514,
+      "side": "left"
+    },
+    "leg_front": {
+      "type": "below_side",
+      "y": 612,
+      "x": 514,
+      "side": "right"
+    }
+  },
+  "rig": {
+    "anchor": {
+      "x": 514,
+      "y": 943
+    },
+    "contentH": 852,
+    "pivots": {
+      "neck": {
+        "x": 524,
+        "y": 201
+      },
+      "shoulder": {
+        "x": 675,
+        "y": 337
+      },
+      "hipB": {
+        "x": 479,
+        "y": 620
+      },
+      "hipF": {
+        "x": 549,
+        "y": 620
+      }
+    },
+    "cent": {
+      "head": {
+        "x": 524,
+        "y": 149
+      },
+      "torso": {
+        "x": 497,
+        "y": 413
+      },
+      "arm_front": {
+        "x": 675,
+        "y": 417
+      },
+      "leg_back": {
+        "x": 382,
+        "y": 759
+      },
+      "leg_front": {
+        "x": 612,
+        "y": 770
+      }
+    },
+    "order": [
+      "leg_back",
+      "torso",
+      "head",
+      "leg_front",
+      "arm_front"
+    ]
+  }
+}

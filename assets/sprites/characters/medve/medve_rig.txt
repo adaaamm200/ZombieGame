@@ -1,0 +1,22 @@
+  medve: {
+    src: 'assets/sprites/zombies/medve/',
+    parts: ['head','torso','arm_front','leg_back','leg_front'],
+    anchor:   { x:504, y:935 },
+    contentH: 859,
+    height:   46,
+    pivots: {
+      neck:     { x:481, y:168 },
+      shoulder: { x:812, y:305 },
+      hipB:     { x:469, y:679 },
+      hipF:     { x:539, y:679 },
+    },
+    cent: {
+      head:      { x:481, y:132 },
+      torso:     { x:479, y:409 },
+      arm_front: { x:812, y:388 },
+      leg_back:  { x:344, y:786 },
+      leg_front: { x:614, y:810 },
+    },
+    order: ['leg_back','torso','head','leg_front','arm_front'],
+    legSwing: 10, armSwing: 5, cadence: 2.0,
+  },

@@ -1,0 +1,22 @@
+  crawler: {
+    src: 'assets/sprites/zombies/crawler/',
+    parts: ['head','torso','arm_front','leg_back','leg_front'],
+    anchor:   { x:542, y:717 },
+    contentH: 391,
+    height:   46,
+    pivots: {
+      neck:     { x:737, y:365 },
+      shoulder: { x:847, y:427 },
+      hipB:     { x:507, y:523 },
+      hipF:     { x:577, y:523 },
+    },
+    cent: {
+      head:      { x:737, y:350 },
+      torso:     { x:606, y:441 },
+      arm_front: { x:847, y:442 },
+      leg_back:  { x:332, y:612 },
+      leg_front: { x:710, y:609 },
+    },
+    order: ['leg_back','torso','head','leg_front','arm_front'],
+    legSwing: 10, armSwing: 5, cadence: 2.0,
+  },

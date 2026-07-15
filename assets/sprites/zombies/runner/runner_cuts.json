@@ -1,0 +1,103 @@
+{
+  "name": "runner",
+  "facing": "right",
+  "image_size": [
+    1024,
+    1024
+  ],
+  "measured": {
+    "head_top_y": 114,
+    "feet_bottom_y": 929,
+    "neck_y": 199,
+    "head_cut_y": 207,
+    "shoulder_y": 337,
+    "hip_y": 586,
+    "hip_x": 508,
+    "content_h": 815
+  },
+  "cut_rules": {
+    "head": {
+      "type": "above",
+      "y": 207
+    },
+    "arm_front": {
+      "type": "diagonal",
+      "y0": 347,
+      "y1": 566,
+      "edge_x": 923,
+      "slope": 0.2,
+      "side": "right"
+    },
+    "torso": {
+      "type": "band",
+      "y0": 192,
+      "y1": 611
+    },
+    "leg_back": {
+      "type": "below_side",
+      "y": 586,
+      "x": 508,
+      "side": "left"
+    },
+    "leg_front": {
+      "type": "below_side",
+      "y": 586,
+      "x": 508,
+      "side": "right"
+    }
+  },
+  "rig": {
+    "anchor": {
+      "x": 508,
+      "y": 929
+    },
+    "contentH": 815,
+    "pivots": {
+      "neck": {
+        "x": 747,
+        "y": 207
+      },
+      "shoulder": {
+        "x": 914,
+        "y": 337
+      },
+      "hipB": {
+        "x": 473,
+        "y": 594
+      },
+      "hipF": {
+        "x": 543,
+        "y": 594
+      }
+    },
+    "cent": {
+      "head": {
+        "x": 747,
+        "y": 164
+      },
+      "torso": {
+        "x": 572,
+        "y": 396
+      },
+      "arm_front": {
+        "x": 914,
+        "y": 533
+      },
+      "leg_back": {
+        "x": 263,
+        "y": 732
+      },
+      "leg_front": {
+        "x": 734,
+        "y": 733
+      }
+    },
+    "order": [
+      "leg_back",
+      "torso",
+      "head",
+      "leg_front",
+      "arm_front"
+    ]
+  }
+}

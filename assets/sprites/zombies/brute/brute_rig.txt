@@ -1,0 +1,22 @@
+  brute: {
+    src: 'assets/sprites/zombies/brute/',
+    parts: ['head','torso','arm_front','leg_back','leg_front'],
+    anchor:   { x:705, y:1010 },
+    contentH: 949,
+    height:   46,
+    pivots: {
+      neck:     { x:633, y:145 },
+      shoulder: { x:821, y:296 },
+      hipB:     { x:670, y:619 },
+      hipF:     { x:740, y:619 },
+    },
+    cent: {
+      head:      { x:633, y:116 },
+      torso:     { x:517, y:381 },
+      arm_front: { x:821, y:542 },
+      leg_back:  { x:480, y:778 },
+      leg_front: { x:806, y:730 },
+    },
+    order: ['leg_back','torso','head','leg_front','arm_front'],
+    legSwing: 10, armSwing: 5, cadence: 2.0,
+  },

@@ -5,32 +5,142 @@
 
    A juice többi részét (screenshake, hitstop, vér-részecske, decal) a game.js
    meglévő rendszere adja — ez a modul CSAK a rig-megjelenítést + a leszakadó
-   testrészeket kezeli. Ha a part-képek nem töltenek be, has() false → a játék a
-   régi kép-alapú / procedurális rajzra esik vissza (nincs összeomlás).
+   testrészeket kezeli. Ha egy típus part-képei nem töltenek be, has() false →
+   a játék a régi kép-alapú / procedurális rajzra esik vissza (nincs összeomlás).
 
-   Bővíthető: minden karakter-típushoz egy RIGS-bejegyzés (saját part-képek +
-   forgáspontok). Jelenleg: walker (Kóbor). A geometria a kobor_raw.png-ből
-   kivágott részekhez van kalibrálva (cut_parts.py, 1024×1024 képtér). */
+   SZEREP-ALAPÚ (role) felépítés:
+     head · torso · armF (elülső kar) · legB (hátsó láb) · legF (elülső láb)
+   Minden rig maga mondja meg, melyik FÁJL melyik szerep (`files`), így mindegy,
+   hogy a Kóbor kézzel vágott part-jai leg_left/leg_right néven vannak, az
+   automatán vágott többi entitás meg leg_back/leg_front néven.
+
+   Geometria: a rig-értékek az 1024×1024-es KÉPTÉRBEN vannak (tools/measure_rig.py
+   méri ki, tools/gen_rigs.py generálja a bejegyzést). Lásd docs/PART_RIG_PIPELINE.md */
 window.ZD = window.ZD || {};
 ZD.partRig = (() => {
   const rnd = (a, b) => a + Math.random() * (b - a);
+  const ROLES = ['head', 'torso', 'armF', 'legB', 'legF'];
 
   const RIGS = {
+    /* Kóbor — KÉZZEL hangolt vágás (assets/.../kobor/cut_parts.py), jóváhagyva.
+       A part-fájljai még a régi leg_left/leg_right nevet viselik. */
     walker: {
       base: 'assets/sprites/zombies/kobor/parts_rig/',
-      parts: ['head', 'torso', 'arm_front', 'leg_left', 'leg_right'],
-      order: ['leg_left', 'torso', 'head', 'leg_right', 'arm_front'],
+      files: { head: 'head', torso: 'torso', armF: 'arm_front', legB: 'leg_left', legF: 'leg_right' },
       anchor: { x: 497, y: 920 },
-      contentH: 811,              // fej-teto(109) → talp(920)
-      height: 46,                 // kirajzolt magassag (logikai px), a walker atlaszhoz igazitva
-      pivots: { neck: { x: 628, y: 236 }, shoulder: { x: 560, y: 415 }, hipL: { x: 455, y: 618 }, hipR: { x: 545, y: 618 } },
-      cent: { head: { x: 563, y: 173 }, torso: { x: 512, y: 440 }, arm_front: { x: 591, y: 524 }, leg_left: { x: 371, y: 763 }, leg_right: { x: 617, y: 764 } },
-      tune: { legSwing: 10, armSwing: 5, cadence: 2.0 },   // behangolt ertekek
+      contentH: 811,
+      height: 46,
+      pivots: {
+        neck: { x: 628, y: 236 }, shoulder: { x: 560, y: 415 },
+        hipB: { x: 455, y: 618 }, hipF: { x: 545, y: 618 },
+      },
+      cent: {
+        head: { x: 563, y: 173 }, torso: { x: 512, y: 440 }, armF: { x: 591, y: 524 },
+        legB: { x: 371, y: 763 }, legF: { x: 617, y: 764 },
+      },
+      order: ['legB', 'torso', 'head', 'legF', 'armF'],
+      tune: { legSwing: 10, armSwing: 5, cadence: 2.0 },
       _img: {}, _mask: {}, _ok: false, _left: 0,
     },
+    /* --- Automatán kimért entitások (measure_rig.py + cut_parts.py) --- */
+    runner: {
+      base: 'assets/sprites/zombies/runner/parts_rig/',
+      files: { head: 'head', torso: 'torso', armF: 'arm_front', legB: 'leg_back', legF: 'leg_front' },
+      anchor: { x: 514, y: 929 },
+      contentH: 815,
+      height: 44,
+      pivots: {
+        neck: { x: 747, y: 207 }, shoulder: { x: 914, y: 337 },
+        hipB: { x: 473, y: 594 }, hipF: { x: 543, y: 594 },
+      },
+      cent: {
+        head: { x: 747, y: 164 }, torso: { x: 572, y: 396 }, armF: { x: 914, y: 533 },
+        legB: { x: 263, y: 732 }, legF: { x: 734, y: 733 },
+      },
+      order: ['legB', 'torso', 'head', 'legF', 'armF'],
+      /* armSwing 0: a sprintelő póz miatt a kar-vágás csak a kézfejet fogta meg,
+         a "váll"-pivot valójában a kéznél van -> ne lengessük. */
+      tune: { legSwing: 12, armSwing: 0, cadence: 2.4 },
+      _img: {}, _mask: {}, _ok: false, _left: 0,
+    },
+    spitter: {
+      base: 'assets/sprites/zombies/spitter/parts_rig/',
+      files: { head: 'head', torso: 'torso', armF: 'arm_front', legB: 'leg_back', legF: 'leg_front' },
+      anchor: { x: 490, y: 949 },
+      contentH: 885,
+      height: 48,
+      pivots: {
+        neck: { x: 651, y: 161 }, shoulder: { x: 682, y: 302 },
+        hipB: { x: 613, y: 604 }, hipF: { x: 683, y: 604 },
+      },
+      cent: {
+        head: { x: 651, y: 116 }, torso: { x: 509, y: 385 }, armF: { x: 682, y: 527 },
+        legB: { x: 487, y: 757 }, legF: { x: 678, y: 748 },
+      },
+      order: ['legB', 'torso', 'head', 'legF', 'armF'],
+      tune: { legSwing: 10, armSwing: 5, cadence: 2.0 },
+      _img: {}, _mask: {}, _ok: false, _left: 0,
+    },
+    bloater: {
+      base: 'assets/sprites/zombies/bloater/parts_rig/',
+      files: { head: 'head', torso: 'torso', armF: 'arm_front', legB: 'leg_back', legF: 'leg_front' },
+      anchor: { x: 495, y: 965 },
+      contentH: 875,
+      height: 54,
+      pivots: {
+        neck: { x: 532, y: 235 }, shoulder: { x: 667, y: 375 },
+        hipB: { x: 493, y: 689 }, hipF: { x: 563, y: 689 },
+      },
+      cent: {
+        head: { x: 532, y: 166 }, torso: { x: 506, y: 460 }, armF: { x: 667, y: 475 },
+        legB: { x: 402, y: 801 }, legF: { x: 604, y: 819 },
+      },
+      order: ['legB', 'torso', 'head', 'legF', 'armF'],
+      tune: { legSwing: 7, armSwing: 4, cadence: 1.5 },
+      _img: {}, _mask: {}, _ok: false, _left: 0,
+    },
+    brute: {
+      base: 'assets/sprites/zombies/brute/parts_rig/',
+      files: { head: 'head', torso: 'torso', armF: 'arm_front', legB: 'leg_back', legF: 'leg_front' },
+      anchor: { x: 516, y: 1010 },
+      contentH: 949,
+      height: 62,
+      pivots: {
+        neck: { x: 633, y: 145 }, shoulder: { x: 821, y: 296 },
+        hipB: { x: 670, y: 619 }, hipF: { x: 740, y: 619 },
+      },
+      cent: {
+        head: { x: 633, y: 116 }, torso: { x: 517, y: 381 }, armF: { x: 821, y: 542 },
+        legB: { x: 480, y: 778 }, legF: { x: 806, y: 730 },
+      },
+      order: ['legB', 'torso', 'head', 'legF', 'armF'],
+      tune: { legSwing: 8, armSwing: 5, cadence: 1.6 },
+      _img: {}, _mask: {}, _ok: false, _left: 0,
+    },
+    boss: {
+      base: 'assets/sprites/zombies/boss/parts_rig/',
+      files: { head: 'head', torso: 'torso', armF: 'arm_front', legB: 'leg_back', legF: 'leg_front' },
+      anchor: { x: 513, y: 968 },
+      contentH: 877,
+      height: 86,
+      pivots: {
+        neck: { x: 559, y: 169 }, shoulder: { x: 787, y: 309 },
+        hipB: { x: 296, y: 607 }, hipF: { x: 366, y: 607 },
+      },
+      cent: {
+        head: { x: 559, y: 146 }, torso: { x: 528, y: 381 }, armF: { x: 787, y: 533 },
+        legB: { x: 256, y: 785 }, legF: { x: 602, y: 726 },
+      },
+      order: ['legB', 'torso', 'head', 'legF', 'armF'],
+      tune: { legSwing: 8, armSwing: 5, cadence: 1.4 },
+      _img: {}, _mask: {}, _ok: false, _left: 0,
+    },
+    /* crawler: KIMARAD — négykézláb, vízszintes póz; az álló-rig fogalmai
+       (fej fent / csípő / láb lent) nem értelmezhetők rá. Marad a régi rajz. */
   };
 
-  /* feher sziluett-maszk (hit-flash) egy part-kephez */
+  const PIVOT_OF = { head: 'neck', armF: 'shoulder', legB: 'hipB', legF: 'hipF' };
+
   function makeMask(im) {
     const m = document.createElement('canvas'); m.width = im.naturalWidth; m.height = im.naturalHeight;
     const g = m.getContext('2d'); g.drawImage(im, 0, 0);
@@ -41,12 +151,12 @@ ZD.partRig = (() => {
   function load() {
     Object.keys(RIGS).forEach((type) => {
       const rig = RIGS[type];
-      rig._left = rig.parts.length;
-      rig.parts.forEach((name) => {
+      rig._left = ROLES.length;
+      ROLES.forEach((role) => {
         const im = new Image();
-        im.onload = () => { rig._img[name] = im; rig._mask[name] = makeMask(im); if (--rig._left <= 0) rig._ok = true; };
-        im.onerror = () => { console.warn('[partRig] part load fail:', type, name); rig._left = 999; rig._ok = false; };
-        im.src = rig.base + name + '.png';
+        im.onload = () => { rig._img[role] = im; rig._mask[role] = makeMask(im); if (--rig._left <= 0) rig._ok = true; };
+        im.onerror = () => { console.warn('[partRig] part load fail:', type, role); rig._left = 999; rig._ok = false; };
+        im.src = rig.base + rig.files[role] + '.png';
       });
     });
   }
@@ -56,17 +166,13 @@ ZD.partRig = (() => {
   let _t = 0;
   const gibs = [];
 
-  function pivotFor(rig, name) {
-    return name === 'head' ? rig.pivots.neck : name === 'arm_front' ? rig.pivots.shoulder
-      : name === 'leg_left' ? rig.pivots.hipL : name === 'leg_right' ? rig.pivots.hipR : null;
-  }
-
   function drawPartSet(ctx, rig, pose, useMask) {
     const src = useMask ? rig._mask : rig._img;
-    for (const name of rig.order) {
-      const im = src[name]; if (!im) continue;
-      const piv = pivotFor(rig, name);
-      const ang = pose[name] || 0;
+    for (const role of rig.order) {
+      const im = src[role]; if (!im) continue;
+      const pk = PIVOT_OF[role];
+      const piv = pk ? rig.pivots[pk] : null;
+      const ang = pose[role] || 0;
       ctx.save();
       if (piv && ang) { ctx.translate(piv.x, piv.y); ctx.rotate(ang * Math.PI / 180); ctx.translate(-piv.x, -piv.y); }
       ctx.drawImage(im, 0, 0);
@@ -83,18 +189,17 @@ ZD.partRig = (() => {
     const pose = {};
     let bob = 0;
     if (z.moving) {
-      const ph = (z.phase || 0) * rig.tune.cadence;
-      const sw = Math.sin(ph);
-      pose.leg_left = sw * rig.tune.legSwing;
-      pose.leg_right = -sw * rig.tune.legSwing;
-      pose.arm_front = sw * rig.tune.armSwing;
+      const sw = Math.sin((z.phase || 0) * rig.tune.cadence);
+      pose.legB = sw * rig.tune.legSwing;
+      pose.legF = -sw * rig.tune.legSwing;
+      pose.armF = sw * rig.tune.armSwing;
       pose.head = sw * 3;
       bob = -Math.abs(sw) * rig.height * 0.03;
     } else {
       bob = Math.sin(_t * 1.6) * rig.height * 0.006;
     }
 
-    /* lagy talaj-arnyek (a rig megkeruli az enemySprites arnyekat) */
+    /* lágy talaj-árnyék (a rig megkerüli az enemySprites árnyékát) */
     const sw2 = rig.height * 0.62;
     ctx.save();
     ctx.globalAlpha = 0.32; ctx.fillStyle = '#020408';
@@ -112,25 +217,25 @@ ZD.partRig = (() => {
     return true;
   }
 
-  /* halalkor: minden testresz leszakad es szetrepul (jatek-skalaju sebesseg) */
+  /* halálkor: minden testrész leszakad és szétrepül (játék-skálájú sebesség) */
   const GIB_SPEC = {
-    head:      (f) => ({ vx: f * rnd(15, 35),  vy: -rnd(150, 210), vr: rnd(6, 12) * f }),
-    torso:     (f) => ({ vx: -f * rnd(25, 55),  vy: -rnd(110, 150), vr: rnd(-5, 5) }),
-    arm_front: (f) => ({ vx: f * rnd(45, 95),  vy: -rnd(130, 180), vr: rnd(8, 16) * f }),
-    leg_left:  (f) => ({ vx: -rnd(20, 60),      vy: -rnd(90, 140),  vr: rnd(-10, -3) }),
-    leg_right: (f) => ({ vx: rnd(20, 60),       vy: -rnd(90, 140),  vr: rnd(3, 10) }),
+    head:  (f) => ({ vx: f * rnd(15, 35),  vy: -rnd(150, 210), vr: rnd(6, 12) * f }),
+    torso: (f) => ({ vx: -f * rnd(25, 55), vy: -rnd(110, 150), vr: rnd(-5, 5) }),
+    armF:  (f) => ({ vx: f * rnd(45, 95),  vy: -rnd(130, 180), vr: rnd(8, 16) * f }),
+    legB:  (f) => ({ vx: -rnd(20, 60),     vy: -rnd(90, 140),  vr: rnd(-10, -3) }),
+    legF:  (f) => ({ vx: rnd(20, 60),      vy: -rnd(90, 140),  vr: rnd(3, 10) }),
   };
   function spawnGibs(z) {
     const rig = RIGS[z.type]; if (!rig || !rig._ok) return;
     const S = rig.height * (z.elite ? 1.12 : 1) / rig.contentH;
     const fac = z.facing < 0 ? -1 : 1;
     const groundY = ZD.C.GROUND_Y;
-    for (const name of rig.parts) {
-      const c = rig.cent[name];
+    for (const role of ROLES) {
+      const c = rig.cent[role];
       const wx = z.x + fac * (c.x - rig.anchor.x) * S;
       const wy = groundY + (c.y - rig.anchor.y) * S;
-      const s = GIB_SPEC[name](fac);
-      gibs.push({ rig: z.type, name, x: wx, y: wy, S, facing: fac,
+      const s = GIB_SPEC[role](fac);
+      gibs.push({ rig: z.type, role, x: wx, y: wy, S, facing: fac,
         vx: s.vx, vy: s.vy, vrot: s.vr, rot: 0, life: 3.4, bounced: 0, rest: false });
     }
     while (gibs.length > 140) gibs.shift();
@@ -153,11 +258,11 @@ ZD.partRig = (() => {
     }
   }
 
-  /* a kamera-transzformon BELUL hivando (vilag-koordinatak) */
+  /* a kamera-transzformon BELÜL hívandó (világ-koordináták) */
   function drawGibs(ctx) {
     for (const g of gibs) {
-      const rig = RIGS[g.rig]; const im = rig && rig._img[g.name]; if (!im) continue;
-      const c = rig.cent[g.name];
+      const rig = RIGS[g.rig]; const im = rig && rig._img[g.role]; if (!im) continue;
+      const c = rig.cent[g.role];
       ctx.save();
       ctx.globalAlpha = g.life < 0.6 ? Math.max(0, g.life / 0.6) : 1;
       ctx.translate(g.x, g.y);

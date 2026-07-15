@@ -1,0 +1,22 @@
+  szellem: {
+    src: 'assets/sprites/zombies/szellem/',
+    parts: ['head','torso','arm_front','leg_back','leg_front'],
+    anchor:   { x:490, y:981 },
+    contentH: 906,
+    height:   46,
+    pivots: {
+      neck:     { x:500, y:227 },
+      shoulder: { x:578, y:371 },
+      hipB:     { x:455, y:681 },
+      hipF:     { x:525, y:681 },
+    },
+    cent: {
+      head:      { x:500, y:155 },
+      torso:     { x:482, y:428 },
+      arm_front: { x:578, y:529 },
+      leg_back:  { x:367, y:813 },
+      leg_front: { x:596, y:824 },
+    },
+    order: ['leg_back','torso','head','leg_front','arm_front'],
+    legSwing: 10, armSwing: 5, cadence: 2.0,
+  },

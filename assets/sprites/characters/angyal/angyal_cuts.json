@@ -1,0 +1,103 @@
+{
+  "name": "angyal",
+  "facing": "right",
+  "image_size": [
+    1024,
+    1024
+  ],
+  "measured": {
+    "head_top_y": 89,
+    "feet_bottom_y": 964,
+    "neck_y": 177,
+    "head_cut_y": 185,
+    "shoulder_y": 325,
+    "hip_y": 644,
+    "hip_x": 495,
+    "content_h": 875
+  },
+  "cut_rules": {
+    "head": {
+      "type": "above",
+      "y": 185
+    },
+    "arm_front": {
+      "type": "diagonal",
+      "y0": 335,
+      "y1": 624,
+      "edge_x": 792,
+      "slope": 0.2,
+      "side": "right"
+    },
+    "torso": {
+      "type": "band",
+      "y0": 170,
+      "y1": 669
+    },
+    "leg_back": {
+      "type": "below_side",
+      "y": 644,
+      "x": 495,
+      "side": "left"
+    },
+    "leg_front": {
+      "type": "below_side",
+      "y": 644,
+      "x": 495,
+      "side": "right"
+    }
+  },
+  "rig": {
+    "anchor": {
+      "x": 495,
+      "y": 964
+    },
+    "contentH": 875,
+    "pivots": {
+      "neck": {
+        "x": 550,
+        "y": 185
+      },
+      "shoulder": {
+        "x": 803,
+        "y": 325
+      },
+      "hipB": {
+        "x": 460,
+        "y": 652
+      },
+      "hipF": {
+        "x": 530,
+        "y": 652
+      }
+    },
+    "cent": {
+      "head": {
+        "x": 550,
+        "y": 142
+      },
+      "torso": {
+        "x": 489,
+        "y": 403
+      },
+      "arm_front": {
+        "x": 803,
+        "y": 393
+      },
+      "leg_back": {
+        "x": 361,
+        "y": 789
+      },
+      "leg_front": {
+        "x": 611,
+        "y": 799
+      }
+    },
+    "order": [
+      "leg_back",
+      "torso",
+      "head",
+      "leg_front",
+      "arm_front"
+    ]
+  }
+}

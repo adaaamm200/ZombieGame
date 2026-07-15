@@ -1,0 +1,22 @@
+  runner: {
+    src: 'assets/sprites/zombies/runner/',
+    parts: ['head','torso','arm_front','leg_back','leg_front'],
+    anchor:   { x:508, y:929 },
+    contentH: 815,
+    height:   46,
+    pivots: {
+      neck:     { x:747, y:207 },
+      shoulder: { x:914, y:337 },
+      hipB:     { x:473, y:594 },
+      hipF:     { x:543, y:594 },
+    },
+    cent: {
+      head:      { x:747, y:164 },
+      torso:     { x:572, y:396 },
+      arm_front: { x:914, y:533 },
+      leg_back:  { x:263, y:732 },
+      leg_front: { x:734, y:733 },
+    },
+    order: ['leg_back','torso','head','leg_front','arm_front'],
+    legSwing: 10, armSwing: 5, cadence: 2.0,
+  },

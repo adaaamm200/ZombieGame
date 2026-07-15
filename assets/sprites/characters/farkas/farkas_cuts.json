@@ -1,0 +1,103 @@
+{
+  "name": "farkas",
+  "facing": "right",
+  "image_size": [
+    1024,
+    1024
+  ],
+  "measured": {
+    "head_top_y": 95,
+    "feet_bottom_y": 953,
+    "neck_y": 190,
+    "head_cut_y": 198,
+    "shoulder_y": 335,
+    "hip_y": 657,
+    "hip_x": 504,
+    "content_h": 858
+  },
+  "cut_rules": {
+    "head": {
+      "type": "above",
+      "y": 198
+    },
+    "arm_front": {
+      "type": "diagonal",
+      "y0": 345,
+      "y1": 637,
+      "edge_x": 644,
+      "slope": 0.2,
+      "side": "right"
+    },
+    "torso": {
+      "type": "band",
+      "y0": 183,
+      "y1": 682
+    },
+    "leg_back": {
+      "type": "below_side",
+      "y": 657,
+      "x": 504,
+      "side": "left"
+    },
+    "leg_front": {
+      "type": "below_side",
+      "y": 657,
+      "x": 504,
+      "side": "right"
+    }
+  },
+  "rig": {
+    "anchor": {
+      "x": 504,
+      "y": 953
+    },
+    "contentH": 858,
+    "pivots": {
+      "neck": {
+        "x": 538,
+        "y": 198
+      },
+      "shoulder": {
+        "x": 693,
+        "y": 335
+      },
+      "hipB": {
+        "x": 469,
+        "y": 665
+      },
+      "hipF": {
+        "x": 539,
+        "y": 665
+      }
+    },
+    "cent": {
+      "head": {
+        "x": 538,
+        "y": 150
+      },
+      "torso": {
+        "x": 490,
+        "y": 422
+      },
+      "arm_front": {
+        "x": 693,
+        "y": 401
+      },
+      "leg_back": {
+        "x": 362,
+        "y": 788
+      },
+      "leg_front": {
+        "x": 613,
+        "y": 806
+      }
+    },
+    "order": [
+      "leg_back",
+      "torso",
+      "head",
+      "leg_front",
+      "arm_front"
+    ]
+  }
+}

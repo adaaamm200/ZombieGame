@@ -1,0 +1,103 @@
+{
+  "name": "spitter",
+  "facing": "right",
+  "image_size": [
+    1024,
+    1024
+  ],
+  "measured": {
+    "head_top_y": 64,
+    "feet_bottom_y": 949,
+    "neck_y": 153,
+    "head_cut_y": 161,
+    "shoulder_y": 302,
+    "hip_y": 596,
+    "hip_x": 648,
+    "content_h": 885
+  },
+  "cut_rules": {
+    "head": {
+      "type": "above",
+      "y": 161
+    },
+    "arm_front": {
+      "type": "diagonal",
+      "y0": 312,
+      "y1": 576,
+      "edge_x": 690,
+      "slope": 0.2,
+      "side": "right"
+    },
+    "torso": {
+      "type": "band",
+      "y0": 146,
+      "y1": 621
+    },
+    "leg_back": {
+      "type": "below_side",
+      "y": 596,
+      "x": 648,
+      "side": "left"
+    },
+    "leg_front": {
+      "type": "below_side",
+      "y": 596,
+      "x": 648,
+      "side": "right"
+    }
+  },
+  "rig": {
+    "anchor": {
+      "x": 648,
+      "y": 949
+    },
+    "contentH": 885,
+    "pivots": {
+      "neck": {
+        "x": 651,
+        "y": 161
+      },
+      "shoulder": {
+        "x": 682,
+        "y": 302
+      },
+      "hipB": {
+        "x": 613,
+        "y": 604
+      },
+      "hipF": {
+        "x": 683,
+        "y": 604
+      }
+    },
+    "cent": {
+      "head": {
+        "x": 651,
+        "y": 116
+      },
+      "torso": {
+        "x": 509,
+        "y": 385
+      },
+      "arm_front": {
+        "x": 682,
+        "y": 527
+      },
+      "leg_back": {
+        "x": 487,
+        "y": 757
+      },
+      "leg_front": {
+        "x": 678,
+        "y": 748
+      }
+    },
+    "order": [
+      "leg_back",
+      "torso",
+      "head",
+      "leg_front",
+      "arm_front"
+    ]
+  }
+}

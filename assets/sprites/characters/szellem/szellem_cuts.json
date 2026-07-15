@@ -1,0 +1,103 @@
+{
+  "name": "szellem",
+  "facing": "right",
+  "image_size": [
+    1024,
+    1024
+  ],
+  "measured": {
+    "head_top_y": 75,
+    "feet_bottom_y": 981,
+    "neck_y": 219,
+    "head_cut_y": 227,
+    "shoulder_y": 371,
+    "hip_y": 673,
+    "hip_x": 490,
+    "content_h": 906
+  },
+  "cut_rules": {
+    "head": {
+      "type": "above",
+      "y": 227
+    },
+    "arm_front": {
+      "type": "diagonal",
+      "y0": 381,
+      "y1": 653,
+      "edge_x": 579,
+      "slope": 0.2,
+      "side": "right"
+    },
+    "torso": {
+      "type": "band",
+      "y0": 212,
+      "y1": 698
+    },
+    "leg_back": {
+      "type": "below_side",
+      "y": 673,
+      "x": 490,
+      "side": "left"
+    },
+    "leg_front": {
+      "type": "below_side",
+      "y": 673,
+      "x": 490,
+      "side": "right"
+    }
+  },
+  "rig": {
+    "anchor": {
+      "x": 490,
+      "y": 981
+    },
+    "contentH": 906,
+    "pivots": {
+      "neck": {
+        "x": 500,
+        "y": 227
+      },
+      "shoulder": {
+        "x": 578,
+        "y": 371
+      },
+      "hipB": {
+        "x": 455,
+        "y": 681
+      },
+      "hipF": {
+        "x": 525,
+        "y": 681
+      }
+    },
+    "cent": {
+      "head": {
+        "x": 500,
+        "y": 155
+      },
+      "torso": {
+        "x": 482,
+        "y": 428
+      },
+      "arm_front": {
+        "x": 578,
+        "y": 529
+      },
+      "leg_back": {
+        "x": 367,
+        "y": 813
+      },
+      "leg_front": {
+        "x": 596,
+        "y": 824
+      }
+    },
+    "order": [
+      "leg_back",
+      "torso",
+      "head",
+      "leg_front",
+      "arm_front"
+    ]
+  }
+}

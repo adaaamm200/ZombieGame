@@ -1,0 +1,22 @@
+  farkas: {
+    src: 'assets/sprites/zombies/farkas/',
+    parts: ['head','torso','arm_front','leg_back','leg_front'],
+    anchor:   { x:504, y:953 },
+    contentH: 858,
+    height:   46,
+    pivots: {
+      neck:     { x:538, y:198 },
+      shoulder: { x:693, y:335 },
+      hipB:     { x:469, y:665 },
+      hipF:     { x:539, y:665 },
+    },
+    cent: {
+      head:      { x:538, y:150 },
+      torso:     { x:490, y:422 },
+      arm_front: { x:693, y:401 },
+      leg_back:  { x:362, y:788 },
+      leg_front: { x:613, y:806 },
+    },
+    order: ['leg_back','torso','head','leg_front','arm_front'],
+    legSwing: 10, armSwing: 5, cadence: 2.0,
+  },

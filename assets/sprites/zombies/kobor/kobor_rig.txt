@@ -1,0 +1,22 @@
+  kobor: {
+    src: 'assets/sprites/zombies/kobor/',
+    parts: ['head','torso','arm_front','leg_back','leg_front'],
+    anchor:   { x:487, y:917 },
+    contentH: 807,
+    height:   46,
+    pivots: {
+      neck:     { x:628, y:195 },
+      shoulder: { x:610, y:324 },
+      hipB:     { x:452, y:664 },
+      hipF:     { x:522, y:664 },
+    },
+    cent: {
+      head:      { x:628, y:159 },
+      torso:     { x:499, y:423 },
+      arm_front: { x:610, y:550 },
+      leg_back:  { x:388, y:791 },
+      leg_front: { x:558, y:793 },
+    },
+    order: ['leg_back','torso','head','leg_front','arm_front'],
+    legSwing: 10, armSwing: 5, cadence: 2.0,
+  },

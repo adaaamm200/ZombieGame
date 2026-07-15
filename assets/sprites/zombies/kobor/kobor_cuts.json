@@ -1,0 +1,103 @@
+{
+  "name": "kobor",
+  "facing": "right",
+  "image_size": [
+    1024,
+    1024
+  ],
+  "measured": {
+    "head_top_y": 110,
+    "feet_bottom_y": 917,
+    "neck_y": 187,
+    "head_cut_y": 195,
+    "shoulder_y": 324,
+    "hip_y": 656,
+    "hip_x": 487,
+    "content_h": 807
+  },
+  "cut_rules": {
+    "head": {
+      "type": "above",
+      "y": 195
+    },
+    "arm_front": {
+      "type": "diagonal",
+      "y0": 334,
+      "y1": 636,
+      "edge_x": 629,
+      "slope": 0.2,
+      "side": "right"
+    },
+    "torso": {
+      "type": "band",
+      "y0": 180,
+      "y1": 681
+    },
+    "leg_back": {
+      "type": "below_side",
+      "y": 656,
+      "x": 487,
+      "side": "left"
+    },
+    "leg_front": {
+      "type": "below_side",
+      "y": 656,
+      "x": 487,
+      "side": "right"
+    }
+  },
+  "rig": {
+    "anchor": {
+      "x": 487,
+      "y": 917
+    },
+    "contentH": 807,
+    "pivots": {
+      "neck": {
+        "x": 628,
+        "y": 195
+      },
+      "shoulder": {
+        "x": 610,
+        "y": 324
+      },
+      "hipB": {
+        "x": 452,
+        "y": 664
+      },
+      "hipF": {
+        "x": 522,
+        "y": 664
+      }
+    },
+    "cent": {
+      "head": {
+        "x": 628,
+        "y": 159
+      },
+      "torso": {
+        "x": 499,
+        "y": 423
+      },
+      "arm_front": {
+        "x": 610,
+        "y": 550
+      },
+      "leg_back": {
+        "x": 388,
+        "y": 791
+      },
+      "leg_front": {
+        "x": 558,
+        "y": 793
+      }
+    },
+    "order": [
+      "leg_back",
+      "torso",
+      "head",
+      "leg_front",
+      "arm_front"
+    ]
+  }
+}

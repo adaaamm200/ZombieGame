@@ -1,0 +1,103 @@
+{
+  "name": "medve",
+  "facing": "right",
+  "image_size": [
+    1024,
+    1024
+  ],
+  "measured": {
+    "head_top_y": 76,
+    "feet_bottom_y": 935,
+    "neck_y": 160,
+    "head_cut_y": 168,
+    "shoulder_y": 305,
+    "hip_y": 671,
+    "hip_x": 504,
+    "content_h": 859
+  },
+  "cut_rules": {
+    "head": {
+      "type": "above",
+      "y": 168
+    },
+    "arm_front": {
+      "type": "diagonal",
+      "y0": 315,
+      "y1": 651,
+      "edge_x": 806,
+      "slope": 0.2,
+      "side": "right"
+    },
+    "torso": {
+      "type": "band",
+      "y0": 153,
+      "y1": 696
+    },
+    "leg_back": {
+      "type": "below_side",
+      "y": 671,
+      "x": 504,
+      "side": "left"
+    },
+    "leg_front": {
+      "type": "below_side",
+      "y": 671,
+      "x": 504,
+      "side": "right"
+    }
+  },
+  "rig": {
+    "anchor": {
+      "x": 504,
+      "y": 935
+    },
+    "contentH": 859,
+    "pivots": {
+      "neck": {
+        "x": 481,
+        "y": 168
+      },
+      "shoulder": {
+        "x": 812,
+        "y": 305
+      },
+      "hipB": {
+        "x": 469,
+        "y": 679
+      },
+      "hipF": {
+        "x": 539,
+        "y": 679
+      }
+    },
+    "cent": {
+      "head": {
+        "x": 481,
+        "y": 132
+      },
+      "torso": {
+        "x": 479,
+        "y": 409
+      },
+      "arm_front": {
+        "x": 812,
+        "y": 388
+      },
+      "leg_back": {
+        "x": 344,
+        "y": 786
+      },
+      "leg_front": {
+        "x": 614,
+        "y": 810
+      }
+    },
+    "order": [
+      "leg_back",
+      "torso",
+      "head",
+      "leg_front",
+      "arm_front"
+    ]
+  }
+}

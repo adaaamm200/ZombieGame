@@ -1,0 +1,22 @@
+  spitter: {
+    src: 'assets/sprites/zombies/spitter/',
+    parts: ['head','torso','arm_front','leg_back','leg_front'],
+    anchor:   { x:648, y:949 },
+    contentH: 885,
+    height:   46,
+    pivots: {
+      neck:     { x:651, y:161 },
+      shoulder: { x:682, y:302 },
+      hipB:     { x:613, y:604 },
+      hipF:     { x:683, y:604 },
+    },
+    cent: {
+      head:      { x:651, y:116 },
+      torso:     { x:509, y:385 },
+      arm_front: { x:682, y:527 },
+      leg_back:  { x:487, y:757 },
+      leg_front: { x:678, y:748 },
+    },
+    order: ['leg_back','torso','head','leg_front','arm_front'],
+    legSwing: 10, armSwing: 5, cadence: 2.0,
+  },
