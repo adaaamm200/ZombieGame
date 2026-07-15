@@ -441,7 +441,7 @@ ZD.game = (() => {
     z.bursting = true;
     const R = z.def.burstR || 74, dmg = z.def.burstDmg || 26;
     const cy = C.GROUND_Y - z.def.h * 0.45;
-    if (!z.dead) killZombie(z);   // dead=true → az explode kihagyja a bloatert
+    if (!z.dead) killZombie(z, true);   // felrobban -> mindig szétszakad. dead=true → az explode kihagyja a bloatert
     explode(z.x, cy, dmg, R);     // AoE a többi zombira + boom + shake
     for (let i = 0; i < 26; i++) {
       const a = Math.random() * 6.28, sp = rand(40, R * 2.4);
@@ -483,11 +483,15 @@ ZD.game = (() => {
     ZD.audio.play('hit');
     if (z.hp <= 0 && !z.dead) {
       if (z.type === 'bloater') bloaterBurst(z);  // lelőve is robban
-      else killZombie(z);
+      /* Testszakadás CSAK nagy/túlölő találatnál: egy pisztolylövéstől ne
+         hulljon mértani darabokra (a vágásvonalak egyenesek -> "szeletelt"
+         hatás). Nagy ütés (a max HP ~80%-a) vagy erős túlölés -> gib. */
+      else killZombie(z, dmg >= z.maxHp * 0.8 || z.hp <= -z.maxHp * 0.6);
     }
   }
 
-  function killZombie(z) {
+  /* gib=true -> a testrészek leszakadnak; egyébként a rig összecsuklik (eldől). */
+  function killZombie(z, gib) {
     z.dead = true;
     z.deathT = 0;
     ZD.audio.play('zdie');
@@ -496,10 +500,22 @@ ZD.game = (() => {
     /* hit-stop: az ölés "üt" — nagyobb ellenfélnél hosszabb */
     st.hitstop = Math.max(st.hitstop, z.type === 'brute' ? 0.07 : z.elite ? 0.08 : 0.045);
 
-    /* ÚJ: part-rig testszakadás — a valódi testrészek leszakadnak és szétrepülnek */
-    if (ZD.partRig && ZD.partRig.has(z.type)) {
+    /* ÚJ: part-rig testszakadás — CSAK nagy/túlölő találatnál (lásd hurtZombie).
+       Normál halálnál a rig ÖSSZECSUKLIK (part_rig.js draw / z.deathT). */
+    if (gib && ZD.partRig && ZD.partRig.has(z.type)) {
       ZD.partRig.spawnGibs({ type: z.type, x: z.x, facing: z.facing, elite: z.elite });
-      st.shake = Math.max(st.shake, 5);
+      z.gibbed = true;
+      st.shake = Math.max(st.shake, 6);
+      /* Vér a szakadási pontoknál: a part-vágások EGYENESEK (fej vízszintesen,
+         lábak függőlegesen), ezért vér nélkül "szeletelt papírbábunak" látszik.
+         A test hosszában spriccelő vér elfedi a varratokat. */
+      for (let i = 0; i < 22; i++) {
+        st.parts.push({
+          x: z.x + rand(-6, 6), y: C.GROUND_Y - z.def.h * rand(0.25, 0.95),
+          vx: rand(-130, 130), vy: rand(-190, -20),
+          life: rand(0.3, 0.85), color: chance(0.6) ? '#8f2f2f' : '#5f1f1f', size: rand(2, 4), grav: 1,
+        });
+      }
     }
 
     if (z.type === 'boss') {
@@ -1172,6 +1188,7 @@ ZD.game = (() => {
       SP.drawZombie(ctx, {
         type: z.type, variant: z.variant, x: z.x, y: C.GROUND_Y,
         facing: z.facing, phase: z.phase, dead: true, deathT: z.deathT, hpRatio: 0,
+        gibbed: z.gibbed,   // szétszakadt -> nincs holttest-rajz (a gibek képviselik)
         anim: z.anim, flash: 0, elite: z.elite,
       });
     });

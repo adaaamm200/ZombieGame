@@ -188,6 +188,34 @@ ZD.partRig = (() => {
 
     const pose = {};
     let bob = 0;
+
+    /* HALÁL — ÖSSZECSUKLÁS (nem szétesés!). A testszakadás csak nagy/túlölő
+       találatnál jár (lásd game.js killZombie gib-ága); egy pisztolylövéstől a
+       zombi eldől, nem hullik mértani darabokra a vágásvonalak mentén. */
+    if (z.dead) {
+      const t = Math.min(1, (z.deathT || 0) / 0.5);
+      const ease = 1 - (1 - t) * (1 - t);
+      const alpha = (z.deathT || 0) < 0.9 ? 1 : Math.max(0, 1 - ((z.deathT || 0) - 0.9) / 0.5);
+      if (alpha <= 0) return true;
+      pose.legB = -34 * ease;          // lábak összecsuklanak
+      pose.legF = 22 * ease;
+      pose.head = 16 * ease;           // fej előrebukik
+      pose.armF = -18 * ease;
+      const A2 = rig.anchor;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(z.x, z.y);
+      ctx.scale(fac * S, S);
+      ctx.translate(-A2.x, -A2.y);
+      ctx.translate(A2.x, A2.y);       // eldőlés a TALP körül
+      ctx.rotate(-ease * 78 * Math.PI / 180);
+      ctx.translate(-A2.x, -A2.y);
+      drawPartSet(ctx, rig, pose, false);
+      ctx.restore();
+      ctx.globalAlpha = 1;
+      return true;
+    }
+
     if (z.moving) {
       const sw = Math.sin((z.phase || 0) * rig.tune.cadence);
       pose.legB = sw * rig.tune.legSwing;

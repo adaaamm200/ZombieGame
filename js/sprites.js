@@ -651,7 +651,9 @@ ZD.sprites = (() => {
        használjuk; halottnál nincs holttest-rajz, a leszakadt testrészek (gibek)
        kezelik a game.js render-jében. */
     if (ZD.partRig && ZD.partRig.has(z.type)) {
-      if (z.dead) return;
+      /* Szétszakadt (gib) halál -> a leszakadt testrészek képviselik, nincs holttest.
+         Normál halál -> a rig rajzolja az összecsuklást (z.deathT alapján). */
+      if (z.dead && z.gibbed) return;
       if (ZD.partRig.draw(ctx, z)) return;
     }
     /* ÚJ: kép-alapú sprite, ha betöltött; különben a procedurális rajz (alább) */
