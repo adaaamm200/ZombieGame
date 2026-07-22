@@ -331,6 +331,13 @@ ZD.sprites = (() => {
   const WGUN = {};
   Object.keys(WGUN_CFG).forEach((id) => { WGUN[id] = img1('assets/sprites/weapons/clean/', WGUN_CFG[id].f + '.png'); });
 
+  /* HD ikon-forrás a bolt / HUD / loadout számára — ugyanaz a tiszta festett
+     sprite, amit a kézbe is rajzolunk. Ha nincs, null → procedurális fallback. */
+  function weaponIconSrc(weapon) {
+    const hc = WGUN_CFG[weapon.id];
+    return hc ? 'assets/sprites/weapons/clean/' + hc.f + '.png' : null;
+  }
+
   /* mount: {x,y} — a KÉZ világ-pozíciója (part-rig). Ha nincs, a régi fix offszet. */
   function drawPlayerGun(ctx, o, mount) {
     if (!o.weapon) return;
@@ -1967,7 +1974,7 @@ ZD.sprites = (() => {
     drawPlayer, drawZombie, drawBackground, drawMenuScene,
     drawBoom, drawCoin, drawMed, drawGrenade, drawShell,
     drawGenerator, drawAmmoBox,
-    weaponIcon, upgIcon, px, pxCircle,
+    weaponIcon, weaponIconSrc, upgIcon, px, pxCircle,
     THEMES, ZDIM, loadMaps, drawForeground,
   };
 })();

@@ -42,6 +42,18 @@
   /* fém bevel: felső fény + alsó árnyék + belső keret */
   --ui-bevel: inset 0 1.5px 0 rgba(255,255,255,.14), inset 0 -3px 8px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.35);
   --ui-shadow: 0 6px 20px rgba(0,0,0,.6);
+
+  /* --- KOPOTT FÉM-PLAKETT recept (board-hangulat a bolt/labor kártyáin) ---
+     steel-face: felső sheen + finom szálcsiszolás + gunmetal alap
+     plaque-inset: belső acél-perem + felső él-fény + alsó mély árnyék
+     rvt: egyetlen szegecs (radial), a ::after négy sarokba pozicionálja */
+  --steel-face:
+    linear-gradient(155deg, rgba(255,255,255,.06), transparent 38%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.015) 0 1px, transparent 1px 3px),
+    radial-gradient(130% 90% at 50% -10%, rgba(58,64,74,.94), rgba(24,27,32,.96) 55%, rgba(11,13,16,.98));
+  --steel-edge: rgba(8,10,13,.9);
+  --plaque-inset: inset 0 0 0 1px rgba(160,175,190,.16), inset 0 1.5px 0 rgba(255,255,255,.16), inset 0 -4px 10px rgba(0,0,0,.55);
+  --rvt: radial-gradient(circle at 35% 30%, #cfd9e2 0 1.2px, #8792a0 2.4px, #2a3038 3.6px, rgba(0,0,0,.55) 4.4px, transparent 5px);
 }
 
 html, body {
@@ -158,7 +170,7 @@ html, body {
   box-shadow: 0 3px 10px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08);
   -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
 }
-#weaponchip img { width: 50px; height: 25px; image-rendering: pixelated; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+#weaponchip img { width: 50px; height: 25px; object-fit: contain; image-rendering: auto; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
 #weaponchip .wc-text { display: flex; flex-direction: column; line-height: 1.28; }
 #weaponname { font-size: 10px; font-weight: bold; letter-spacing: .5px; color: var(--text); text-shadow: 0 1px 1px rgba(0,0,0,.6); }
 #ammocount { font-size: 13px; font-weight: bold; color: var(--amber); text-shadow: 0 1px 1px rgba(0,0,0,.6); }
@@ -242,6 +254,31 @@ html, body {
   scrollbar-width: none;
 }
 .screen::-webkit-scrollbar { display: none; }
+
+/* --- BOLT / LABOR / BEÁLLÍTÁSOK: festett artwork-háttér (board-recept) ---
+   A kép a GÖRGETŐ elem saját backgroundja (attachment: scroll = az elemhez
+   rögzül, csak a tartalom görög felette) → nem kell külön DOM-réteg.
+   Rétegek felülről: kategória-derengés → olvashatósági scrim → artwork. */
+#s-armory, #s-lab, #s-settings {
+  background:
+    radial-gradient(120% 75% at 50% 108%, rgba(255,60,40,.10), transparent 55%),
+    linear-gradient(180deg, rgba(4,6,9,.88) 0%, rgba(4,6,9,.64) 26%, rgba(4,6,9,.58) 62%, rgba(4,6,9,.90) 100%),
+    url("../assets/references/main menu background.png") center 62% / cover no-repeat #05070a;
+}
+#s-armory { /* arany bolt-derengés felülről */
+  background:
+    radial-gradient(95% 55% at 50% -4%, rgba(255,190,60,.09), transparent 62%),
+    radial-gradient(120% 75% at 50% 108%, rgba(255,60,40,.10), transparent 55%),
+    linear-gradient(180deg, rgba(4,6,9,.88) 0%, rgba(4,6,9,.64) 26%, rgba(4,6,9,.58) 62%, rgba(4,6,9,.90) 100%),
+    url("../assets/references/main menu background.png") center 62% / cover no-repeat #05070a;
+}
+#s-lab { /* kék labor-derengés felülről */
+  background:
+    radial-gradient(95% 55% at 50% -4%, rgba(56,182,255,.10), transparent 62%),
+    radial-gradient(120% 75% at 50% 108%, rgba(40,120,255,.07), transparent 55%),
+    linear-gradient(180deg, rgba(4,6,9,.88) 0%, rgba(4,6,9,.66) 26%, rgba(4,6,9,.60) 62%, rgba(4,6,9,.90) 100%),
+    url("../assets/references/main menu background.png") center 62% / cover no-repeat #05070a;
+}
 .screen.anim > * { animation: rise .32s ease-out both; }
 .screen.anim > *:nth-child(2) { animation-delay: .05s; }
 .screen.anim > *:nth-child(3) { animation-delay: .1s; }
@@ -470,6 +507,15 @@ html, body {
   font-size: 22px; letter-spacing: 3px; color: var(--ui-gold-hi); margin: 4px 0; font-weight: bold;
   text-shadow: 0 2px 0 rgba(0,0,0,.6), 0 0 14px rgba(255,190,60,.35);
 }
+/* bolt/labor/beállítások cím = gravírozott fém feliratsáv (board DAY-plakett rokona) */
+#s-armory h2, #s-lab h2, #s-settings h2 {
+  font-size: 18px; padding: 9px 24px; border-radius: 11px;
+  background: linear-gradient(180deg, #3a4048, #16191e);
+  border: 1px solid var(--steel-edge);
+  box-shadow: 0 4px 12px rgba(0,0,0,.55), var(--plaque-inset);
+  text-shadow: 0 -1px 0 rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.08), 0 0 14px rgba(255,190,60,.3);
+}
+#s-lab h2 { color: var(--ui-blue-hi); text-shadow: 0 -1px 0 rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.08), 0 0 14px rgba(56,182,255,.35); }
 .topbar {
   width: 100%; max-width: 820px; display: flex; align-items: center; justify-content: space-between;
   gap: 10px; margin-bottom: 12px; flex: none;
@@ -482,21 +528,35 @@ html, body {
 }
 .backbtn { font-size: 15px; padding: 10px 18px; }
 
-/* --- bolt-tabok (fém + arany aktív) --- */
+/* --- bolt-tabok: szegecselt fém-lemezek, aktív = arany gravírozott plakett --- */
 .tabs {
   display: flex; gap: 9px; width: 100%; max-width: 820px; margin-bottom: 13px; flex: none;
 }
 .tab {
-  flex: 1; font-family: inherit; font-size: 14px; font-weight: bold; letter-spacing: 1px;
-  padding: 12px 8px; border-radius: 11px; cursor: pointer;
-  background: var(--ui-panel); color: var(--ui-mute); border: 1.5px solid var(--ui-border);
-  box-shadow: var(--ui-bevel); transition: filter .12s;
+  position: relative; flex: 1; font-family: inherit; font-size: 14px; font-weight: bold; letter-spacing: 1.5px;
+  padding: 13px 8px; border-radius: 11px; cursor: pointer;
+  background: var(--steel-face); color: var(--ui-mute); border: 1px solid var(--steel-edge);
+  box-shadow: 0 4px 10px rgba(0,0,0,.5), var(--plaque-inset);
+  text-shadow: 0 1px 1px rgba(0,0,0,.7); transition: filter .12s;
+}
+.tab::after { /* két oldalsó szegecs */
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background-image: var(--rvt), var(--rvt);
+  background-size: 11px 11px; background-repeat: no-repeat;
+  background-position: 6px 50%, calc(100% - 6px) 50%;
 }
 .tab.active {
-  color: #2a1900;
-  background: linear-gradient(180deg, var(--ui-gold-hi), var(--ui-gold) 55%, var(--ui-gold-dk));
-  border-color: #ffe9a8;
-  box-shadow: 0 0 16px rgba(255,190,60,.35), var(--ui-bevel);
+  color: #241600;
+  background:
+    linear-gradient(155deg, rgba(255,255,255,.28), transparent 45%),
+    linear-gradient(180deg, var(--ui-gold-hi), var(--ui-gold) 52%, var(--ui-gold-dk));
+  border-color: rgba(60,38,4,.9);
+  box-shadow: 0 0 18px rgba(255,190,60,.35), 0 4px 10px rgba(0,0,0,.5),
+    inset 0 1.5px 0 rgba(255,255,255,.5), inset 0 -3px 7px rgba(122,74,10,.55), inset 0 0 0 1px rgba(120,72,8,.4);
+  text-shadow: 0 1px 0 rgba(255,240,190,.55);
+}
+.tab.active::after { /* aktív arany lemezen sötét bronz szegecsek */
+  --rvt: radial-gradient(circle at 35% 30%, #ffe9b0 0 1.2px, #b07f22 2.4px, #5c3c08 3.6px, rgba(40,24,0,.55) 4.4px, transparent 5px);
 }
 @media (hover: hover) { .tab:hover:not(.active) { filter: brightness(1.2); } }
 
@@ -517,7 +577,9 @@ html, body {
 .ammo-buys { display: flex; gap: 8px; width: 100%; margin-top: auto; }
 .ammo-buy {
   flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
-  background: #0d130d; border: 1.5px solid #223022; border-radius: 9px; padding: 7px 6px;
+  background: linear-gradient(180deg, #14171c, #0b0d10);
+  border: 1px solid var(--steel-edge); border-radius: 9px; padding: 7px 6px;
+  box-shadow: inset 0 0 0 1px rgba(160,175,190,.1), inset 0 1px 0 rgba(255,255,255,.07);
 }
 .ammo-buy .price { font-size: 11px; }
 .ammo-buy .price em { font-style: normal; color: var(--green-hi); font-size: 9.5px; }
@@ -820,20 +882,38 @@ html, body {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 12px; width: 100%; max-width: 780px;
 }
+/* labor: szélesebb, fekvő kártyák — elfér a leírás + a szint-pipek egy sorban */
+#s-lab .cardgrid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+/* kártya = KOPOTT FÉM-PLAKETT (szálcsiszolt gunmetal, szegecsek, kategória-akcentus) */
 .card {
   position: relative;
-  background: linear-gradient(180deg, rgba(30,33,39,.94), rgba(13,15,19,.96));
-  border: 1.5px solid var(--ui-border); border-radius: 14px;
-  padding: 13px 14px 12px;
-  box-shadow: var(--ui-shadow), var(--ui-bevel);
+  background: var(--steel-face);
+  border: 1px solid var(--steel-edge); border-radius: 13px;
+  padding: 15px 15px 13px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.62), var(--plaque-inset);
   display: flex; flex-direction: column; gap: 7px;
+  --acc: var(--ui-gold);  /* armory = arany; labor felülírja kékre */
+}
+#s-lab .card { --acc: var(--ui-blue); }
+.card::before { /* felső kategória-akcentvonal (arany bolt / kék labor) */
+  content: ''; position: absolute; top: 0; left: 20px; right: 20px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--acc), transparent); opacity: .5; pointer-events: none;
+}
+.card::after { /* szegecsek a négy sarokban */
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background-image: var(--rvt), var(--rvt), var(--rvt), var(--rvt);
+  background-size: 11px 11px; background-repeat: no-repeat;
+  background-position: 6px 6px, calc(100% - 6px) 6px, 6px calc(100% - 6px), calc(100% - 6px) calc(100% - 6px);
 }
 .card.flash { animation: card-flash .7s ease-out; }
 @keyframes card-flash {
   0% { box-shadow: 0 0 0 3px var(--green-hi), 0 0 26px 6px rgba(125, 219, 79, .55); }
-  100% { box-shadow: 0 3px 0 rgba(0,0,0,.5); }
+  100% { box-shadow: 0 8px 22px rgba(0,0,0,.62), var(--plaque-inset); }
 }
-.wcard.equipped { border-color: var(--green); box-shadow: 0 0 12px rgba(125, 219, 79, .22), 0 3px 0 rgba(0,0,0,.5); }
+.wcard.equipped {
+  border-color: rgba(85,224,106,.55);
+  box-shadow: 0 0 14px rgba(85,224,106,.22), 0 8px 22px rgba(0,0,0,.62), var(--plaque-inset);
+}
 .badge {
   position: absolute; top: -9px; right: 10px;
   background: var(--green); color: #10200a;
@@ -842,15 +922,21 @@ html, body {
   box-shadow: 0 2px 4px rgba(0,0,0,.5);
 }
 .badge.dim { background: #3d523d; color: #c6d8bc; }
+/* fegyver-vitrin: mély, semleges acél-ablak (a HD festett sprite-nak) */
 .wicon {
-  align-self: center;
+  align-self: center; width: 100%;
   background:
-    radial-gradient(60% 80% at 50% 45%, rgba(125, 219, 79, .08), transparent),
-    linear-gradient(180deg, #0d130d, #101710);
-  border: 1.5px solid #223022; border-radius: 9px;
-  padding: 6px 10px;
+    radial-gradient(80% 90% at 50% 40%, rgba(70,78,90,.35), transparent 75%),
+    linear-gradient(180deg, #0c0e12, #14171c 55%, #0a0c0f);
+  border: 1px solid var(--steel-edge); border-radius: 9px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,.7), inset 0 0 0 1px rgba(160,175,190,.12), inset 0 0 22px rgba(0,0,0,.5);
+  padding: 8px 10px;
+  display: flex; align-items: center; justify-content: center;
 }
-.wicon img { width: 120px; height: 60px; image-rendering: pixelated; display: block; }
+.wicon img {
+  width: auto; max-width: 100%; height: 58px; object-fit: contain;
+  image-rendering: auto; display: block; filter: drop-shadow(0 3px 5px rgba(0,0,0,.6));
+}
 .wname { font-size: 14px; font-weight: bold; letter-spacing: .5px; }
 .wstats { display: flex; flex-direction: column; gap: 4px; }
 .srow { display: flex; align-items: center; gap: 7px; font-size: 9px; }
@@ -858,11 +944,13 @@ html, body {
 .srow b { width: 44px; text-align: right; font-size: 10px; color: var(--text); flex: none; }
 .bar {
   flex: 1; height: 7px; border-radius: 4px; overflow: hidden;
-  background: #0d130d; border: 1px solid #000;
+  background: #0b0d10; border: 1px solid #000;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.7);
 }
+/* statbár = borostyán/arany (referencia szerint) — zöld csak ready/success */
 .bar i {
   display: block; height: 100%;
-  background: linear-gradient(90deg, #4c8a32, #8ae05e);
+  background: linear-gradient(90deg, #8a5a16, #f2b736 70%, #ffe08a);
   border-radius: 3px;
 }
 .wtags { font-size: 9.5px; color: var(--amber); min-height: 13px; }
@@ -872,13 +960,16 @@ html, body {
 .price.na { color: #8a5a4a; }
 .ammoinfo-sm { font-size: 9px; color: var(--muted); width: 100%; text-align: right; }
 
-/* labor-kártya */
+/* labor-kártya (kék kategória) */
 .ucard { flex-direction: row; align-items: center; gap: 12px; }
-.ucard.maxed { border-color: #4a5a2a; }
+.ucard.maxed { border-color: rgba(85,224,106,.4); }
 .uicon {
   flex: none; width: 52px; height: 52px; border-radius: 10px;
-  background: linear-gradient(180deg, #0d130d, #101710);
-  border: 1.5px solid #223022;
+  background:
+    radial-gradient(70% 70% at 50% 35%, rgba(56,182,255,.12), transparent 75%),
+    linear-gradient(180deg, #0c0e12, #0a0c0f);
+  border: 1px solid var(--steel-edge);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,.7), inset 0 0 0 1px rgba(160,175,190,.12);
   display: flex; align-items: center; justify-content: center;
 }
 .uicon img { width: 36px; height: 36px; image-rendering: pixelated; }
@@ -886,27 +977,31 @@ html, body {
 .ulvl { color: var(--muted); font-size: 10.5px; }
 .udesc { font-size: 10px; color: var(--muted); }
 .ucard .wact { flex-direction: column; align-items: flex-end; gap: 5px; margin: 0; }
-.pips { display: inline-flex; gap: 2.5px; flex-wrap: wrap; }
+.pips { display: inline-flex; gap: 2px; flex-wrap: wrap; max-width: 100%; }
 .pips i {
-  width: 10px; height: 10px; border-radius: 2.5px;
-  background: #1a231a; border: 1px solid #000;
+  width: 7px; height: 7px; border-radius: 2px;
+  background: #121821; border: 1px solid #000;
 }
-.pips i.on {
-  background: linear-gradient(180deg, #a5e87e, #4c8a32);
-  box-shadow: 0 0 4px rgba(125, 219, 79, .5);
+.pips i.on { /* labor-fejlesztés szintjei = kék kategória-izzás */
+  background: linear-gradient(180deg, #a6e2ff, #2277c8);
+  box-shadow: 0 0 4px rgba(56, 182, 255, .55);
 }
 
 /* --- eredmény / szünet modal --- */
 .modalbox {
   margin: auto;
-  background:
-    radial-gradient(120% 90% at 50% 0%, rgba(40,44,52,.5), transparent 60%),
-    linear-gradient(180deg, rgba(26,29,34,.96), rgba(10,12,15,.98));
-  border: 1.5px solid var(--ui-border);
+  background: var(--steel-face);
+  border: 1px solid var(--steel-edge);
   border-radius: 18px; padding: 24px 26px; width: min(390px, 92vw);
   display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, .72), var(--ui-bevel);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .72), var(--plaque-inset);
   animation: modal-in .28s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+.modalbox::after { /* szegecsek a négy sarokban (fém-plakett) */
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background-image: var(--rvt), var(--rvt), var(--rvt), var(--rvt);
+  background-size: 11px 11px; background-repeat: no-repeat;
+  background-position: 8px 8px, calc(100% - 8px) 8px, 8px calc(100% - 8px), calc(100% - 8px) calc(100% - 8px);
 }
 .modalbox::before { /* felső arany accent-vonal */
   content: ''; position: absolute; top: 0; left: 26px; right: 26px; height: 2px; border-radius: 2px;
@@ -933,13 +1028,16 @@ html, body {
 .modalbox.loadout { gap: 9px; }
 .lo-weapon {
   display: flex; align-items: center; gap: 8px; width: 100%;
-  background: linear-gradient(180deg, rgba(34,38,44,.9), rgba(12,14,18,.94)); border: 1.5px solid var(--ui-border); border-radius: 12px; padding: 8px 9px;
-  box-shadow: var(--ui-bevel);
+  background:
+    radial-gradient(80% 90% at 50% 40%, rgba(70,78,90,.3), transparent 75%),
+    linear-gradient(180deg, #0c0e12, #14171c 55%, #0a0c0f);
+  border: 1px solid var(--steel-edge); border-radius: 12px; padding: 8px 9px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,.7), inset 0 0 0 1px rgba(160,175,190,.12);
 }
 .modalbox.loadout .lo-arrow { width: auto; padding: 8px 12px; font-size: 14px; flex: none; }
 .modalbox.loadout .lo-row .btn { width: auto; }
 .lo-winfo { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
-.lo-winfo img { width: 96px; height: 48px; image-rendering: pixelated; }
+.lo-winfo img { width: auto; max-width: 130px; height: 48px; object-fit: contain; image-rendering: auto; filter: drop-shadow(0 3px 5px rgba(0,0,0,.6)); }
 #lo-wname { font-size: 12px; font-weight: bold; }
 #lo-wammo { font-size: 10px; color: var(--muted); }
 #lo-wammo .lo-empty { color: var(--red); }
@@ -954,16 +1052,22 @@ html, body {
 
 /* --- beállítások --- */
 .settings-panel {
-  width: 100%; max-width: 520px;
-  background: linear-gradient(180deg, rgba(28,31,37,.95), rgba(12,14,18,.97));
-  border: 1.5px solid var(--ui-border); border-radius: 16px;
+  position: relative; width: 100%; max-width: 520px;
+  background: var(--steel-face);
+  border: 1px solid var(--steel-edge); border-radius: 16px;
   padding: 8px 18px 18px;
-  box-shadow: var(--ui-shadow), var(--ui-bevel);
+  box-shadow: 0 8px 22px rgba(0,0,0,.62), var(--plaque-inset);
   display: flex; flex-direction: column;
+}
+.settings-panel::after { /* szegecsek a négy sarokban */
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background-image: var(--rvt), var(--rvt), var(--rvt), var(--rvt);
+  background-size: 11px 11px; background-repeat: no-repeat;
+  background-position: 7px 7px, calc(100% - 7px) 7px, 7px calc(100% - 7px), calc(100% - 7px) calc(100% - 7px);
 }
 .settingsrow {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--line);
+  gap: 10px; padding: 11px 0; border-bottom: 1px solid rgba(150,166,178,.14);
   font-size: 13px;
 }
 .settingsrow:last-child { border-bottom: none; padding-bottom: 0; }
@@ -977,8 +1081,9 @@ html, body {
 .settings-sep { text-align: center; font-size: 9.5px; color: var(--muted); letter-spacing: 1px; margin: 12px 0 2px; }
 textarea.save-io {
   width: 100%; height: 72px; margin: 10px 0 2px;
-  background: #0d130d; color: var(--text);
-  border: 2px solid var(--line); border-radius: 8px;
+  background: #0c0e11; color: var(--text);
+  border: 1.5px solid rgba(150,166,178,.22); border-radius: 8px;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,.6);
   font-family: inherit; font-size: 10px; padding: 8px;
   resize: none;
 }

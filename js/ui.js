@@ -21,10 +21,11 @@ ZD.ui = (() => {
 
   function fmt(n) { return Math.round(n).toLocaleString('hu-HU'); }
 
-  /* fegyverikonok cache-elve */
+  /* fegyverikonok cache-elve — a HD festett sprite az elsődleges (ugyanaz, ami a
+     karakter kezében is van), a procedurális rajz csak fallback */
   const iconCache = {};
   function wIcon(w) {
-    if (!iconCache[w.id]) iconCache[w.id] = ZD.sprites.weaponIcon(w);
+    if (!iconCache[w.id]) iconCache[w.id] = ZD.sprites.weaponIconSrc(w) || ZD.sprites.weaponIcon(w);
     return iconCache[w.id];
   }
   const upgIconCache = {};

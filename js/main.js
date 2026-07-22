@@ -92,7 +92,14 @@ window.ZD = window.ZD || {};
   if (ZD.sprites.loadMaps) ZD.sprites.loadMaps(); // HD parallax map-rétegek betöltése
   ZD.ui.build();
   ZD.input.setup();
-  ZD.ui.show('title');
+  /* dev/QA: #képernyő[@scrollTop][@tab] hash → az adott képernyőre nyit, opcionális
+     görgetéssel/tabbal, pl. #armory@520@ammo (headless screenshot-teszthez és gyors
+     kézi ellenőrzéshez; játékost nem érint — hash nélkül minden a régi). */
+  const dbg = (location.hash.slice(1) || '').split('@');
+  const dbgScreen = dbg[0] && document.querySelector('#s-' + dbg[0]) ? dbg[0] : 'title';
+  ZD.ui.show(dbgScreen);
+  if (dbg[2]) { const tb = document.querySelector('#s-' + dbgScreen + ' .tab[data-tab="' + dbg[2] + '"]'); if (tb) tb.click(); }
+  if (dbg[1]) { const sc = document.querySelector('#s-' + dbgScreen); if (sc) sc.scrollTop = +dbg[1]; }
   fit();
   requestAnimationFrame(loop);
 

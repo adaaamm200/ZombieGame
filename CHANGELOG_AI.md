@@ -18,6 +18,29 @@ Entry format:
 
 ---
 
+### 2026-07-22 — Menu overhaul "B": armory/lab/settings in board mood
+- Goal: user picked option "B" (full package) — the flat shop/lab/settings screens must adopt
+  the campaign-board mood: painted backdrop + worn metal plaques + premium tabs + HD weapon icons.
+- Files changed: css/style.css, js/ui.js, js/sprites.js, js/main.js, tools/qa_seed.html (new),
+  assets/sprites/weapons/clean/w2_vipera.png + w8_ion.png (cleaned), sw.js + index.html (v61),
+  docs/STATUS.md.
+- What changed: painted main-menu artwork as CSS background of #s-armory/#s-lab/#s-settings
+  (scrim + gold/blue category glow); reusable steel-plaque design tokens (--steel-face,
+  --plaque-inset, --rvt rivets); cards/tabs/h2/modalbox/settings-panel/loadout as riveted
+  brushed-metal plaques with category accent (gold=armory, blue=lab); stat bars green→amber;
+  lab pips blue + 2-column wide cards; weaponIconSrc() serves the clean painted weapon PNGs to
+  shop/loadout/HUD chip (procedural icon is fallback only); checkerboard-pattern detector +
+  island removal cleaned baked residue from w2_vipera and w8_ion (canvas size preserved for
+  WGUN_CFG grip ratios).
+- Tests run: node --check on all js (OK), 0 console errors, sw bumped zk-v61.
+- Visual QA: headless-Chrome screenshots of every view (armory weapons/ammo/survivors tabs,
+  scrolled rows, lab, settings, owned/equipped states) via new dev hash-hook
+  (#screen[@scrollTop][@tab]) + tools/qa_seed.html seeded save; residue zoom-verified.
+- What was not changed: gameplay, board/title screens, HUD logic, part-rig, other 6 weapon sprites.
+- Open questions: remaining faint dark "wear" specks on vipera icon (reads as grunge — OK?);
+  baked "ION LEZER / ZOMBI KRONIKA" decal text on w8_ion (reads as tech branding at icon size).
+- Next recommended step: crawler rig decision or missions 4-5 maps; power-ups still untouched.
+
 ### 2026-07-13 — Prop fix L1/L2: half-vehicle (clipped lower body) + swap cheap van
 - Goal: user reported L1 police car "only half visible" and L2 vehicle "cheap, half a car, wrong
   size, doesn't fit".

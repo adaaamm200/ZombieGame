@@ -11,6 +11,31 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## MENÜ FELTURBÓZÁS „B" — bolt/labor/beállítások a BOARD hangulatában (2026-07-22)
+- **Feladat**: a felhasználó „B" opciója — a lapos armory/lab/settings képernyők vegyék fel a
+  board hangulatát EGYBEN (festett háttér + fém-plakett kártyák + tabok + HD fegyver-ikonok).
+- **Festett háttér**: `#s-armory/#s-lab/#s-settings` a main-menu artworköt kapja CSS
+  multi-layer backgroundként (scrim + kategória-derengés: arany=bolt, kék=labor). Trükk: a kép
+  a GÖRGETŐ elem saját backgroundja (attachment: scroll az elemhez rögzít) → nem kell külön DOM-réteg.
+- **Fém-plakett rendszer** (`:root` változók: `--steel-face/--steel-edge/--plaque-inset/--rvt`):
+  szálcsiszolt gunmetal kártyák NÉGY SAROK-SZEGECCSEL (::after, 4 radial-gradient), felső
+  kategória-akcentvonal (::before, arany/kék), gravírozott fém címsáv (h2), szegecselt tabok
+  (aktív = arany gravírozott). Modalbox + settings-panel + loadout ugyanígy. Statbárok
+  ZÖLD→BOROSTYÁN (zöld csak ready/equipped). Labor: kék pipek, 2 oszlopos széles kártyák.
+- **HD fegyver-ikonok INGYEN**: `ZD.sprites.weaponIconSrc()` — a bolt/loadout/HUD-chip a
+  `assets/sprites/weapons/clean/*.png` festett sprite-okat mutatja (procedurális = fallback).
+  `.wicon` = semleges acél-vitrin, object-fit contain, NEM pixelated.
+- **Sprite-tisztítás**: w2_vipera + w8_ion beégetett sakktábla-maradvány → MINTA-detektor
+  (17×17 tisztasági teszt: csak ott töröl, ahol a környezet szinte tisztán a két lapos szürke
+  tónus) + leváló szigetek eldobása. A többi 6 lap érintetlen (a detektor 0 px-t jelölt).
+  FONTOS: a vászonméret NEM változott (a WGUN_CFG grip-arányok a kézbe-rajzoláshoz méretfüggők).
+- **QA-infrastruktúra (ÚJ, mert a browser-panel screenshot timeoutol)**: headless Chrome
+  kamera + dev hash-hook (`#képernyő[@scrollTop][@tab]`, main.js) + `tools/qa_seed.html`
+  (gazdag mentést ír, átirányít) → minden nézet SZEMMEL ellenőrizve (armory 3 tab + scroll,
+  lab, settings, birtokolt/felszerelt állapotok).
+- **Tesztek**: node --check MIND OK; 0 konzolhiba; sw: **zk-v61**.
+- **Nem változott**: gameplay, board, title, HUD-logika, part-rig, a 6 másik fegyver-sprite.
+
 ## PROP-FIX L1/L2 — fél-jármű (levágott alsó test) + gagyi furgon csere (2026-07-13)
 - **Panasz**: L1 rendőrautó „csak félig látszik"; L2 „autó" gagyi, fél autó, rossz méret, nem illik.
 - **Ok**: a sziluett-küszöb (confLo = bgMax+18) túl magas volt a SÖTÉT alsó testű járműveknél

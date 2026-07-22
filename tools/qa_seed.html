@@ -1,0 +1,21 @@
+<!doctype html>
+<!-- QA-segéd (csak dev): gazdag mentést ír a localStorage-ba, majd a hash-ben
+     kapott képernyőre irányít, pl. /tools/qa_seed.html#armory@0@ammo
+     → headless screenshotokhoz (lőszer-tab, felszereltségi állapotok). -->
+<meta charset="utf-8">
+<script>
+  var save = {
+    coins: 123456,
+    character: 'farkas',
+    weapons: { owned: ['pistol', 'uzi', 'shotgun', 'rifle', 'rocket'], equipped: 'rifle' },
+    ammo: { uzi: 300, shotgun: 12, rifle: 220, rocket: 6 },
+    upg: { hp: 3, regen: 1, dmg: 5, crit: 0, speed: 2, gren: 0, luck: 7 },
+    stages: { unlocked: 9, cleared: [1, 2, 3, 4, 5, 6, 7, 8] },
+    sound: false,
+    lang: 'hu',
+    everBackedUp: true,
+    _ts: 1
+  };
+  localStorage.setItem('zombikronika_save_v1', JSON.stringify(save));
+  location.replace('/index.html' + (location.hash || '#armory'));
+</script>
