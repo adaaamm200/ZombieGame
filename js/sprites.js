@@ -313,8 +313,41 @@ ZD.sprites = (() => {
   /* A kézben tartott fegyver kirajzolása (a testtől FÜGGETLENÜL) — a procedurális
      rajz és a PART-RIG is ezt használja, hogy ne duplázódjon a kód. A HD atlasznál
      nem kell: ott a fegyver bele van festve a frame-ekbe. */
+  /* HD FEGYVER-KÉPEK (assets/sprites/weapons/clean/) — a tools/extract_weapons.py
+     nyeri ki őket a generált lapokból (sakktábla-háttér + belefestett felirat nélkül).
+     len  = a fegyver hossza logikai px-ben (a ~54px magas karakterhez hangolva)
+     grip = a markolat helye a KÉPEN belül, arányban (0..1) — ide kerül a kéz.
+     Ha egy kép nem tölt be, az adott fegyver a régi procedurális rajzot kapja. */
+  const WGUN_CFG = {
+    pistol:  { f: 'w1_m9',        len: 19, grip: [0.30, 0.62] },
+    uzi:     { f: 'w2_vipera',    len: 24, grip: [0.34, 0.62] },
+    shotgun: { f: 'w3_soretes',   len: 34, grip: [0.30, 0.58] },
+    rifle:   { f: 'w4_ak',        len: 33, grip: [0.32, 0.55] },
+    flamer:  { f: 'w5_langszoro', len: 31, grip: [0.30, 0.45] },
+    minigun: { f: 'w6_minigun',   len: 35, grip: [0.28, 0.55] },
+    rocket:  { f: 'w7_rpg',       len: 37, grip: [0.34, 0.60] },
+    laser:   { f: 'w8_ion',       len: 35, grip: [0.30, 0.55] },
+  };
+  const WGUN = {};
+  Object.keys(WGUN_CFG).forEach((id) => { WGUN[id] = img1('assets/sprites/weapons/clean/', WGUN_CFG[id].f + '.png'); });
+
   function drawPlayerGun(ctx, o) {
     if (!o.weapon) return;
+    const hd = WGUN[o.weapon.id], hc = WGUN_CFG[o.weapon.id];
+    if (hd && hd.naturalWidth) {
+      const rec2 = o.fireAnim > 0 ? -2 : 0;
+      const tilt2 = o.reloadT > 0 ? 0.5 : (o.fireAnim > 0 ? -0.06 : 0);
+      const w = hc.len, h = w * (hd.naturalHeight / hd.naturalWidth);
+      ctx.save();
+      ctx.translate(r2(o.x), r2(o.y));
+      if (o.facing < 0) ctx.scale(-1, 1);
+      ctx.translate(GUN_ANCHOR.x + rec2, GUN_ANCHOR.y + (o.moving ? -0.5 : 0));
+      if (tilt2) ctx.rotate(tilt2);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(hd, -w * hc.grip[0], -h * hc.grip[1], w, h);
+      ctx.restore();
+      return;
+    }
     const gun = GUNS[o.weapon.id] || GUNS.pistol;
     const rec = o.fireAnim > 0 ? -2 : 0;
     const tilt = o.reloadT > 0 ? 0.5 : (o.fireAnim > 0 ? -0.06 : 0);
