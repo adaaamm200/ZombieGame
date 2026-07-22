@@ -1,10 +1,16 @@
 /* Zombi Krónika — offline service worker (cache-first) */
-const VERSION = 'zk-v61';
+const VERSION = 'zk-v63';
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
   './css/style.css',
+  './css/fonts.css',
+  /* betűfájlok — offline is kellenek, különben a PWA visszaesik a rendszer-betűre */
+  './assets/fonts/oswald-400-latin.woff2',
+  './assets/fonts/oswald-400-latin-ext.woff2',
+  './assets/fonts/oswald-600-latin.woff2',
+  './assets/fonts/oswald-600-latin-ext.woff2',
   './js/const.js',
   './js/save.js',
   './js/i18n.js',

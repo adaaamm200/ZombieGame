@@ -96,6 +96,8 @@ window.ZD = window.ZD || {};
      görgetéssel/tabbal, pl. #armory@520@ammo (headless screenshot-teszthez és gyors
      kézi ellenőrzéshez; játékost nem érint — hash nélkül minden a régi). */
   const dbg = (location.hash.slice(1) || '').split('@');
+  /* betűtípus-variáns próba: a 4. mező (pl. #armory@@@f-rajdhani) */
+  if (dbg[3] && /^f-[a-z]+$/.test(dbg[3])) document.body.classList.add(dbg[3]);
   const dbgScreen = dbg[0] && document.querySelector('#s-' + dbg[0]) ? dbg[0] : 'title';
   ZD.ui.show(dbgScreen);
   if (dbg[2]) { const tb = document.querySelector('#s-' + dbgScreen + ' .tab[data-tab="' + dbg[2] + '"]'); if (tb) tb.click(); }
