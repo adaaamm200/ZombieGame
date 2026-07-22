@@ -208,6 +208,7 @@ ZD.ui = (() => {
         <div class="tabs">
           <button class="tab active" data-tab="weapons" id="arm-tab-w"></button>
           <button class="tab" data-tab="ammo" id="arm-tab-a"></button>
+          <button class="tab" data-tab="chars" id="arm-tab-c"></button>
         </div>
         <div class="cardgrid" id="weaponlist"></div>
       </div>`);
@@ -745,11 +746,33 @@ ZD.ui = (() => {
       $('#arm-title').textContent = T('arm.title');
       $('#arm-tab-w').textContent = T('arm.weapons');
       $('#arm-tab-a').textContent = T('arm.ammo');
+      $('#arm-tab-c').textContent = T('arm.chars');
       const list = $('#weaponlist');
       list.innerHTML = '';
       const COIN = AIMG('coin', 'coin-ic');
 
-      if (armTab === 'weapons') {
+      if (armTab === 'chars') {
+        /* KARAKTER-VÁLASZTÓ — a kártya-előnézet a rig TORZÓ+FEJ partjából áll össze
+           (nincs külön portré-asset). Egyelőre mind elérhető, stat-eltérés nincs. */
+        C.CHARACTERS.forEach((ch) => {
+          const sel = S().character === ch.id;
+          const base = `assets/sprites/characters/${ch.id}/parts_rig/`;
+          const item = el(`
+            <div class="card wcard${sel ? ' equipped' : ''} owned" data-id="${ch.id}">
+              ${sel ? `<span class="badge">${T('arm.equipped')}</span>` : ''}
+              <div class="wicon charpv">
+                <img alt="" src="${base}torso.png" class="cp-torso" />
+                <img alt="" src="${base}head.png" class="cp-head" />
+              </div>
+              <div class="wname">${T(ch.nameKey)}</div>
+              <div class="wtags">${T(ch.descKey)}</div>
+              <div class="wact">
+                <button class="btn ${sel ? 'ghost' : 'primary'}" data-char="${ch.id}" ${sel ? 'disabled' : ''}>${sel ? T('arm.equipped') : T('arm.select')}</button>
+              </div>
+            </div>`);
+          list.appendChild(item);
+        });
+      } else if (armTab === 'weapons') {
         C.WEAPONS.forEach((w) => {
           const owned = S().weapons.owned.includes(w.id);
           const equipped = S().weapons.equipped === w.id;
@@ -826,9 +849,15 @@ ZD.ui = (() => {
       list.onclick = (e) => {
         const buy = e.target.closest('[data-buy]');
         const eq = e.target.closest('[data-equip]');
+        const ch = e.target.closest('[data-char]');
         const am = e.target.closest('[data-ammo]');
         const amb = e.target.closest('[data-ammobig]');
-        if (buy) {
+        if (ch) {
+          S().character = ch.dataset.char;   // a drawPlayer ezt olvassa (part-rig)
+          ZD.save.persist();
+          ZD.audio.play('click');
+          api.refresh_armory();
+        } else if (buy) {
           const w = C.WEAPONS.find((x) => x.id === buy.dataset.buy);
           if (S().coins >= w.price) {
             S().coins -= w.price;

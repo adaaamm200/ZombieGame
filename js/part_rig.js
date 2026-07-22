@@ -137,6 +137,60 @@ ZD.partRig = (() => {
     },
     /* crawler: KIMARAD — négykézláb, vízszintes póz; az álló-rig fogalmai
        (fej fent / csípő / láb lent) nem értelmezhetők rá. Marad a régi rajz. */
+
+    /* --- JÁTSZHATÓ KARAKTEREK (a C.CHARACTERS id-jaival egyezik) ---
+       height 54 = a régi HD játékos-atlasz magassága (enemy_sprites P_CFG.h),
+       hogy a méret/hitbox ne változzon. */
+    farkas: {
+      base: 'assets/sprites/characters/farkas/parts_rig/',
+      files: { head: 'head', torso: 'torso', armF: 'arm_front', legB: 'leg_back', legF: 'leg_front' },
+      anchor: { x: 504, y: 953 }, contentH: 858, height: 54,
+      pivots: { neck: { x: 538, y: 198 }, shoulder: { x: 693, y: 335 }, hipB: { x: 469, y: 665 }, hipF: { x: 539, y: 665 } },
+      cent: { head: { x: 538, y: 150 }, torso: { x: 490, y: 422 }, armF: { x: 693, y: 401 }, legB: { x: 362, y: 788 }, legF: { x: 613, y: 806 } },
+      order: ['legB', 'torso', 'head', 'legF', 'armF'],
+      tune: { legSwing: 11, armSwing: 6, cadence: 2.2 },
+      _img: {}, _mask: {}, _ok: false, _left: 0,
+    },
+    szellem: {
+      base: 'assets/sprites/characters/szellem/parts_rig/',
+      files: { head: 'head', torso: 'torso', armF: 'arm_front', legB: 'leg_back', legF: 'leg_front' },
+      anchor: { x: 490, y: 981 }, contentH: 906, height: 54,
+      pivots: { neck: { x: 500, y: 227 }, shoulder: { x: 578, y: 371 }, hipB: { x: 455, y: 681 }, hipF: { x: 525, y: 681 } },
+      cent: { head: { x: 500, y: 155 }, torso: { x: 482, y: 428 }, armF: { x: 578, y: 529 }, legB: { x: 367, y: 813 }, legF: { x: 596, y: 824 } },
+      order: ['legB', 'torso', 'head', 'legF', 'armF'],
+      tune: { legSwing: 11, armSwing: 6, cadence: 2.2 },
+      _img: {}, _mask: {}, _ok: false, _left: 0,
+    },
+    angyal: {
+      base: 'assets/sprites/characters/angyal/parts_rig/',
+      files: { head: 'head', torso: 'torso', armF: 'arm_front', legB: 'leg_back', legF: 'leg_front' },
+      anchor: { x: 495, y: 964 }, contentH: 875, height: 54,
+      pivots: { neck: { x: 550, y: 185 }, shoulder: { x: 803, y: 325 }, hipB: { x: 460, y: 652 }, hipF: { x: 530, y: 652 } },
+      cent: { head: { x: 550, y: 142 }, torso: { x: 489, y: 403 }, armF: { x: 803, y: 393 }, legB: { x: 361, y: 789 }, legF: { x: 611, y: 799 } },
+      order: ['legB', 'torso', 'head', 'legF', 'armF'],
+      tune: { legSwing: 11, armSwing: 6, cadence: 2.2 },
+      _img: {}, _mask: {}, _ok: false, _left: 0,
+    },
+    medve: {
+      base: 'assets/sprites/characters/medve/parts_rig/',
+      files: { head: 'head', torso: 'torso', armF: 'arm_front', legB: 'leg_back', legF: 'leg_front' },
+      anchor: { x: 504, y: 935 }, contentH: 859, height: 54,
+      pivots: { neck: { x: 481, y: 168 }, shoulder: { x: 812, y: 305 }, hipB: { x: 469, y: 679 }, hipF: { x: 539, y: 679 } },
+      cent: { head: { x: 481, y: 132 }, torso: { x: 479, y: 409 }, armF: { x: 812, y: 388 }, legB: { x: 344, y: 786 }, legF: { x: 614, y: 810 } },
+      order: ['legB', 'torso', 'head', 'legF', 'armF'],
+      tune: { legSwing: 10, armSwing: 5, cadence: 1.9 },   // nehéz páncél -> lassabb ütem
+      _img: {}, _mask: {}, _ok: false, _left: 0,
+    },
+    szikra: {
+      base: 'assets/sprites/characters/szikra/parts_rig/',
+      files: { head: 'head', torso: 'torso', armF: 'arm_front', legB: 'leg_back', legF: 'leg_front' },
+      anchor: { x: 514, y: 943 }, contentH: 852, height: 54,
+      pivots: { neck: { x: 524, y: 201 }, shoulder: { x: 675, y: 337 }, hipB: { x: 479, y: 620 }, hipF: { x: 549, y: 620 } },
+      cent: { head: { x: 524, y: 149 }, torso: { x: 497, y: 413 }, armF: { x: 675, y: 417 }, legB: { x: 382, y: 759 }, legF: { x: 612, y: 770 } },
+      order: ['legB', 'torso', 'head', 'legF', 'armF'],
+      tune: { legSwing: 12, armSwing: 7, cadence: 2.4 },    // fürge -> gyorsabb ütem
+      _img: {}, _mask: {}, _ok: false, _left: 0,
+    },
   };
 
   const PIVOT_OF = { head: 'neck', armF: 'shoulder', legB: 'hipB', legF: 'hipF' };

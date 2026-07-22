@@ -137,6 +137,19 @@ ZD.C = {
 
   PLAYER: { w: 18, h: 38, speed: 110, baseHp: 100 },
 
+  /* Játszható karakterek — az id egyezik a js/part_rig.js RIGS kulcsaival és az
+     assets/sprites/characters/<id>/ mappával.
+     FONTOS: egyelőre TISZTÁN KOZMETIKAI (nincs stat-eltérés), hogy a meglévő
+     balansz ne változzon. A szerepek (katona/felderítő/medikus/nehéz/technikus)
+     megvannak, perkeket később lehet rájuk húzni — az külön döntés. */
+  CHARACTERS: [
+    { id: 'farkas',  nameKey: 'char.farkas',  descKey: 'char.farkas.d' },
+    { id: 'szellem', nameKey: 'char.szellem', descKey: 'char.szellem.d' },
+    { id: 'angyal',  nameKey: 'char.angyal',  descKey: 'char.angyal.d' },
+    { id: 'medve',   nameKey: 'char.medve',   descKey: 'char.medve.d' },
+    { id: 'szikra',  nameKey: 'char.szikra',  descKey: 'char.szikra.d' },
+  ],
+
   /* Fegyverek — ammo: kezdő lőszer (perzisztens pool), -1 = végtelen.
      kb: találati visszalökés, flashScale: torkolattűz méret.
      Lőszer-gazdaságtan (jelentősen olcsóbb, játékosbarát):

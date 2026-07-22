@@ -991,3 +991,15 @@ textarea.save-io {
 @media (orientation: portrait) {
   #rotate-note { display: flex; }
 }
+
+/* --- Karakter-választó kártya előnézete (Fegyverbolt → Túlélők) ---
+   Nincs külön portré-asset: a rig TORZÓ + FEJ partját rétegezzük egymásra.
+   Mindkét PNG teljes-vászon (1024×1024) és tökéletesen illeszkedik, ezért
+   elég abszolút pozícióban egymásra tenni; a felső ~62% mutatja a mellképet. */
+.wicon.charpv { position: relative; overflow: hidden; aspect-ratio: 1 / 1; }
+.wicon.charpv img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: contain; object-position: center top;
+  transform: scale(1.55) translateY(6%);   /* mellkép-kivágás */
+  image-rendering: auto;
+}

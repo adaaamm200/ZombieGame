@@ -310,9 +310,42 @@ ZD.sprites = (() => {
 
   const GUN_ANCHOR = { x: 8.4, y: -24 }; // logikai — kéz pozíció (1.3× testhez)
 
+  /* A kézben tartott fegyver kirajzolása (a testtől FÜGGETLENÜL) — a procedurális
+     rajz és a PART-RIG is ezt használja, hogy ne duplázódjon a kód. A HD atlasznál
+     nem kell: ott a fegyver bele van festve a frame-ekbe. */
+  function drawPlayerGun(ctx, o) {
+    if (!o.weapon) return;
+    const gun = GUNS[o.weapon.id] || GUNS.pistol;
+    const rec = o.fireAnim > 0 ? -2 : 0;
+    const tilt = o.reloadT > 0 ? 0.5 : (o.fireAnim > 0 ? -0.06 : 0);
+    ctx.save();
+    ctx.translate(r2(o.x), r2(o.y));
+    if (o.facing < 0) ctx.scale(-1, 1);
+    ctx.translate(GUN_ANCHOR.x + rec, GUN_ANCHOR.y + (o.moving ? -0.5 : 0));
+    if (tilt) ctx.rotate(tilt);
+    ctx.drawImage(gun.c, -22 / ART, -26 / ART, 76 / ART, 38 / ART);
+    ctx.restore();
+  }
+
   function drawPlayer(ctx, o) {
     /* o: {x,y,facing,moving,phase,idleT,fireAnim,reloadT,flash,weapon,deathT} */
-    /* ÚJ: HD katona-sprite, ha betöltött; különben a procedurális rajz (alább) */
+    /* ÚJ: PART-RIG a választott karakterrel (járás = külön lengő lábak/kar,
+       halál = összecsuklás). A rig id-ja a mentett S().character (C.CHARACTERS).
+       Ha nincs betöltve, marad a régi HD atlasz, majd a procedurális rajz. */
+    const cid = (ZD.save && ZD.save.data && ZD.save.data.character) || 'farkas';
+    if (ZD.partRig && ZD.partRig.has(cid)) {
+      const dying = o.deathT !== undefined && o.deathT > 0;
+      if (ZD.partRig.draw(ctx, {
+        type: cid, x: o.x, y: o.y, facing: o.facing,
+        phase: o.phase || 0, moving: !!o.moving && !dying,
+        flash: o.flash || 0, dead: dying, deathT: o.deathT || 0,
+      })) {
+        /* a rig CSAK a testet rajzolja -> a fegyvert külön tesszük rá (halálkor nem) */
+        if (!dying) drawPlayerGun(ctx, o);
+        return;
+      }
+    }
+    /* HD katona-sprite, ha betöltött; különben a procedurális rajz (alább) */
     if (ZD.enemySprites && ZD.enemySprites.hasPlayer()) {
       if (ZD.enemySprites.drawPlayer(ctx, o)) return;
     }
@@ -337,16 +370,7 @@ ZD.sprites = (() => {
     blit(ctx, sh, frame, o.x, o.y, o.facing);
 
     /* fegyver a kézben — lövésnél hátrarúg */
-    const gun = GUNS[o.weapon.id] || GUNS.pistol;
-    const rec = o.fireAnim > 0 ? -2 : 0;
-    const tilt = o.reloadT > 0 ? 0.5 : (o.fireAnim > 0 ? -0.06 : 0);
-    ctx.save();
-    ctx.translate(r2(o.x), r2(o.y));
-    if (o.facing < 0) ctx.scale(-1, 1);
-    ctx.translate(GUN_ANCHOR.x + rec, GUN_ANCHOR.y + (o.moving ? -0.5 : 0));
-    if (tilt) ctx.rotate(tilt);
-    ctx.drawImage(gun.c, -22 / ART, -26 / ART, 76 / ART, 38 / ART);
-    ctx.restore();
+    drawPlayerGun(ctx, o);
 
     /* torkolattűz — fegyverenként eltérő méret */
     if (o.fireAnim > 0 && o.weapon.kind !== 'flame') {

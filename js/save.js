@@ -9,6 +9,7 @@ ZD.save = (() => {
 
   const defaults = () => ({
     coins: 0,
+    character: 'farkas',   // választott játszható karakter (C.CHARACTERS id)
     weapons: { owned: ['pistol'], equipped: 'pistol' },
     ammo: {},          // fegyverenkénti perzisztens lőszerkészlet
     upg: { hp: 0, regen: 0, dmg: 0, crit: 0, speed: 0, gren: 0, luck: 0 },
@@ -21,6 +22,8 @@ ZD.save = (() => {
 
   /* régi mentés migrálása: ammo-mező pótlása a birtokolt fegyverekhez */
   function migrate(d) {
+    /* régi mentésben nincs karakter, vagy időközben törölt id-t tárol */
+    if (!d.character || !(ZD.C.CHARACTERS || []).some((c) => c.id === d.character)) d.character = 'farkas';
     if (!d.ammo || typeof d.ammo !== 'object') d.ammo = {};
     (d.weapons.owned || []).forEach((id) => {
       if (id === 'pistol') return;

@@ -35,3 +35,5 @@ assets/sprites/_weapons_qa_magenta.png
 
 # Pálya-audit kontaktlapok (a tools/ szimulációval újragenerálhatók)
 assets/maps/_audit_*.png
+assets/sprites/_player_rig_qa.png
+assets/sprites/_player_scale_qa.jpg
