@@ -331,7 +331,8 @@ ZD.sprites = (() => {
   const WGUN = {};
   Object.keys(WGUN_CFG).forEach((id) => { WGUN[id] = img1('assets/sprites/weapons/clean/', WGUN_CFG[id].f + '.png'); });
 
-  function drawPlayerGun(ctx, o) {
+  /* mount: {x,y} — a KÉZ világ-pozíciója (part-rig). Ha nincs, a régi fix offszet. */
+  function drawPlayerGun(ctx, o, mount) {
     if (!o.weapon) return;
     const hd = WGUN[o.weapon.id], hc = WGUN_CFG[o.weapon.id];
     if (hd && hd.naturalWidth) {
@@ -339,9 +340,16 @@ ZD.sprites = (() => {
       const tilt2 = o.reloadT > 0 ? 0.5 : (o.fireAnim > 0 ? -0.06 : 0);
       const w = hc.len, h = w * (hd.naturalHeight / hd.naturalWidth);
       ctx.save();
-      ctx.translate(r2(o.x), r2(o.y));
-      if (o.facing < 0) ctx.scale(-1, 1);
-      ctx.translate(GUN_ANCHOR.x + rec2, GUN_ANCHOR.y + (o.moving ? -0.5 : 0));
+      if (mount) {
+        /* a fegyver a kézhez tapad: a markolat kerül a kéz pontjára */
+        ctx.translate(r2(mount.x), r2(mount.y));
+        if (o.facing < 0) ctx.scale(-1, 1);
+        ctx.translate(rec2, 0);
+      } else {
+        ctx.translate(r2(o.x), r2(o.y));
+        if (o.facing < 0) ctx.scale(-1, 1);
+        ctx.translate(GUN_ANCHOR.x + rec2, GUN_ANCHOR.y + (o.moving ? -0.5 : 0));
+      }
       if (tilt2) ctx.rotate(tilt2);
       ctx.imageSmoothingEnabled = true;
       ctx.drawImage(hd, -w * hc.grip[0], -h * hc.grip[1], w, h);
@@ -365,16 +373,30 @@ ZD.sprites = (() => {
     /* ÚJ: PART-RIG a választott karakterrel (járás = külön lengő lábak/kar,
        halál = összecsuklás). A rig id-ja a mentett S().character (C.CHARACTERS).
        Ha nincs betöltve, marad a régi HD atlasz, majd a procedurális rajz. */
+    /* JÁTÉKOS-RENDER: egyelőre a HD atlasz megy (PLAYER_RIG = false).
+       MIÉRT: a karakter-artok JÁRÓ pózban készültek (a kar lefelé lóg), a régi HD
+       atlaszban viszont dedikált célzó/lövő frame-ek vannak, a FEGYVERREL EGYÜTT
+       megfestve. A rigre váltva a fegyvert külön kell rárajzolni, de nincs kéz,
+       ami megfogja -> a fegyver "lebeg". Ezt forgatással/eltolással nem lehet
+       pótolni (3 próbálkozás után sem), csak fegyvertartó pózban generált
+       karakter-arttal. A rig-kód és az 5 karakter-rig ITT MARAD, hogy amint a
+       megfelelő art meglesz, egy kapcsolóval élesíthető legyen. */
+    const PLAYER_RIG = false;
     const cid = (ZD.save && ZD.save.data && ZD.save.data.character) || 'farkas';
-    if (ZD.partRig && ZD.partRig.has(cid)) {
+    if (PLAYER_RIG && ZD.partRig && ZD.partRig.has(cid)) {
       const dying = o.deathT !== undefined && o.deathT > 0;
       if (ZD.partRig.draw(ctx, {
         type: cid, x: o.x, y: o.y, facing: o.facing,
         phase: o.phase || 0, moving: !!o.moving && !dying,
         flash: o.flash || 0, dead: dying, deathT: o.deathT || 0,
+        aiming: !dying,          // az elülső kar előre céloz (lásd part_rig armAim)
       })) {
-        /* a rig CSAK a testet rajzolja -> a fegyvert külön tesszük rá (halálkor nem) */
-        if (!dying) drawPlayerGun(ctx, o);
+        /* A rig CSAK a testet rajzolja -> a fegyvert külön tesszük rá, a KÉZHEZ
+           rögzítve (gunMount), nem egy fix offszetre — így nem "lebeg". */
+        if (!dying) {
+          const rigA = ZD.partRig.gunMount(cid, o.x, o.y, o.facing, ZD.partRig.armAimOf(cid));
+          drawPlayerGun(ctx, o, rigA);
+        }
         return;
       }
     }

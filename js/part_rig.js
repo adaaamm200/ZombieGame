@@ -147,6 +147,7 @@ ZD.partRig = (() => {
       anchor: { x: 504, y: 953 }, contentH: 858, height: 54,
       pivots: { neck: { x: 538, y: 198 }, shoulder: { x: 693, y: 335 }, hipB: { x: 469, y: 665 }, hipF: { x: 539, y: 665 } },
       cent: { head: { x: 538, y: 150 }, torso: { x: 490, y: 422 }, armF: { x: 693, y: 401 }, legB: { x: 362, y: 788 }, legF: { x: 613, y: 806 } },
+      hand: { x: 611, y: 621 }, armAim: -100,   // fegyver-rogzites + celzo-szog
       order: ['legB', 'torso', 'head', 'legF', 'armF'],
       tune: { legSwing: 11, armSwing: 6, cadence: 2.2 },
       _img: {}, _mask: {}, _ok: false, _left: 0,
@@ -157,6 +158,7 @@ ZD.partRig = (() => {
       anchor: { x: 490, y: 981 }, contentH: 906, height: 54,
       pivots: { neck: { x: 500, y: 227 }, shoulder: { x: 578, y: 371 }, hipB: { x: 455, y: 681 }, hipF: { x: 525, y: 681 } },
       cent: { head: { x: 500, y: 155 }, torso: { x: 482, y: 428 }, armF: { x: 578, y: 529 }, legB: { x: 367, y: 813 }, legF: { x: 596, y: 824 } },
+      hand: { x: 556, y: 637 }, armAim: -104,   // fegyver-rogzites + celzo-szog
       order: ['legB', 'torso', 'head', 'legF', 'armF'],
       tune: { legSwing: 11, armSwing: 6, cadence: 2.2 },
       _img: {}, _mask: {}, _ok: false, _left: 0,
@@ -167,6 +169,7 @@ ZD.partRig = (() => {
       anchor: { x: 495, y: 964 }, contentH: 875, height: 54,
       pivots: { neck: { x: 550, y: 185 }, shoulder: { x: 803, y: 325 }, hipB: { x: 460, y: 652 }, hipF: { x: 530, y: 652 } },
       cent: { head: { x: 550, y: 142 }, torso: { x: 489, y: 403 }, armF: { x: 803, y: 393 }, legB: { x: 361, y: 789 }, legF: { x: 611, y: 799 } },
+      hand: { x: 787, y: 419 }, armAim: -70,   // fegyver-rogzites + celzo-szog
       order: ['legB', 'torso', 'head', 'legF', 'armF'],
       tune: { legSwing: 11, armSwing: 6, cadence: 2.2 },
       _img: {}, _mask: {}, _ok: false, _left: 0,
@@ -177,6 +180,7 @@ ZD.partRig = (() => {
       anchor: { x: 504, y: 935 }, contentH: 859, height: 54,
       pivots: { neck: { x: 481, y: 168 }, shoulder: { x: 812, y: 305 }, hipB: { x: 469, y: 679 }, hipF: { x: 539, y: 679 } },
       cent: { head: { x: 481, y: 132 }, torso: { x: 479, y: 409 }, armF: { x: 812, y: 388 }, legB: { x: 344, y: 786 }, legF: { x: 614, y: 810 } },
+      hand: { x: 797, y: 425 }, armAim: -70,   // fegyver-rogzites + celzo-szog
       order: ['legB', 'torso', 'head', 'legF', 'armF'],
       tune: { legSwing: 10, armSwing: 5, cadence: 1.9 },   // nehéz páncél -> lassabb ütem
       _img: {}, _mask: {}, _ok: false, _left: 0,
@@ -187,6 +191,7 @@ ZD.partRig = (() => {
       anchor: { x: 514, y: 943 }, contentH: 852, height: 54,
       pivots: { neck: { x: 524, y: 201 }, shoulder: { x: 675, y: 337 }, hipB: { x: 479, y: 620 }, hipF: { x: 549, y: 620 } },
       cent: { head: { x: 524, y: 149 }, torso: { x: 497, y: 413 }, armF: { x: 675, y: 417 }, legB: { x: 382, y: 759 }, legF: { x: 612, y: 770 } },
+      hand: { x: 608, y: 578 }, armAim: -98,   // fegyver-rogzites + celzo-szog
       order: ['legB', 'torso', 'head', 'legF', 'armF'],
       tune: { legSwing: 12, armSwing: 7, cadence: 2.4 },    // fürge -> gyorsabb ütem
       _img: {}, _mask: {}, _ok: false, _left: 0,
@@ -279,6 +284,14 @@ ZD.partRig = (() => {
       bob = -Math.abs(sw) * rig.height * 0.03;
     } else {
       bob = Math.sin(_t * 1.6) * rig.height * 0.006;
+    }
+
+    /* CÉLZÓ KAR (játékos): a karakter-art JÁRÓ pózban készült, a kar lefelé-hátra
+       lóg -> a fegyver csak "lebegett" mellette. Ha a hívó aiming-et kér, az
+       elülső kart a rig armAim szögébe forgatjuk (előre mutat), és a fegyvert a
+       gunMount() a KÉZHEZ teszi. A járás-lengés kis maradéka megmarad. */
+    if (z.aiming && rig.armAim != null) {
+      pose.armF = rig.armAim + (pose.armF || 0) * 0.25;
     }
 
     /* TALÁLAT-REAKCIÓ: a game.js z.flash-t 0.12s-re állítja találatkor.
@@ -386,5 +399,33 @@ ZD.partRig = (() => {
 
   function reset() { gibs.length = 0; }
 
-  return { load, has, draw, spawnGibs, update, drawGibs, reset };
+  /* --- FEGYVER-RÖGZÍTÉS ---------------------------------------------------
+     A fegyvert eddig egy FIX képernyő-offszetre (GUN_ANCHOR) rajzoltuk, ami a
+     régi procedurális testhez volt hangolva -> a rig-karakterek kezétől akár
+     18px-re esett, ezért "lebegett" a fegyver.
+     Ez a függvény megmondja, hol van a karakter KEZE a világban, miután az
+     elülső kart `armDeg` fokkal elforgattuk a váll körül — így a fegyver a
+     kézhez tapad és együtt mozog vele.
+     rig.hand: a kéz helye a kar-parton (képtér). Ha nincs megadva, nincs
+     rögzítés (a hívó marad a régi fix offszetnél). */
+  function gunMount(type, x, y, facing, armDeg) {
+    const rig = RIGS[type]; if (!rig || !rig._ok || !rig.hand) return null;
+    const S = rig.height / rig.contentH;
+    const fac = facing < 0 ? -1 : 1;
+    const sh = rig.pivots.shoulder;
+    const a = (armDeg || 0) * Math.PI / 180;
+    /* a kéz elforgatva a váll körül (képtérben), majd talp-anchorhoz igazítva */
+    const dx = rig.hand.x - sh.x, dy = rig.hand.y - sh.y;
+    const rx = sh.x + dx * Math.cos(a) - dy * Math.sin(a);
+    const ry = sh.y + dx * Math.sin(a) + dy * Math.cos(a);
+    return {
+      x: x + fac * (rx - rig.anchor.x) * S,
+      y: y + (ry - rig.anchor.y) * S,
+      rot: a,          // a fegyver dőlése kövesse a kart
+    };
+  }
+
+  function armAimOf(type) { const r = RIGS[type]; return r && r.armAim != null ? r.armAim : 0; }
+
+  return { load, has, draw, spawnGibs, update, drawGibs, reset, gunMount, armAimOf };
 })();
