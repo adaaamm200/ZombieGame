@@ -1523,9 +1523,13 @@ ZD.sprites = (() => {
     return items;
   }
 
-  function tileLayer(ctx, tile, cam, par, bottomY) {
-    const w = tile.width / ART;
-    const h = tile.height / ART;
+  /* div: a réteg kicsinyítése (alapból ART=2). A level_02/03 far-ja NATÍV méretben
+     (div=1) megy: így egyrészt szélesebb a látómezőnél + parallax-úton (nem tileel
+     láthatóan), másrészt a teljes képmagasságot kitölti (nem marad üres sáv felül). */
+  function tileLayer(ctx, tile, cam, par, bottomY, div) {
+    const d = div || ART;
+    const w = tile.width / d;
+    const h = tile.height / d;
     let off = -((cam * par) % w);
     if (off > 0) off -= w;
     for (let x = off; x < C.VIEW_W; x += w) {
@@ -1549,7 +1553,7 @@ ZD.sprites = (() => {
   const MAPS = {};
   function img1(base, name) { const im = new Image(); im.src = base + name; return im; }
   function loadMap(theme, base, cfg) {
-    const m = { ready: false, base, struct: {}, props: {}, fx: {}, structPattern: cfg.structPattern || [], structPeriod: cfg.structPeriod || 560, place: cfg.place || [] };
+    const m = { ready: false, base, struct: {}, props: {}, fx: {}, structPattern: cfg.structPattern || [], structPeriod: cfg.structPeriod || 560, place: cfg.place || [], farDiv: cfg.farDiv || ART };
     MAPS[theme] = m;
     /* tiszta réteg-modell: far (skyline) + ground (talaj) + diszkrét struktúrák + ritka propok */
     ['far', 'ground'].forEach((k) => { m[k] = img1(base, k + '.png'); });
@@ -1576,9 +1580,14 @@ ZD.sprites = (() => {
     /* theme 1 = level_02 „Quick Mart" (kampány 6–10. nap) — ugyanaz a tiszta modell:
        far skyline + diszkrét midground (bolt-homlokzat + oszlop) + talaj + ritka propok */
     loadMap(1, 'assets/maps/level_02/', {
+      /* farDiv 1: a far natív méretben (551×236) — kitölti a képmagasságot, és a
+         parallax-úton (480 + 0.2·560 ≈ 592px) alig ismétlődik. ART=2-vel csak egy
+         vékony 118px-es sáv volt, felette üres éggel. */
+      farDiv: 1,
       struct: ['facade', 'power_pole'],
       structPattern: [[40, 'facade'], [400, 'power_pole']],
-      structPeriod: 640,
+      /* 640 → 760: a 299px-es homlokzat így nem tűnik fel kétszer egy képernyőn */
+      structPeriod: 760,
       props: ['car', 'gas_pump', 'dumpster', 'gas_sign'],
       place: [[150, 'gas_pump'], [360, 'car'], [630, 'dumpster'], [880, 'gas_sign']],
     });
@@ -1586,6 +1595,11 @@ ZD.sprites = (() => {
        a teljes festett alley-jelenet (neon/glow/nedves tükröződés) a gazdag ÉLŐ far-háttér,
        + nedves aszfalt talaj + ritka propok. Nincs külön midground struktúra (a jelenet gazdag). */
     loadMap(2, 'assets/maps/level_03/', {
+      /* farDiv 1: EZ VOLT A LEGNAGYOBB BAJ. A far egy PERSPEKTIVIKUS jelenet
+         (utcalámpa + enyészpont), amit ART=2-vel a motor 367px-en tileelt -> ugyanaz
+         a lámpa 2-3× ismétlődött egy képernyőn, felette 40% üres feketével.
+         Natív méretben (735×236) egyetlen összefüggő jelenet, ismétlődés nélkül. */
+      farDiv: 1,
       struct: [],
       props: [],   // a festett jelenet baked-in propokat tartalmaz — nincs külön cropped prop
       place: [],
@@ -1704,7 +1718,7 @@ ZD.sprites = (() => {
       /* TISZTA RÉTEG-MODELL + FINOM MÉLYSÉG-SÁVOS ATMOSZFÉRA (nem full-screen szűrő):
          far → FAR mist → struktúrák → MID mist (halvány) → talaj → fénypool → propok.
          Az előtér-köd + eső a drawForeground-ban, az entitások UTÁN. */
-      if (hd.far.naturalWidth) tileLayer(ctx, hd.far, cam, 0.2, GY);
+      if (hd.far.naturalWidth) tileLayer(ctx, hd.far, cam, 0.2, GY, hd.farDiv);
       drawFogBand(ctx, cam, t || 0, 'far', GY - 60, 30);        // horizont/far mist (erősebb, de halvány)
       drawStructures(ctx, hd, cam);                              // épületek + víztorony (par 0.5)
       drawFogBand(ctx, cam, t || 0, 'mid', GY - 16, 18);        // midground/struktúra-tő (nagyon halvány)

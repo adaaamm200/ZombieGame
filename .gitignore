@@ -32,3 +32,6 @@ assets/sprites/_v2_test.png
 assets/sprites/_ai_cutout_qa.png
 assets/sprites/_chars_qa_magenta.png
 assets/sprites/_weapons_qa_magenta.png
+
+# Pálya-audit kontaktlapok (a tools/ szimulációval újragenerálhatók)
+assets/maps/_audit_*.png
