@@ -309,6 +309,17 @@ ZD.ui = (() => {
       root.appendChild(s);
     });
 
+    /* Atmoszféra-réteg (pernye + filmszemcse + vignetta) a teljes képernyős
+       felületekre. A modálok (pause/loadout/result) kimaradnak: azok már
+       elsötétített overlay-en ülnek, ott dupla lenne. */
+    ['title', 'stages', 'armory', 'lab', 'settings'].forEach((k) => {
+      if (!screens[k]) return;
+      const fx = document.createElement('div');
+      fx.className = 'scr-fx';
+      fx.setAttribute('aria-hidden', 'true');
+      screens[k].appendChild(fx);
+    });
+
     /* navigációs gombok */
     root.addEventListener('click', (e) => {
       const act = e.target.closest('[data-action]');

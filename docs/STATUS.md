@@ -11,6 +11,42 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## UI-EGYSÉGESÍTÉS — tipográfia + fémlemez-gombrendszer + atmoszféra (2026-07-23)
+- **Panasz**: „az egész kezelőfelület gagyi, a board/shop/menü mind különböző, a menü
+  a v1-ből maradt zöld fos, semmi effekt, 1990-es pixeles játék hatása."
+- **Diagnózis (mérhető, nem hangulat)**: (1) MINDEN szöveg `Courier New` volt — egy 1955-ös
+  írógép-betű; (2) a főmenü `.menu-btn` lapos doboz + 2px NEON keret, alap `#7ddb4f` =
+  szó szerint a v1 maradéka; (3) NÉGY külön vizuális nyelv futott (menü neon-kártya /
+  board generált PNG / bolt acél-plakett / HUD zöld chip); (4) nulla atmoszféra-réteg.
+- **1. TIPOGRÁFIA**: `css/fonts.css` + `assets/fonts/` — SIL OFL woff2 (Oswald =
+  alapértelmezés, + Rajdhani/BlackOps/BarlowCond variánsok). Zero-dependency: sima
+  fájlok `@font-face`-szel, nincs CDN, nincs build. `--font-ui` / `--font-display`.
+  **CSAPDA**: a Google `latin` és `latin-ext` külön fájlra vágja; a magyar `ő`/`ű` CSAK
+  a latin-ext-ben van, az alapbetűk CSAK a latinban → MINDKETTŐ kell, eredeti
+  `unicode-range`-dzsel. Kirenderelve ellenőrizve, nem feltételezve.
+- **2. FÉMLEMEZ-GOMBRENDSZER** (`.plate`/`.btn`/`.tab`/`.menu-btn` közös alap): chamfer
+  `clip-path` + koncentrikus `inset box-shadow` gyűrűk (dupla keret + akcentus-vonal) +
+  `filter: drop-shadow` külső izzás. NINCS pszeudo-elem → a szöveg természetesen felül
+  marad. Variánsok: primary=arany, danger=vörös, ok=zöld, ghost=semleges.
+  **Miért CSS és nem PNG**: a generált gomb-PNG-kbe bele van égetve a felirat → nem
+  fordítható, nincs lenyomott/tiltott állapot, és minden új felirat új kredit.
+  A board generált gombjai SZÁNDÉKOSAN maradtak (a felhasználó szerint azok jók).
+- **3. ZÖLD KIVEZETÉSE**: menü primary zöld→ARANY; briefing cím/accent zöld→arany;
+  briefing panel + sp-thumb zöldes→semleges acél; HUD `#weaponchip` zöldes→acél;
+  nyelvválasztó aktív zöld→arany. Zöld MARADT, ahol jelentése van: equipped-badge,
+  vásárlás-villanás, done/next státusz, győzelem, HP.
+- **4. ATMOSZFÉRA** (`.scr-fx`, JS-ből injektálva 5 képernyőre): felszálló pernye +
+  filmszemcse (SVG feTurbulence data-URI, nulla fájl) + vignetta. `position: fixed`,
+  hogy görgetéskor ne ússzon el — ellenőrizve a görgetett bolton.
+  **Első kísérlet HIBÁS volt**: 0.5 opacitás + vignetta EGYÜTT `soft-light`-ban
+  tejfehérre mosta a festett hátteret → szemcse 0.09/`overlay`, vignetta külön
+  `box-shadow`-ra. (Screenshotból derült ki, ezért kell mindig ránézni.)
+- **Tesztek**: node --check MIND OK; 0 betöltési hiba; minden képernyő kirenderelve
+  (főmenü, board, bolt 3 tab + görgetve, labor, beállítások, modálok). sw: **zk-v65**.
+- **Nem változott**: gameplay, board-artwork és annak generált gombjai, part-rig, assetek.
+- **HÁTRA VAN**: az ikonok (`m-*.png`, labor procedurális pixel-ikonok) — ezek a
+  következő gyenge láncszem; SVG-re kéne váltani, az is kredit nélkül megy.
+
 ## MENÜ FELTURBÓZÁS „B" — bolt/labor/beállítások a BOARD hangulatában (2026-07-22)
 - **Feladat**: a felhasználó „B" opciója — a lapos armory/lab/settings képernyők vegyék fel a
   board hangulatát EGYBEN (festett háttér + fém-plakett kártyák + tabok + HD fegyver-ikonok).

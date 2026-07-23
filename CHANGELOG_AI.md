@@ -18,6 +18,35 @@ Entry format:
 
 ---
 
+### 2026-07-23 — UI unification: typography, metal-plate buttons, atmosphere
+- Goal: user reported the whole UI feels cheap, every screen looks different, the main menu
+  is still the v1 green neon, no effects, "like a 1990s pixel game".
+- Root causes (measured, not vibes): every string rendered in Courier New (a 1955 typewriter
+  face); `.menu-btn` was a flat box with a 2px neon border defaulting to the legacy `#7ddb4f`;
+  four separate visual languages coexisted (neon menu card / generated board PNG / steel
+  plaque shop / green HUD chip); no atmosphere layer at all.
+- Files changed: css/fonts.css (new), assets/fonts/* (new, SIL OFL woff2 + licenses),
+  css/style.css, js/ui.js, js/main.js, index.html, sw.js, docs/STATUS.md.
+- What changed: (1) real game typography via local @font-face, `--font-ui`/`--font-display`,
+  Oswald as default — both `latin` AND `latin-ext` subsets shipped so Hungarian ő/ű render;
+  (2) one metal-plate button system shared by `.plate/.btn/.tab/.menu-btn` — chamfer clip-path
+  + concentric inset-shadow rings + drop-shadow glow, no pseudo-elements so real text stays on
+  top; variants primary/danger/ok/ghost; (3) legacy green retired except where it means
+  ready/success (equipped, purchase flash, done/next, win, HP); (4) `.scr-fx` atmosphere layer
+  (drifting embers + SVG-turbulence grain + vignette), position:fixed so it survives scrolling.
+- Tests run: node --check on all js + sw (OK), zero load errors, sw bumped zk-v65.
+- Visual QA: every screen rendered headless and inspected — title, board, armory (3 tabs +
+  scrolled), lab, settings, modals. Two real defects were caught this way and fixed: the first
+  atmosphere pass washed the painted backdrop milky (grain opacity 0.5 + vignette both in
+  soft-light → 0.09 overlay + separate box-shadow vignette), and staggered entrance animations
+  made headless shots drop random buttons (fixed properly by honouring prefers-reduced-motion).
+- What was not changed: gameplay, board artwork and its generated PNG buttons (user considers
+  those good), part-rig, sprites.
+- Open questions: the icons are now the weakest link — `assets/ui/m-*.png` read as mud at 44px
+  and the lab still uses crude procedural pixel icons; SVG would fix both at zero credit cost.
+- Next recommended step: replace the icon set with vector icons, then revisit player movement
+  (accel/decel) which is still a single instant-velocity line in game.js.
+
 ### 2026-07-22 — Menu overhaul "B": armory/lab/settings in board mood
 - Goal: user picked option "B" (full package) — the flat shop/lab/settings screens must adopt
   the campaign-board mood: painted backdrop + worn metal plaques + premium tabs + HD weapon icons.
