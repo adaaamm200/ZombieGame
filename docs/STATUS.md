@@ -11,6 +11,32 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## IKONOK — vektor-glyph rendszer a homályos PNG-k és pixel-ikonok helyett (2026-07-23)
+- **Kiindulás**: a `js/icons.js`-ben MÁR volt egy rendes SVG-készlet, de sosem jutott
+  szóhoz: az `AIMG()` mindig a generált PNG-t választotta, a labor pedig teljesen
+  kimaradt (procedurális canvas pixel-ikonokat rajzolt a `ZD.sprites.upgIcon`).
+- **Új laboros glyphek** (`icons.js`): regen, dmg, crit, speed, luck + az `armory`
+  újrarajzolva. Elv: TÖMÖR SZILUETT + sötét belső részlet — az ikon nem kicsi
+  illusztráció. A generált `m-*.png`-k pont ezért mosódtak sárrá 44px-en.
+- **Bekötve**: labor-kártyák (kategóriaszínnel: hp=vörös, regen=zöld, dmg=arany,
+  crit=narancs, speed=kék, gren=olív, luck=lila), főmenü-gombok (süllyesztett
+  ikonfészek + akcentus-színű glyph), vissza- és fogaskerék-gombok.
+- **NEM változott**: a board hotspot-hexagonjai (`s-*.png`), a board nagy generált
+  gombjai (CAMPAIGN/SCAVENGE/SHOP/START RUN) és a bal nav — a felhasználó szerint jók.
+  → Így a board bal-alsó fogaskereke (generált PNG) és a jobb-felső (új vektor)
+  most eltér egymástól; ha zavaró, a bal nav is átvihető.
+- **SZEMMEL JAVÍTOTT HIBÁK** (kirenderelt nagyítás nélkül mind átment volna):
+  1. a csizma-alapú `speed` ikon olvashatatlan volt → dupla chevron;
+  2. a `luck` négylevelű lóhere egybefolyt → sötét elválasztó kontúr a leveleknek;
+  3. a `regen` kereszt+nyíl zsúfolt volt → kisebb, kontúrozott kereszt;
+  4. az `armory` fegyver alaktalan folt volt → tiszta pisztoly-sziluett;
+  5. a Folytatás ARANY lemezén ZÖLD maradt a glyph — egy régi „SVG fallback"
+     szabály (`.menu-btn .mb-ic svg`) ráerőltette a saját accent-színét és fix
+     27px-et; a szabály törölve.
+- **Tesztek**: node --check OK, 0 betöltési hiba, minden képernyő + ikon-nagyítás
+  megnézve. sw: **zk-v69**.
+- **Maradék**: a `ZD.sprites.upgIcon()` mostantól halott kód (külön feladatnak jelezve).
+
 ## UI-EGYSÉGESÍTÉS — tipográfia + fémlemez-gombrendszer + atmoszféra (2026-07-23)
 - **Panasz**: „az egész kezelőfelület gagyi, a board/shop/menü mind különböző, a menü
   a v1-ből maradt zöld fos, semmi effekt, 1990-es pixeles játék hatása."

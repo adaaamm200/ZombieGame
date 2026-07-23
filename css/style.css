@@ -459,8 +459,9 @@ html, body {
 }
 /* az asset MAGA a 3D gomb (saját keret+glow); CSS csak méretez + finom mélység-árnyék (NINCS dupla glow/keret) */
 .menu-btn .mb-ic .aic { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
-/* SVG fallback (ha nincs asset) — sötét korong accent glyph-fel */
-.menu-btn .mb-ic svg { position: relative; width: 27px; height: 27px; color: var(--accent, var(--ui-gold)); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent, var(--ui-gold)) 60%, transparent)); }
+/* (A régi „SVG fallback" szabály innen KIKERÜLT: fix 27px-re méretezte és a saját
+   accent-színét erőltette az SVG-re — emiatt a Folytatás arany lemezén ZÖLD maradt
+   a glyph. A méretezést/színt most a .mb-ic örökíti, lásd a glyph-rendszert.) */
 .menu-btn .mb-tx { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
 .menu-btn .mb-tx b { font-size: clamp(18px, 4.6vw, 23px); letter-spacing: 1.5px; text-shadow: 0 1px 2px rgba(0,0,0,.7); }
 .menu-btn .mb-tx small { font-size: clamp(10px, 2.6vw, 12px); letter-spacing: .5px; color: var(--ui-mute); font-weight: normal; margin-top: 3px; }
@@ -515,6 +516,44 @@ html, body {
   font-family: var(--font-display);
 }
 .screen h2, .btn, .tab, .menu-btn .mb-tx b, .bd-num, .modalbox h2 { letter-spacing: var(--disp-track); }
+
+/* ============ VEKTOR-GLYPH IKONRENDSZER ============
+   MIÉRT vektor és nem generált PNG: az ikon nem kicsi illusztráció, hanem ERŐS
+   SZILUETT, aminek 40px-en is olvashatónak kell lennie. A generált m-*.png-k
+   részletgazdag festmények voltak → ikonméretben sárrá mosódtak. Az SVG ráadásul
+   currentColor-t örököl, így EGY fájlból bármilyen kategóriaszínt felvesz, és
+   ugyanaz a kéz rajzolta mindet → tényleg egy család. Nulla kredit, nulla asset. */
+.glyph { display: block; width: 1em; height: 1em; flex: none; }
+.glyph-btn { font-size: 21px; }
+
+/* --- főmenü gomb: süllyesztett ikonfészek + kategóriaszínű glyph --- */
+.menu-btn .mb-ic {
+  border-radius: 13px; color: var(--accent, var(--ui-gold));
+  background: radial-gradient(circle at 50% 30%, #2b3038, #0b0d11 78%);
+  box-shadow: inset 0 0 0 1px rgba(160,175,190,.18), inset 0 2px 7px rgba(0,0,0,.75), 0 1px 0 rgba(255,255,255,.06);
+  font-size: clamp(27px, 6.6vw, 34px);
+}
+.menu-btn .mb-ic .glyph { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--accent, var(--ui-gold)) 45%, transparent)); }
+/* arany lemezen a fészek sötét marad, de a glyph meleg aranyra vált (nem arany-aranyon) */
+.menu-btn.primary .mb-ic { color: var(--ui-gold-hi); box-shadow: inset 0 0 0 1px rgba(90,55,4,.5), inset 0 2px 7px rgba(0,0,0,.8); }
+
+/* --- labor-kártya ikon: kategóriánként saját szín (informatív, nem dekoráció) --- */
+.uicon { font-size: 30px; }
+.uicon .glyph { filter: drop-shadow(0 1px 2px rgba(0,0,0,.7)) drop-shadow(0 0 8px currentColor); }
+.uicon.u-hp    { color: #ff6b63; }
+.uicon.u-regen { color: var(--ui-green); }
+.uicon.u-dmg   { color: var(--ui-gold); }
+.uicon.u-crit  { color: #ffa33d; }
+.uicon.u-speed { color: var(--ui-blue); }
+.uicon.u-gren  { color: #b9c46a; }
+.uicon.u-luck  { color: var(--ui-purple); }
+
+/* --- vissza / fogaskerék: a lemez adja a házat, a glyph csak a jel --- */
+.backbtn .glyph-btn { color: var(--ui-ink); }
+.bhud-gear .glyph-btn, .title-gear .glyph-btn {
+  font-size: 26px; color: var(--ui-ink);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.75)) drop-shadow(0 0 6px rgba(160,190,220,.3));
+}
 
 /* --- általános programozott UI ikon-igazítás --- */
 .ui-ic, .mb-ic svg, .bhud-coin svg, .coin-ic, .title-coin svg { display: inline-block; vertical-align: -0.14em; }
@@ -1129,7 +1168,7 @@ html, body {
   box-shadow: inset 0 2px 6px rgba(0,0,0,.7), inset 0 0 0 1px rgba(160,175,190,.12);
   display: flex; align-items: center; justify-content: center;
 }
-.uicon img { width: 36px; height: 36px; image-rendering: pixelated; }
+.uicon img { width: 36px; height: 36px; image-rendering: pixelated; }  /* régi raszter-fallback */
 .uinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .ulvl { color: var(--muted); font-size: 10.5px; }
 .udesc { font-size: 10px; color: var(--muted); }

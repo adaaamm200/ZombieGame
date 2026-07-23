@@ -1,4 +1,4 @@
-/* DOM-alapú képernyők: főmenü, pályaválasztó, bolt, labor, beállítások, modálok */
+﻿/* DOM-alapú képernyők: főmenü, pályaválasztó, bolt, labor, beállítások, modálok */
 window.ZD = window.ZD || {};
 
 ZD.ui = (() => {
@@ -28,11 +28,11 @@ ZD.ui = (() => {
     if (!iconCache[w.id]) iconCache[w.id] = ZD.sprites.weaponIconSrc(w) || ZD.sprites.weaponIcon(w);
     return iconCache[w.id];
   }
-  const upgIconCache = {};
-  function uIcon(id) {
-    if (!upgIconCache[id]) upgIconCache[id] = ZD.sprites.upgIcon(id);
-    return upgIconCache[id];
-  }
+  /* Labor-fejlesztés → SVG-glyph név. A régi procedurális canvas-pixelikonok
+     (ZD.sprites.upgIcon) helyett vektor: 40px-en is éles, tintázható, és egy
+     kéz rajzolta mind → tényleg egy családnak látszanak. */
+  const UPG_GLYPH = { hp: 'heart', regen: 'regen', dmg: 'dmg', crit: 'crit', speed: 'speed', gren: 'grenade', luck: 'luck' };
+  function uIcon(id) { return IC(UPG_GLYPH[id] || 'warning', 'glyph'); }
 
   const T = (k, v) => ZD.i18n.t(k, v);
   const IC = (n, c) => ZD.icon(n, c);
@@ -603,7 +603,7 @@ ZD.ui = (() => {
   function fillBoardChrome() {
     const scr = screens.stages;
     scr.querySelector('.bhud-back').innerHTML = BIMG('btn_back', 'Back', 'bhud-back-img');
-    scr.querySelector('.bhud-gear').innerHTML = AIMG('settings', 'aic-btn');
+    scr.querySelector('.bhud-gear').innerHTML = IC('settings', 'glyph glyph-btn');
     $('#bd-num').textContent = T('day.label') + ' ' + curDay;
     $('#bd-name').style.display = 'none';   // a napnak NINCS neve — az elnevezés a helyszíneké
     const cd = currentDay();
@@ -754,7 +754,7 @@ ZD.ui = (() => {
 
     refresh_armory() {
       refreshCoins(screens.armory);
-      screens.armory.querySelector('#arm-back').innerHTML = AIMG('back', 'aic-btn');
+      screens.armory.querySelector('#arm-back').innerHTML = IC('back', 'glyph glyph-btn');
       $('#arm-title').textContent = T('arm.title');
       $('#arm-tab-w').textContent = T('arm.weapons');
       $('#arm-tab-a').textContent = T('arm.ammo');
@@ -912,7 +912,7 @@ ZD.ui = (() => {
 
     refresh_lab() {
       refreshCoins(screens.lab);
-      screens.lab.querySelector('#lab-back').innerHTML = AIMG('back', 'aic-btn');
+      screens.lab.querySelector('#lab-back').innerHTML = IC('back', 'glyph glyph-btn');
       $('#lab-title').textContent = T('lab.title');
       const list = $('#upglist');
       list.innerHTML = '';
@@ -925,7 +925,7 @@ ZD.ui = (() => {
         const pips = Array.from({ length: u.max }, (_, i) => `<i class="${i < lvl ? 'on' : ''}"></i>`).join('');
         const item = el(`
           <div class="card ucard${maxed ? ' maxed' : ''}" data-id="${u.id}">
-            <div class="uicon"><img alt="" src="${uIcon(u.id)}" /></div>
+            <div class="uicon u-${u.id}">${uIcon(u.id)}</div>
             <div class="uinfo">
               <div class="wname">${u.name} <span class="ulvl">${lvl}/${u.max}</span></div>
               <div class="udesc">${u.desc}</div>
@@ -967,7 +967,7 @@ ZD.ui = (() => {
     refresh_settings() {
       const s = S();
       const setTxt = (id, k) => { const e = $(id); if (e) e.textContent = T(k); };
-      $('#set-back').innerHTML = AIMG('back', 'aic-btn');
+      $('#set-back').innerHTML = IC('back', 'glyph glyph-btn');
       setTxt('#set-title', 'set.title');
       setTxt('#set-lang-l', 'set.language');
       setTxt('#set-sound-l', 'set.sound');
@@ -1005,12 +1005,14 @@ ZD.ui = (() => {
       btns.push({ go: 'settings', icon: 'settings', label: T('menu.settings'), sub: T('menu.settingsSub'), cls: 'm-settings' });
       $('#title-menu').innerHTML = btns.map((b) =>
         `<button class="menu-btn${b.primary ? ' primary' : ''} ${b.cls || ''}"${b.go ? ` data-go="${b.go}"` : ''}${b.action ? ` data-action="${b.action}"` : ''}>` +
-          `<span class="mb-ic">${AIMG(b.icon)}</span>` +
+          /* glyph, NEM a m-*.png: a lemez-gomb MÁR ad házolást, a sötét octagon-PNG
+             pedig 44px-en sárrá mosódott (a felirat-kontraszt is romlott tőle) */
+          `<span class="mb-ic">${IC(b.icon, 'glyph')}</span>` +
           `<span class="mb-tx"><b>${b.label}</b><small>${b.sub}</small></span>` +
           `<span class="mb-arrow">${IC('chevron')}</span>` +
         '</button>').join('');
       $('#title-coin').innerHTML = `${AIMG('coin', 'coin-ic')}<b>${fmt(s.coins)}</b>`;
-      $('#title-gear').innerHTML = AIMG('settings', 'aic-btn');
+      $('#title-gear').innerHTML = IC('settings', 'glyph glyph-btn');
       $('#title-note').textContent = T('menu.note');
       const bb = $('#build-badge');
       if (bb) {

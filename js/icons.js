@@ -36,7 +36,9 @@ ZD.icon = (() => {
     /* ---- nav item glyphs ---- */
     campaign: `<svg ${V}><path d="M5 4v16M5 5l8 3-8 3" fill="currentColor" fill-opacity=".22"/><path d="M5 5l8 3-3 2.2 5 1.8-9 3" fill="currentColor" fill-opacity=".85" stroke-width="1.4"/></svg>`,
     scavenge: `<svg ${V}><path d="M3.5 8L12 4l8.5 4v8L12 20l-8.5-4z"/><path d="M3.5 8l8.5 4 8.5-4M12 12v8" stroke-width="2"/></svg>`,
-    armory: `<svg ${Vf}><path d="M2.5 9.2h12.3l1.4-2h4.3l.9 1.2-1.4 1.6h-1.5v2.2l-2.6 2.8h-3.1l-1-2.5H8.3l-1.1 2.2H5l1-2.2H2.5z"/><rect x="8" y="13.4" width="1.9" height="3.4" rx=".6"/></svg>`,
+    /* pisztoly-sziluett: külön tömör elemekből (cső+szán, markolat, elsütőbillentyű-kengyel)
+       — 30px-en is egyértelmű, az előző „egybefolyó" fegyverforma helyett */
+    armory: `<svg ${Vf}><rect x="2.6" y="6.8" width="18.8" height="4.4" rx=".9"/><path d="M5.1 11.2h4.6l-1.8 8.6a.95.95 0 01-.93.74H4.05a.95.95 0 01-.93-1.14z"/><path d="M10 11.2h4.8a.85.85 0 01.83 1.05l-.3 1.25A2.5 2.5 0 0112.9 15.4h-2.2z" opacity=".8"/><rect x="19.4" y="8.2" width="2.6" height="1.6" rx=".5" fill="rgba(0,0,0,.45)"/></svg>`,
     lab: `<svg ${V}><path d="M9.5 3h5M10.4 3v6.2L5.7 17.6A2 2 0 007.5 20.6h9a2 2 0 001.8-3L13.6 9.2V3"/><path d="M8 14.4h8" stroke-width="2"/><circle cx="11" cy="16.3" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="17.4" r=".8" fill="currentColor" stroke="none"/></svg>`,
 
     /* ---- in-game vezérlők / HUD ---- */
@@ -50,6 +52,15 @@ ZD.icon = (() => {
     reload: `<svg ${V}><path d="M20 5.5v4.6h-4.6" stroke-width="2.4"/><path d="M19.4 10a7.6 7.6 0 10.3 5" fill="none" stroke-width="2.4"/></svg>`,
     boss: `<svg ${Vf}><path d="M12 2.2C6.5 2.2 2.6 6 2.6 10.9c0 2.8 1.4 4.8 3 6v2.6c0 1 .85 1.9 1.9 1.9h1v-2.4h1.7v2.4h3.6v-2.4h1.7v2.4h1c1.05 0 1.9-.85 1.9-1.9v-2.6c1.6-1.2 3-3.2 3-6C21.4 6 17.5 2.2 12 2.2z"/><circle cx="8.2" cy="11.2" r="2.3" fill="#ff2a2a"/><circle cx="15.8" cy="11.2" r="2.3" fill="#ff2a2a"/><circle cx="8.2" cy="11.2" r=".9" fill="#3a0000"/><circle cx="15.8" cy="11.2" r=".9" fill="#3a0000"/><path d="M12 14l-1.4 2.6h2.8z" fill="#3a0000"/></svg>`,
     objective: `<svg ${V}><circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="4.4"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><path d="M12 1.6v2.6M12 19.8v2.6M1.6 12h2.6M19.8 12h2.6" stroke-width="2"/></svg>`,
+
+    /* ---- LABOR-FEJLESZTÉSEK ----
+       Tömör sziluett + sötét belső részlet: 36-52px-en is azonnal felismerhető.
+       (A korábbi procedurális canvas-pixelikonok helyett.) */
+    regen: `<svg ${Vf}><path d="M12 4.4a7.6 7.6 0 017.2 5.2h-2.6A5.3 5.3 0 1012 17.3v2.3A7.6 7.6 0 1112 4.4z"/><path d="M17.6 2.2l2.2 5.4-5.6.7z"/><path d="M11 10h2v2h2v2h-2v2h-2v-2H9v-2h2z" stroke="rgba(0,0,0,.6)" stroke-width="1.3" stroke-linejoin="round"/></svg>`,
+    dmg: `<svg ${Vf}><path d="M3.6 9.6h4V14.4h-4a1 1 0 01-1-1v-2.8a1 1 0 011-1z"/><rect x="8.2" y="8.7" width="2.9" height="6.6" rx=".6"/><path d="M11.9 8.7h2.8l6.5 3.3-6.5 3.3h-2.8z"/><path d="M4.6 11.2v1.6" stroke="rgba(0,0,0,.45)" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+    crit: `<svg ${Vf}><path d="M12 1.6l2.1 6.6 6.7-2.2-4 5.9 4 5.9-6.7-2.2L12 22.4l-2.1-6.8-6.7 2.2 4-5.9-4-5.9 6.7 2.2z"/><circle cx="12" cy="12" r="2.9" fill="rgba(0,0,0,.5)"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>`,
+    speed: `<svg ${Vf}><path d="M13.4 3.8l7.8 8.2-7.8 8.2-2.9-2.6 5.4-5.6-5.4-5.6z"/><path d="M6.6 3.8l7.8 8.2-7.8 8.2-2.9-2.6 5.4-5.6-5.4-5.6z" opacity=".55"/></svg>`,
+    luck: `<svg ${Vf}><path d="M12.4 13.2c.1 3 .9 5.4 2.7 7.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="8.7" cy="8.7" r="3.5" stroke="rgba(0,0,0,.62)" stroke-width="1.3"/><circle cx="15.3" cy="8.7" r="3.5" stroke="rgba(0,0,0,.62)" stroke-width="1.3"/><circle cx="8.7" cy="15.3" r="3.5" stroke="rgba(0,0,0,.62)" stroke-width="1.3"/><circle cx="15.3" cy="15.3" r="3.5" stroke="rgba(0,0,0,.62)" stroke-width="1.3"/></svg>`,
   };
 
   return function icon(name, cls) {

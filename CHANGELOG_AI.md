@@ -18,6 +18,32 @@ Entry format:
 
 ---
 
+### 2026-07-23 — Vector glyph icon system replaces muddy PNGs and pixel icons
+- Goal: the icons were the weakest remaining link — generated `m-*.png` badges read as mud
+  at 44px, and the lab still drew crude procedural canvas pixel icons.
+- Root cause: js/icons.js already held a decent inline-SVG set, but `AIMG()` always preferred
+  the PNG asset so the SVGs never rendered; the lab bypassed the system entirely.
+- Files changed: js/icons.js (5 new upgrade glyphs + armory redrawn), js/ui.js (lab and menu
+  now emit glyphs; back/gear buttons too), css/style.css (glyph sizing, recessed icon well,
+  per-upgrade category tints), sw.js/index.html (v69), docs/STATUS.md.
+- What changed: icons are now vector, inherit `currentColor` so one file serves every category
+  colour, and are drawn as solid silhouettes with a dark inner detail so they survive at 30px.
+  Lab upgrades are colour-coded (hp red, regen green, dmg gold, crit orange, speed blue,
+  gren olive, luck purple). The board's hotspot hexagons and large generated buttons were
+  deliberately left alone since the user considers the board good.
+- Tests run: node --check on js (OK), zero load errors, sw bumped zk-v69.
+- Visual QA: every screen rendered headless, plus 4x zoom strips of the icon wells. Five real
+  defects were caught only by zooming in and fixed: unreadable boot-based speed icon (now a
+  double chevron), clover leaves merging into a blob (added dark separator outlines), cluttered
+  regen cross, shapeless armory weapon (now a clean pistol silhouette), and a stale
+  `.menu-btn .mb-ic svg` fallback rule that forced its own accent colour onto the glyph so the
+  play icon stayed green on the gold plate.
+- What was not changed: gameplay, board artwork/buttons/hotspots, weapon sprites, fonts.
+- Open questions: the board's left nav still uses generated PNGs, so its settings cog now
+  differs from the new vector cog in the top-right — migrate the nav too, or leave it?
+- Next recommended step: player movement feel (accel/decel/momentum) — still one instant
+  velocity line at js/game.js:645. `ZD.sprites.upgIcon()` is now dead code (task spawned).
+
 ### 2026-07-23 — UI unification: typography, metal-plate buttons, atmosphere
 - Goal: user reported the whole UI feels cheap, every screen looks different, the main menu
   is still the v1 green neon, no effects, "like a 1990s pixel game".
