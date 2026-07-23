@@ -18,6 +18,35 @@ Entry format:
 
 ---
 
+### 2026-07-23 — Movement feel: momentum, body lean, footstep dust
+- Goal: player movement was a single line (`p.x += axis * speed * dt`) — instant full speed,
+  instant stop. It read as sliding rather than walking, and was the biggest remaining gap in
+  game feel. Pure code, no assets.
+- Files changed: js/const.js (new tunable `MOVE` block), js/game.js (velocity-based movement,
+  lean, footstep dust, `moving` derived from speed), js/enemy_sprites.js (lean rotation),
+  tools/qa_move.html (new QA harness), sw.js/index.html (v71), docs/STATUS.md.
+- What changed: velocity is now eased toward the target (accel 700, decel 1100 so braking is
+  firmer than acceleration, turnMul 2.2 for a crisp about-face); the walk cycle is driven by
+  actual speed so the feet no longer slide; `moving` comes from velocity rather than the input
+  button so the walk animation continues through the slide-out; the body leans into
+  acceleration and back under braking, rotated at the feet and applied before the facing flip
+  so it stays world-oriented; footstep dust reuses the existing `st.parts` system.
+- Tests run: node --check on all js (OK). Measured in-browser by stepping fixed frames:
+  0→110 px/s in 0.157s, stop in 0.10s, direction reversal crosses zero in 0.043s. Stress run
+  of 1200 frames (~20s) with varying input and continuous fire: zero errors, zero NaN, speed
+  never exceeded the cap, player stayed in bounds, viewport invariant intact.
+- Visual QA: new tools/qa_move.html drives the game in a same-origin iframe with deterministic
+  fixed steps and composites the movement phases side by side, so the lean is verifiable from
+  one screenshot. Two real defects were caught this way: the crop maths ignored the render's
+  ZOOM and vertical offset so the first strip showed empty background instead of the player,
+  and `leanRate: 7` let the lean reach only ~1° because the smoothing was slower than the
+  0.16s acceleration ramp itself (raised to 18, giving a measured 2.1° forward / 1.65° back).
+- What was not changed: weapons, zombies, balance, UI, assets.
+- Open questions: should sprinting or a dodge/dash build on this velocity model now that the
+  momentum layer exists?
+- Next recommended step: zombie movement could use the same treatment (they still snap to
+  full speed), and the 2-frame zombie walk cycles remain the animation bottleneck.
+
 ### 2026-07-23 — Vector glyph icon system replaces muddy PNGs and pixel icons
 - Goal: the icons were the weakest remaining link — generated `m-*.png` badges read as mud
   at 44px, and the lab still drew crude procedural canvas pixel icons.

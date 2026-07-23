@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<title>QA — mozgás-érzet</title>
+<!-- Csak DEV/QA: a játékot iframe-ben (azonos origin) futtatja, determinisztikus
+     fix lépésekkel hajtja, és a jellemző mozgás-fázisokat egymás mellé rajzolja.
+     Így a gyorsulás/fékezés/testdőlés SZEMMEL ellenőrizhető egy screenshotból —
+     a játék kódjába nem kell QA-hook. -->
+<style>
+  body { margin:0; background:#0b0d11; color:#cfd8e2; font:13px system-ui, sans-serif; }
+  #strip { display:block; margin:0; image-rendering:auto; }
+  .lbl { padding:6px 10px; letter-spacing:1px; }
+</style>
+</head>
+<body>
+<div class="lbl" id="lbl">betöltés…</div>
+<canvas id="strip" width="640" height="210"></canvas>
+<iframe id="fr" src="/index.html" style="width:960px;height:540px;border:0;position:absolute;left:-4000px;top:0"></iframe>
+<script>
+const PHASES = [
+  { name: 'ÁLLÓ',        axis: 0, steps: 30 },
+  { name: 'GYORSUL',     axis: 1, steps: 5  },
+  { name: 'TELJES TEMPÓ',axis: 1, steps: 40 },
+  { name: 'FÉKEZ',       axis: 0, steps: 3  },
+];
+
+function boot() {
+  const w = document.getElementById('fr').contentWindow;
+  if (!w.ZD || !w.ZD.game || !w.ZD.game.start) return setTimeout(boot, 250);
+  const ZD = w.ZD, C = ZD.C;
+  const cnv = w.document.getElementById('cv');
+  if (!cnv) return setTimeout(boot, 250);
+  const gctx = cnv.getContext('2d');
+  ZD.game.start(1, {});
+  const st = ZD.game.st, p = st.player, inp = ZD.input.state, dt = 1 / 60;
+  /* Világ -> canvas leképezés PONTOSAN úgy, ahogy a game.render() csinálja:
+       ctx.setTransform(RS)  →  scale(ZOOM)  →  translate(0,-vy0)  →  translate(-cam,0)
+     ahol vy0 = GROUND_Y - 232/ZOOM, tehát a talpvonal a zoom után fixen 232-re esik.
+     (Az első próbánál csak a canvas/VIEW arányt vettem — a ZOOM és a függőleges
+      eltolás nélkül a kivágás mellétrafált, és üres hátteret mutatott.) */
+  const RS = C.RS, Z = C.ZOOM;
+  const worldToCanvasX = (wx) => RS * Z * (wx - Math.round(st.cam));
+  const groundCanvasY = RS * 232;
+
+  const out = document.getElementById('strip');
+  const og = out.getContext('2d');
+  og.fillStyle = '#0b0d11'; og.fillRect(0, 0, out.width, out.height);
+  const TW = 160, TH = 180;
+
+  PHASES.forEach((ph, i) => {
+    inp.axis = ph.axis;
+    for (let k = 0; k < ph.steps; k++) ZD.game.update(dt);
+    ZD.game.render(gctx);
+    const sx = worldToCanvasX(p.x), sy = groundCanvasY;
+    og.drawImage(cnv, Math.round(sx - TW / 2), Math.round(sy - TH + 24), TW, TH, TW * i, 0, TW, TH);
+    og.fillStyle = 'rgba(0,0,0,.65)'; og.fillRect(TW * i, TH, TW, 30);
+    og.fillStyle = '#ffc22e'; og.font = 'bold 13px system-ui, sans-serif';
+    og.fillText(ph.name, TW * i + 8, TH + 15);
+    og.fillStyle = '#9fb0bd'; og.font = '11px system-ui, sans-serif';
+    og.fillText('vx ' + p.vx.toFixed(0) + '  dőlés ' + (p.lean * 180 / Math.PI).toFixed(1) + '°', TW * i + 8, TH + 27);
+    og.strokeStyle = 'rgba(255,255,255,.12)'; og.strokeRect(TW * i + .5, .5, TW - 1, TH + 29);
+  });
+  document.getElementById('lbl').textContent =
+    'Mozgás-fázisok — csúcssebesség ' + p.stats.speed + ' px/s · gyorsulás ' + C.MOVE.accel + ' · fékezés ' + C.MOVE.decel;
+}
+boot();
+</script>
+</body>
+</html>

@@ -120,6 +120,7 @@ ZD.game = (() => {
       x: C.WORLD_W / 2 - (st.gen ? 60 : 0), hp: stats.maxHp, stats,
       facing: 1, phase: 0, idleT: 0, fireCd: 0, fireAnim: 0, muzzleSeed: 0,
       reloadT: 0,
+      vx: 0, lean: 0, stepMark: 0,   // mozgás-érzet: lendület, testdőlés, lépés-ütem
       invuln: 0, flash: 0,
       /* lőszer a perzisztens készletből (pisztoly végtelen) */
       weapons: owned.map((w) => ({
@@ -637,18 +638,62 @@ ZD.game = (() => {
       inp.grenade = false; inp.swap = false; inp.buyammo = false;
     }
 
-    /* — játékos mozgás — */
+    /* — játékos mozgás: lendület-alapú (gyorsulás / fékezés / irányváltás) —
+       A régi `p.x += axis * speed * dt` azonnali sebességet adott: a karakter
+       0-ról teljesre ugrott és azonnal megállt → „csúszott". Most a sebességet
+       (p.vx) húzzuk a célsebesség felé, a járásciklus pedig a TÉNYLEGES
+       sebességből jön, így nem csúszik a talp. */
     if (st.dying > 0) {
-      /* halott: nem mozog, nem lő */
-    } else if (inp.axis !== 0) {
-      p.facing = inp.axis > 0 ? 1 : -1;
-      p.x += inp.axis * p.stats.speed * dt;
-      p.x = Math.max(10, Math.min(C.WORLD_W - 10, p.x));
-      p.phase += dt * 11;
-      p.idleT = 0;
+      p.vx = 0;                      // halott: nincs irányítás és nincs sodródás
     } else {
-      p.phase = 0;
-      p.idleT += dt;
+      const MV = C.MOVE;
+      const target = inp.axis * p.stats.speed;
+      /* fékezés erősebb, mint a gyorsulás; ellenirányú bemenetnél még erősebb
+         → határozott megállás és éles fordulás (nem jégpálya) */
+      let a = MV.accel;
+      if (inp.axis === 0) a = MV.decel;
+      else if (p.vx !== 0 && Math.sign(inp.axis) !== Math.sign(p.vx)) a = MV.decel * MV.turnMul;
+      const dv = target - p.vx;
+      const step = a * dt;
+      p.vx += Math.abs(dv) <= step ? dv : Math.sign(dv) * step;
+
+      p.x += p.vx * dt;
+      /* pályaszél: a lendület is elnyelődik, különben „ragadna" a falnál */
+      const lo = 10, hi = C.WORLD_W - 10;
+      if (p.x <= lo) { p.x = lo; if (p.vx < 0) p.vx = 0; }
+      else if (p.x >= hi) { p.x = hi; if (p.vx > 0) p.vx = 0; }
+
+      /* nézési irány CSAK bemenetre vált — kifutás közben ne pörögjön meg */
+      if (inp.axis !== 0) p.facing = inp.axis > 0 ? 1 : -1;
+
+      /* testdőlés: a gyorsulás irányába dől, simítva (nem ugrik) */
+      const leanT = Math.max(-1, Math.min(1, (target - p.vx) / p.stats.speed)) * MV.leanMax;
+      p.lean += (leanT - p.lean) * Math.min(1, MV.leanRate * dt);
+
+      /* járásciklus a valódi sebességből → nincs talp-csúszás */
+      const spd = Math.abs(p.vx);
+      if (spd > MV.stopEps) {
+        const ratio = spd / p.stats.speed;
+        p.phase += dt * (4.5 + 7 * ratio);
+        p.idleT = 0;
+        /* lépés-por: minden féllépésnél, csak érdemi tempónál */
+        if (ratio > 0.45 && p.phase - p.stepMark >= MV.stepPhase) {
+          p.stepMark = p.phase;
+          const n = 1 + (ratio > 0.85 ? 1 : 0);
+          for (let i = 0; i < n; i++) {
+            st.parts.push({
+              x: p.x + rand(-3, 3), y: C.GROUND_Y - 1,
+              vx: -Math.sign(p.vx) * rand(10, 34), vy: rand(-20, -6),
+              life: rand(0.22, 0.44), color: chance(0.5) ? '#6b6255' : '#4e4941',
+              size: rand(1.2, 2.4), grav: 40,
+            });
+          }
+        }
+      } else {
+        p.phase = 0;
+        p.stepMark = 0;
+        p.idleT += dt;
+      }
     }
     if (p.fireCd > 0) p.fireCd -= dt;
     if (p.fireAnim > 0) p.fireAnim -= dt;
@@ -1243,7 +1288,11 @@ ZD.game = (() => {
     } else if (!(p.invuln > 0 && Math.floor(st.time * 14) % 2 === 0)) {
       SP.drawPlayer(ctx, {
         x: p.x, y: C.GROUND_Y, facing: p.facing,
-        moving: ZD.input.state.axis !== 0, phase: p.phase, idleT: p.idleT,
+        /* `moving` a TÉNYLEGES sebességből, nem a gombnyomásból: így a járás-
+           animáció a kifutás (fékezés) alatt is megy, és nem vált idle-re,
+           miközben a karakter még csúszik előre. */
+        moving: Math.abs(p.vx) > C.MOVE.stopEps, phase: p.phase, idleT: p.idleT,
+        lean: p.lean,
         fireAnim: p.fireAnim, muzzleSeed: p.muzzleSeed, reloadT: p.reloadT,
         flash: p.flash, weapon: curWeapon().def,
       });

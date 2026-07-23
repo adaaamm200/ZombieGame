@@ -11,6 +11,37 @@
 - Hosszú távú terv: [`docs/ROADMAP.md`](ROADMAP.md) (6 fázis). **A FÁZIS 1 kész**, a többi csak dokumentált terv.
 - Élő HTTPS elérés: https://adaaamm200.github.io/ZombieGame/ (GitHub Pages, main branch).
 
+## MOZGÁS-ÉRZET — lendület, testdőlés, lépés-por (2026-07-23)
+- **Kiindulás**: a játékos mozgása EGYETLEN sor volt (`p.x += axis * speed * dt`):
+  0-ról azonnal teljes sebességre ugrott és azonnal megállt → „csúszott", nem ment.
+  Ez volt a legnagyobb érezhető szakadék a Zombie Diary-hez képest, és tiszta kód.
+- **Új modell** (`C.MOVE` a const.js-ben, hangolható): a sebességet (`p.vx`) húzzuk a
+  célsebesség felé. `accel: 700`, `decel: 1100` (a fékezés ERŐSEBB → határozott
+  megállás, nem jégpálya), `turnMul: 2.2` ellenirányú bemenetnél → éles fordulás.
+- **Járásciklus a TÉNYLEGES sebességből** (`4.5 + 7*ratio`): nincs talp-csúszás, és
+  teljes tempón megőrzi a régi ütemet (11.5 ≈ a korábbi fix 11).
+- **`moving` a sebességből, nem a gombnyomásból**: a járás-animáció a kifutás alatt is
+  megy, nem vált idle-re, miközben a karakter még csúszik.
+- **Testdőlés** (`p.lean`, a talpnál forgatva, a facing-tükrözés ELŐTT, hogy világ-irányú
+  maradjon): gyorsításkor előre, fékezéskor hátra. Az `enemy_sprites.drawPlayer` kapta.
+- **Lépés-por**: a meglévő `st.parts` rendszerbe, féltempó fölött, ~2/s.
+- **MÉRVE (nem feltételezve)** — a böngészőben léptetve:
+  felfutás 0→110 px/s: **0.157 s**; megállás: **0.10 s**; irányváltás: a sebesség
+  **0.043 s** alatt fordul át, a facing azonnal.
+- **Egy hangolási hibát a mérés fogott meg**: `leanRate: 7`-tel a dőlés csak ~1°-ig
+  jutott, mert a simítás lassabb volt, mint maga a 0.16 s-os gyorsulási rámpa (mire
+  konvergált volna, a célérték már visszaesett 0-ra). → `leanRate: 18`, `leanMax: 0.07`
+  → mérve **2.1° előre / 1.65° hátra**.
+- **QA-eszköz (ÚJ)**: `tools/qa_move.html` — a játékot iframe-ben (azonos origin)
+  determinisztikus fix lépésekkel hajtja, és a mozgás-fázisokat egymás mellé rajzolja,
+  így egy screenshotból SZEMMEL ellenőrizhető. FONTOS: a világ→canvas leképezéshez a
+  render TELJES transzformja kell (`RS` → `ZOOM` → `-vy0` → `-cam`); az első próba
+  csak a canvas/VIEW arányt vette és üres hátteret vágott ki.
+- **Terhelési próba**: 1200 frame (~20 s) változó bemenettel + folyamatos tüzeléssel:
+  0 hiba, 0 NaN, a sebesség sosem lépte túl a 110-et, a játékos pályán belül maradt.
+  Viewport-invariáns OK (stage 1280×720, canvas 960×540).
+- sw: **zk-v71**. Nem változott: fegyverek, zombik, balansz, UI.
+
 ## IKONOK — vektor-glyph rendszer a homályos PNG-k és pixel-ikonok helyett (2026-07-23)
 - **Kiindulás**: a `js/icons.js`-ben MÁR volt egy rendes SVG-készlet, de sosem jutott
   szóhoz: az `AIMG()` mindig a generált PNG-t választotta, a labor pedig teljesen

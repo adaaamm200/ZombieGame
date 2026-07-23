@@ -259,6 +259,10 @@ ZD.enemySprites = (() => {
 
     ctx.save();
     ctx.translate(Math.round(o.x), Math.round(o.y));
+    /* testdőlés gyorsításkor — a TALPNÁL forgat (a translate origója a
+       GROUND_Y), és a facing-tükrözés ELŐTT, hogy a dőlés világ-irányú
+       maradjon (különben irányváltásnál ellenkezőre fordulna). */
+    if (o.lean) ctx.rotate(o.lean);
     if (fac < 0) ctx.scale(-1, 1);
     ctx.globalAlpha = alpha;
     ctx.imageSmoothingEnabled = true;

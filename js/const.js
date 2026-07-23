@@ -137,6 +137,29 @@ ZD.C = {
 
   PLAYER: { w: 18, h: 38, speed: 110, baseHp: 100 },
 
+  /* --- MOZGÁS-ÉRZET (game feel) ---
+     Korábban a játékos AZONNAL teljes sebességre ugrott és azonnal megállt
+     (`p.x += axis * speed * dt`) — ettől „csúszott" ahelyett, hogy ment volna.
+     Most sebességet (p.vx) gyorsítunk/lassítunk, és a járásciklus a TÉNYLEGES
+     sebességhez igazodik, így nem csúszik a talpa.
+     Hangolás: accel < decel → határozott megállás, nem jégpálya.
+     turnMul: irányváltásnál erősebb fékezés → éles, katonás fordulás. */
+  MOVE: {
+    /* 110 px/s csúcssebességnél: felfutás ~0.16 s / ~8.6 px (fél testszélesség),
+       megállás ~0.10 s / ~5.5 px. Érezhető súly, de nem lomha és nem jégpálya.
+       (950/1500-nél a rámpa 0.1 s alatt lezajlott — mérhető, de nem érezhető.) */
+    accel: 700,      // px/s² felfutás
+    decel: 1100,     // px/s² fékezés nyugalomba
+    turnMul: 2.2,    // fékezés-szorzó ellenirányú bemenetnél (éles fordulás)
+    stopEps: 5,      // ez alatt (px/s) állónak számít
+    stepPhase: 5.0,  // ennyi fázisonként egy lépés-por (teljes tempón ~2/s)
+    /* A dőlés simítása GYORSABB kell legyen, mint maga a gyorsulási rámpa (0.16 s),
+       különben a lean sosem éri el a maximumot: mérve 7-es rátával csak ~1°-ig jutott,
+       mire a sebesség már beállt és a célérték visszaesett 0-ra. */
+    leanMax: 0.07,   // rad — max. testdőlés (~4°)
+    leanRate: 18,    // 1/s — a dőlés simítása
+  },
+
   /* Játszható karakterek — az id egyezik a js/part_rig.js RIGS kulcsaival és az
      assets/sprites/characters/<id>/ mappával.
      FONTOS: egyelőre TISZTÁN KOZMETIKAI (nincs stat-eltérés), hogy a meglévő
